@@ -41,11 +41,30 @@ builder.Services.AddDbContext<VsfhContext>(options => options
 builder.Services.Configure<KestrelServerOptions>(o => o.AllowSynchronousIO = true);
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie();
+    // By default, the cookie auth scheme assumes you are running an MVC application
+    // with a few special routes. Thus it uses redirect responses to these routes
+    // when a user is unauthenticated/unauthorised. Override this behaviour to just
+    // return plain 401/403 responses, respectively.
+    .AddCookie(o => 
+    {
+        o.Events.OnRedirectToAccessDenied = ctx =>
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+        o.Events.OnRedirectToLogin = ctx =>
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+    });
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+if(!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCookiePolicy(new CookiePolicyOptions
 {
