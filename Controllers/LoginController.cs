@@ -83,7 +83,7 @@ public class LoginController : Controller
         [Required] public bool? RememberMe { get; init; }
     }
 
-    [HttpPost($"{nameof(AcceptInvite)}/{{inviteKey}}")]
+    [HttpPost($"{nameof(AcceptInvite)}")]
     [AllowAnonymous]
     public async Task<ActionResult> AcceptInvite(AcceptInviteDto acceptDto)
     {

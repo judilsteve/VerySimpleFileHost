@@ -52,10 +52,10 @@ app.UseCookiePolicy(new CookiePolicyOptions
     MinimumSameSitePolicy = SameSiteMode.Strict
 });
 
-app.UseAuthentication();
-
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseAuthentication();
 
 app.UseRouting();
 app.UseAuthorization();
