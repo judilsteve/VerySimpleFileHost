@@ -33,6 +33,16 @@ const main = async () => {
     import('react-router-dom')
   ]);
 
+  /**
+   * TODO_JU
+   * Wrappers for routes requiring authentication/admin privileges
+   * Suspense wrapper for dynamic import of route component
+   * Global useAuthState hook
+   * Some sort of global interceptor (openapi-gen middleware?) to detect 403s due to expired passwords and redirect to /ChangePassword
+   * Another of the above to detect 401s due to expired/revoked auth cookies and redirect to /Login
+   * ^ Will probably need to send some response headers/content from the backend to indicate this
+   */
+
   ReactDOM.render(
     <React.StrictMode>
       <BrowserRouter>
