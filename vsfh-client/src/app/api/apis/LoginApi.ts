@@ -123,6 +123,53 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
+    async loginMinimumPasswordScoreGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<number>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/Login/MinimumPasswordScore`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.TextApiResponse(response) as any;
+    }
+
+    /**
+     */
+    async loginMinimumPasswordScoreGet(initOverrides?: RequestInit): Promise<number> {
+        const response = await this.loginMinimumPasswordScoreGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async loginPingGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/Login/Ping`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async loginPingGet(initOverrides?: RequestInit): Promise<void> {
+        await this.loginPingGetRaw(initOverrides);
+    }
+
+    /**
+     */
     async loginPostRaw(requestParameters: LoginPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<UserSecurityInfoDto>> {
         const queryParameters: any = {};
 

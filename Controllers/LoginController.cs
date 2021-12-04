@@ -18,15 +18,15 @@ namespace VerySimpleFileHost.Controllers;
 public class LoginController : Controller
 {
     private readonly VsfhContext context;
-    private readonly AuthenticationConfiguration configuration;
+    private readonly AuthenticationConfiguration config;
 
     public LoginController(
         VsfhContext context,
-        AuthenticationConfiguration configuration
+        AuthenticationConfiguration config
     )
     {
         this.context = context;
-        this.configuration = configuration;
+        this.config = config;
     }
 
     public class LoginAttemptDto
@@ -62,8 +62,8 @@ public class LoginController : Controller
         var authProperties = new AuthenticationProperties
         {
             AllowRefresh = true,
-            ExpiresUtc = configuration.CookieExpiryMinutes.HasValue
-                ? loginDateTimeUtc.AddMinutes(configuration.CookieExpiryMinutes.Value)
+            ExpiresUtc = config.CookieExpiryMinutes.HasValue
+                ? loginDateTimeUtc.AddMinutes(config.CookieExpiryMinutes.Value)
                 : null,
             IsPersistent = rememberMe,
             IssuedUtc = loginDateTimeUtc
@@ -87,7 +87,7 @@ public class LoginController : Controller
     [AllowAnonymous]
     public async Task<ActionResult> AcceptInvite(AcceptInviteDto acceptDto)
     {
-        if(acceptDto.RememberMe!.Value && !configuration.AllowRememberMe)
+        if(acceptDto.RememberMe!.Value && !config.AllowRememberMe)
             return BadRequest("The administrator has disabled the \"Remember Me\" option");
 
         var user = await context.Users
@@ -100,10 +100,10 @@ public class LoginController : Controller
             return Unauthorized();
         }
 
-        if(configuration.InviteLinkExpiryHours.HasValue)
+        if(config.InviteLinkExpiryHours.HasValue)
         {
             var inviteKeyExpiryUtc = DateTime.SpecifyKind(user.LastAuthChangeUtc, DateTimeKind.Utc)
-                .AddHours(configuration.InviteLinkExpiryHours.Value);
+                .AddHours(config.InviteLinkExpiryHours.Value);
             if(inviteKeyExpiryUtc < DateTimeOffset.UtcNow)
             {
                 await TaskUtils.RandomWait();
@@ -112,7 +112,7 @@ public class LoginController : Controller
         }
 
         var score = Zxcvbn.Core.EvaluatePassword(acceptDto.NewPassword).Score;
-        if(score < configuration.MinimumPasswordScore)
+        if(score < config.MinimumPasswordScore)
             return BadRequest("New password would be too weak");
 
         user.InviteKey = null; // Ensure that the invite key cannot be used again
@@ -130,7 +130,7 @@ public class LoginController : Controller
     [AllowAnonymous]
     public async Task<ActionResult<UserSecurityInfoDto>> Login(LoginAttemptDto loginAttempt)
     {
-        if(loginAttempt.RememberMe!.Value && !configuration.AllowRememberMe)
+        if(loginAttempt.RememberMe!.Value && !config.AllowRememberMe)
             return BadRequest("The administrator has disabled the \"Remember Me\" option");
 
         var userDetails = await context.Users
@@ -164,7 +164,7 @@ public class LoginController : Controller
             IsAdministrator = userDetails.IsAdministrator,
             MustChangePassword = PasswordUtils.PasswordExpired(
                 DateTime.SpecifyKind(userDetails.LastAuthChangeUtc, DateTimeKind.Utc),
-                configuration.PasswordExpiryDays)
+                config.PasswordExpiryDays)
         };
     }
 
@@ -191,7 +191,7 @@ public class LoginController : Controller
     public async Task<ActionResult> ChangePassword(ChangePasswordAttemptDto changePasswordAttempt)
     {
         var score = Zxcvbn.Core.EvaluatePassword(changePasswordAttempt.NewPassword).Score;
-        if(score < configuration.MinimumPasswordScore)
+        if(score < config.MinimumPasswordScore)
             return BadRequest("New password would be too weak");
 
         if(changePasswordAttempt.CurrentPassword == changePasswordAttempt.NewPassword)
@@ -228,4 +228,11 @@ public class LoginController : Controller
 
         return Ok();
     }
+
+    [AllowAnonymous]
+    [HttpGet(nameof(MinimumPasswordScore))]
+    public int MinimumPasswordScore() => config.MinimumPasswordScore;
+
+    [HttpGet(nameof(Ping))]
+    public ActionResult Ping() => Ok();
 }

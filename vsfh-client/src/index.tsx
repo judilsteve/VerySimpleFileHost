@@ -1,17 +1,36 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+import { Configuration, LoginApi } from './app/api';
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+const main = async () => {
+  const loginApi = new LoginApi(new Configuration({ basePath: 'https://localhost:7270' })); // TODO_JU Remove this hack
+  const pingResponse = (await loginApi.loginPingGetRaw()).raw;
+  if(pingResponse.status === 401) {
+    // User is unauthenticated
+  } else if(pingResponse.status === 403) {
+    // User's password has expired
+  } else if(!pingResponse.ok) {
+    // What the hell?
+    throw new Error(
+      `Could not connect to server (${pingResponse.status}: ${pingResponse.statusText}): ${await pingResponse.text()}`);
+  }
+
+  const [
+    React,
+    ReactDOM,
+    { default: App }
+  ] = await Promise.all([
+    import('react'),
+    import('react-dom'),
+    import('./App')
+  ]);
+
+  ReactDOM.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+    document.getElementById('root')
+  );
+}
+
+main()
