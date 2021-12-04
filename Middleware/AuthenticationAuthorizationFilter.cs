@@ -30,7 +30,8 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
     {
         Allow,
         FailAuthentication,
-        FailAuthorization
+        FailAuthorization,
+        PasswordExpired
     }
 
     private static async Task<CheckResult> RequestIsAllowed(AuthorizationFilterContext context)
@@ -82,7 +83,7 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
 
             if(!allowExpiredPassword)
             {
-                return CheckResult.FailAuthorization;
+                return CheckResult.PasswordExpired;
             }
         }
 
@@ -107,6 +108,7 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
             {
                 CheckResult.FailAuthentication => new UnauthorizedResult(),
                 CheckResult.FailAuthorization => new ForbidResult(),
+                CheckResult.PasswordExpired => new ForbidResult(), // TODO_JU Tell the user why
                 _ => throw new ArgumentException("Unhandled check result", nameof(checkResult))
             };
         }
