@@ -92,6 +92,14 @@ public class LoginController : Controller
 
         var user = await context.Users
             .AsTracking()
+            // This Where statement provides a little extra protection in case an
+            // attacker manages to hit this endpoint with a null InviteKey (which
+            // shouldn't happen anyway because of the input validation on the DTO).
+            // In the case where a null/empty invite key is sent, were it not for
+            // this Where statement, the query would simply return the first
+            // already-activated user (since their invite key would be null) and
+            // set their password to whatever the attacker desires
+            .Where(u => u.InviteKey != null)
             .SingleOrDefaultAsync(u => u.InviteKey == WebEncoders.Base64UrlDecode(acceptDto.InviteKey));
 
         if(user is null)

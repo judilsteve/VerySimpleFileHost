@@ -14,7 +14,6 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate-api-client": "SET JAVA_OPTS=-Dio.swagger.v3.parser.util.RemoteUrl.trustAll=true && openapi-generator-cli generate -i https://localhost:7270/swagger/v1/swagger.json  -g typescript-fetch -o ./src/app/api"
   },
