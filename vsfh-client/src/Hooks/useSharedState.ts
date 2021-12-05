@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 
-export type Watcher<T> = (v: T) => void;
-
 export class SharedState<T> {
-    private readonly watchers: Watcher<T>[] = [];
+    private readonly watchers: ((v: T) => void)[] = [];
 
-    constructor(public Value: T) {}
+    constructor(public value: T) {}
 
-    watch(watcher: Watcher<T>) {
+    watch(watcher: (v: T) => void) {
         this.watchers.push(watcher);
         return this.watchers.length - 1;
     }
@@ -17,7 +15,7 @@ export class SharedState<T> {
     }
 
     setValue(newValue: T) {
-        this.Value = newValue;
+        this.value = newValue;
         for(const watcher of this.watchers) {
             watcher(newValue);
         }
@@ -42,7 +40,7 @@ export class SharedPersistedState<T> extends SharedState<T> {
 }
 
 export function useSharedState<T>(sharedState: SharedState<T>): [T, (newValue: T) => void] {
-    const [value, setValue] = useState(sharedState.Value);
+    const [value, setValue] = useState(sharedState.value);
     useEffect(() => {
         const watcherIndex = sharedState.watch(setValue);
         return () => sharedState.removeWatcher(watcherIndex);
