@@ -25,7 +25,8 @@ public static class PasswordUtils
         user.PasswordSalt = null;
         user.PasswordHash = null;
         user.InviteKey = inviteKey;
-        user.LastAuthChangeUtc = DateTime.UtcNow;
+        user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
+        user.LastPasswordChangeUtc = DateTime.UtcNow;
 
         return WebEncoders.Base64UrlEncode(inviteKey);
     }

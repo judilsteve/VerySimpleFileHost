@@ -11,5 +11,6 @@ public class User
     public byte[]? PasswordHash { get; set; }
     public byte[]? InviteKey { get; set; }
     public bool IsAdministrator { get; set; }
-    public DateTime LastAuthChangeUtc { get; set; }
+    public DateTime LastPasswordChangeUtc { get; set; }
+    public DateTime RejectCookiesOlderThanUtc { get; set; }
 }

@@ -52,7 +52,8 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
             .Select(u => new
             {
                 u.IsAdministrator,
-                u.LastAuthChangeUtc,
+                u.LastPasswordChangeUtc,
+                u.RejectCookiesOlderThanUtc,
                 HasPassword = u.PasswordHash != null
             })
             .SingleOrDefaultAsync();
@@ -62,7 +63,6 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
             return CheckResult.FailAuthentication;
         }
 
-        var lastAuthChange = DateTime.SpecifyKind(userSecurityInfo.LastAuthChangeUtc, DateTimeKind.Utc);
         var cookieCreatedOn = DateTimeOffset.ParseExact(
             context.HttpContext.User.Claims
                 .Where(c => c.Type == CookieCreatedOnUtcClaimType)
@@ -71,12 +71,12 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
             CookieCreatedOnUtcDateFormat,
             CultureInfo.InvariantCulture,
             DateTimeStyles.AssumeUniversal);
-        if(cookieCreatedOn < lastAuthChange)
+        if(cookieCreatedOn < userSecurityInfo.RejectCookiesOlderThanUtc)
         {
             return CheckResult.FailAuthentication;
         }
 
-        if(PasswordUtils.PasswordExpired(lastAuthChange, config.PasswordExpiryDays))
+        if(PasswordUtils.PasswordExpired(userSecurityInfo.LastPasswordChangeUtc, config.PasswordExpiryDays))
         {
             var allowExpiredPassword = attributes
                 .Any(ca => ca.AttributeType == typeof(AllowExpiredPasswordAttribute));

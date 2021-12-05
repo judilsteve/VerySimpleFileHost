@@ -102,7 +102,7 @@ public class LoginController : Controller
 
         if(config.InviteLinkExpiryHours.HasValue)
         {
-            var inviteKeyExpiryUtc = DateTime.SpecifyKind(user.LastAuthChangeUtc, DateTimeKind.Utc)
+            var inviteKeyExpiryUtc = user.LastPasswordChangeUtc
                 .AddHours(config.InviteLinkExpiryHours.Value);
             if(inviteKeyExpiryUtc < DateTimeOffset.UtcNow)
             {
@@ -118,7 +118,8 @@ public class LoginController : Controller
         user.InviteKey = null; // Ensure that the invite key cannot be used again
         user.PasswordSalt = PasswordUtils.GenerateSalt();
         user.PasswordHash = PasswordUtils.GenerateSaltedHash(acceptDto.NewPassword, user.PasswordSalt);
-        user.LastAuthChangeUtc = DateTime.UtcNow;
+        user.LastPasswordChangeUtc = DateTime.UtcNow;
+        user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
         await context.SaveChangesAsync();
 
         await GrantAuthCookie(user.Id, acceptDto.RememberMe!.Value);
@@ -141,7 +142,7 @@ public class LoginController : Controller
                 u.IsAdministrator,
                 u.PasswordSalt,
                 u.PasswordHash,
-                u.LastAuthChangeUtc
+                u.LastPasswordChangeUtc
             })
             .SingleOrDefaultAsync();
 
@@ -163,7 +164,7 @@ public class LoginController : Controller
         {
             IsAdministrator = userDetails.IsAdministrator,
             MustChangePassword = PasswordUtils.PasswordExpired(
-                DateTime.SpecifyKind(userDetails.LastAuthChangeUtc, DateTimeKind.Utc),
+                userDetails.LastPasswordChangeUtc,
                 config.PasswordExpiryDays)
         };
     }
@@ -174,7 +175,7 @@ public class LoginController : Controller
         var user = await context.Users
             .AsTracking()
             .SingleAsync(u => u.Id == Guid.Parse(HttpContext.User.Identity!.Name!));
-        user.LastAuthChangeUtc = DateTime.UtcNow;
+        user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
         await context.SaveChangesAsync();
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return Ok();
@@ -213,7 +214,8 @@ public class LoginController : Controller
 
         user.PasswordSalt = PasswordUtils.GenerateSalt();
         user.PasswordHash = PasswordUtils.GenerateSaltedHash(changePasswordAttempt.NewPassword, user.PasswordSalt);
-        user.LastAuthChangeUtc = DateTime.UtcNow;
+        user.LastPasswordChangeUtc = DateTime.UtcNow;
+        user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
 
