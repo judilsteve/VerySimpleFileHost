@@ -1,6 +1,15 @@
 import './index.css';
 import { Configuration, LoginApi } from './app/api';
 
+const routes = {
+  login: '/Login',
+  acceptInvite: '/AcceptInvite',
+  changePassword: '/ChangePassword',
+  manageUsers: '/ManageUsers',
+  browseFiles: '/Browse',
+  displayError: '/DisplayError'
+}
+
 const main = async () => {
   let startRoute = window.location.href;
   let startRouteProps = null;
@@ -9,13 +18,13 @@ const main = async () => {
   const pingResponse = (await loginApi.loginPingGetRaw()).raw;
   if(pingResponse.status === 401) {
     // User is unauthenticated
-    startRoute = '/Login'; // TODO_JU Don't use magic strings
+    startRoute = routes.login
   } else if(pingResponse.status === 403) {
     // User's password has expired
-    startRoute = '/ChangePassword'; // TODO_JU Don't use magic strings
+    startRoute = routes.changePassword
   } else if(!pingResponse.ok) {
     // What the hell?
-    startRoute = '/Error'; // TODO_JU Don't use magic strings
+    startRoute = routes.displayError;
     startRouteProps = {
       message: `Could not connect to server (${pingResponse.status}: ${pingResponse.statusText}): ${await pingResponse.text()}`
     };
@@ -24,14 +33,15 @@ const main = async () => {
   const [
     React,
     ReactDOM,
-    { default: App },
     { BrowserRouter, Routes, Route }
   ] = await Promise.all([
     import('react'),
     import('react-dom'),
-    import('./App'),
     import('react-router-dom')
   ]);
+
+  // TODO_JU Is there way to do this from within react-router?
+  window.location.href = startRoute;
 
   /**
    * TODO_JU
@@ -47,11 +57,11 @@ const main = async () => {
     <React.StrictMode>
       <BrowserRouter>
         <Routes>
-          <Route path={"/Login"}/>
-          <Route path={"/AcceptInvite"}/>
-          <Route path={"/ChangePassword"}/>
-          <Route path={"/Admin/Users"}/>
-          <Route path={"/Browse"}/>
+          <Route path={routes.login}/>
+          <Route path={routes.acceptInvite}/>
+          <Route path={routes.changePassword}/>
+          <Route path={routes.manageUsers}/>
+          <Route path={routes.browseFiles}/>
         </Routes>
       </BrowserRouter>
     </React.StrictMode>,
