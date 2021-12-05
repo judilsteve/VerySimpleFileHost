@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Navigate, Route } from 'react-router-dom';
-import LazyRoute from './Routing/LazyRoute';
+import SuspensefulComponent from './Routing/SuspensefulComponent';
 
 export const routes = {
   login: '/Login',
@@ -15,14 +15,15 @@ export const routes = {
 function App() {
   return <BrowserRouter>
     <Routes>
-      <LazyRoute path={routes.login} importFunc={() => import('./Routes/Login')}/>
-      <LazyRoute path={routes.acceptInvite} importFunc={() => import('./Routes/AcceptInvite')}/>
-      <LazyRoute path={routes.changePassword} importFunc={() => import('./Routes/ChangePassword')}/>
-      <LazyRoute path={routes.manageUsers} importFunc={() => import('./Routes/Admin/ManageUsers')}/>
-      <LazyRoute path={routes.browseFiles} importFunc={() => import('./Routes/Browse')}/>
-      <LazyRoute path={routes.serverError} importFunc={() => import('./Routes/Error/ServerError')}/>
-      <LazyRoute path={routes.unauthorised} importFunc={() => import('./Routes/Error/Unauthorised')}/>
-      <LazyRoute path={routes.notFound} importFunc={() => import('./Routes/Error/NotFound')}/>
+      <Route path="/" element={<Navigate to={routes.browseFiles}/>}/>
+      <Route path={routes.login} element={<SuspensefulComponent importFunc={() => import('./Routes/Login')}/>}/>
+      <Route path={routes.acceptInvite} element={<SuspensefulComponent importFunc={() => import('./Routes/AcceptInvite')}/>}/>
+      <Route path={routes.changePassword} element={<SuspensefulComponent importFunc={() => import('./Routes/ChangePassword')}/>}/>
+      <Route path={routes.manageUsers} element={<SuspensefulComponent importFunc={() => import('./Routes/Admin/ManageUsers')}/>}/>
+      <Route path={routes.browseFiles} element={<SuspensefulComponent importFunc={() => import('./Routes/Browse')}/>}/>
+      <Route path={routes.serverError} element={<SuspensefulComponent importFunc={() => import('./Routes/Error/ServerError')}/>}/>
+      <Route path={routes.unauthorised} element={<SuspensefulComponent importFunc={() => import('./Routes/Error/Unauthorised')}/>}/>
+      <Route path={routes.notFound} element={<SuspensefulComponent importFunc={() => import('./Routes/Error/NotFound')}/>}/>
       <Route path="*" element={<Navigate to={routes.notFound}/>}/>
     </Routes>
   </BrowserRouter>;

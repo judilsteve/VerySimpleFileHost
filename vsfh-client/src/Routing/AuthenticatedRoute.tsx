@@ -1,7 +1,7 @@
 import CenteredSpinner from "../Components/CenteredSpinner";
 import { useSharedState } from "../Hooks/useSharedState";
 import { authenticationState, isPasswordExpiredState } from "../State/sharedState";
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { routes } from "../App";
 import { ReactNode } from "react";
 
@@ -15,14 +15,15 @@ function AuthenticatedRoute(props: AuthenticatedRouteProps) {
     const [isAuthenticated, ] = useSharedState(authenticationState);
     const [passwordExpired, ] = useSharedState(isPasswordExpiredState);
 
+    const navigate = useNavigate();
+
     if(isAuthenticated === null)
         return <CenteredSpinner/>;
 
     if(!isAuthenticated)
-        return <Navigate to={routes.login}/>;
-
+        navigate(routes.login);
     if(passwordExpired)
-        return <Navigate to={routes.changePassword}/>;
+        navigate(routes.login);
 
     return <>
         { children }
