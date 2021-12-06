@@ -16,17 +16,9 @@
 import * as runtime from '../runtime';
 import {
     AcceptInviteDto,
-    AcceptInviteDtoFromJSON,
-    AcceptInviteDtoToJSON,
     ChangePasswordAttemptDto,
-    ChangePasswordAttemptDtoFromJSON,
-    ChangePasswordAttemptDtoToJSON,
     LoginAttemptDto,
-    LoginAttemptDtoFromJSON,
-    LoginAttemptDtoToJSON,
     UserSecurityInfoDto,
-    UserSecurityInfoDtoFromJSON,
-    UserSecurityInfoDtoToJSON,
 } from '../models';
 
 export interface LoginAcceptInvitePostRequest {
@@ -60,7 +52,7 @@ export class LoginApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: AcceptInviteDtoToJSON(requestParameters.acceptInviteDto),
+            body: requestParameters.acceptInviteDto,
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -86,7 +78,7 @@ export class LoginApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ChangePasswordAttemptDtoToJSON(requestParameters.changePasswordAttemptDto),
+            body: requestParameters.changePasswordAttemptDto,
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -182,10 +174,10 @@ export class LoginApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: LoginAttemptDtoToJSON(requestParameters.loginAttemptDto),
+            body: requestParameters.loginAttemptDto,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserSecurityInfoDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response);
     }
 
     /**

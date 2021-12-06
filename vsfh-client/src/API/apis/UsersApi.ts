@@ -16,17 +16,9 @@
 import * as runtime from '../runtime';
 import {
     UserAddRequestDto,
-    UserAddRequestDtoFromJSON,
-    UserAddRequestDtoToJSON,
     UserEditDto,
-    UserEditDtoFromJSON,
-    UserEditDtoToJSON,
     UserListingDto,
-    UserListingDtoFromJSON,
-    UserListingDtoToJSON,
     UserResponseDto,
-    UserResponseDtoFromJSON,
-    UserResponseDtoToJSON,
 } from '../models';
 
 export interface UsersPostRequest {
@@ -61,7 +53,7 @@ export class UsersApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserListingDtoFromJSON));
+        return new runtime.JSONApiResponse(response);
     }
 
     /**
@@ -85,10 +77,10 @@ export class UsersApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: UserAddRequestDtoToJSON(requestParameters.userAddRequestDto),
+            body: requestParameters.userAddRequestDto,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response);
     }
 
     /**
@@ -143,10 +135,10 @@ export class UsersApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: UserEditDtoToJSON(requestParameters.userEditDto),
+            body: requestParameters.userEditDto,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response);
     }
 
     /**

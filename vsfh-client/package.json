@@ -16,7 +16,7 @@
     "start": "craco start",
     "build": "craco build",
     "eject": "craco eject",
-    "generate-api-client": "SET JAVA_OPTS=-Dio.swagger.v3.parser.util.RemoteUrl.trustAll=true && openapi-generator-cli generate -i https://localhost:7270/swagger/v1/swagger.json  -g typescript-fetch -o ./src/API"
+    "generate-api-client": "SET JAVA_OPTS=-Dio.swagger.v3.parser.util.RemoteUrl.trustAll=true && openapi-generator-cli generate -i https://localhost:7270/swagger/v1/swagger.json  -g typescript-fetch --additional-properties=withoutRuntimeChecks=true -o ./src/API"
   },
   "eslintConfig": {
     "extends": [

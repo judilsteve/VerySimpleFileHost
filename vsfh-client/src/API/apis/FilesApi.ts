@@ -16,11 +16,7 @@
 import * as runtime from '../runtime';
 import {
     ArchiveFormat,
-    ArchiveFormatFromJSON,
-    ArchiveFormatToJSON,
     DirectoryDto,
-    DirectoryDtoFromJSON,
-    DirectoryDtoToJSON,
 } from '../models';
 
 export interface FilesDownloadGetRequest {
@@ -130,7 +126,7 @@ export class FilesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => DirectoryDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response);
     }
 
     /**

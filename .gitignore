@@ -4,6 +4,8 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 Database.sqlite
+Database.sqlite-shm
+Database.sqlite-wal
 appsettings.Development.json
 
 # User-specific files

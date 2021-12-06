@@ -3,16 +3,5 @@ apis/LoginApi.ts
 apis/UsersApi.ts
 apis/index.ts
 index.ts
-models/AcceptInviteDto.ts
-models/ArchiveFormat.ts
-models/ChangePasswordAttemptDto.ts
-models/DirectoryDto.ts
-models/FileDto.ts
-models/LoginAttemptDto.ts
-models/UserAddRequestDto.ts
-models/UserEditDto.ts
-models/UserListingDto.ts
-models/UserResponseDto.ts
-models/UserSecurityInfoDto.ts
 models/index.ts
 runtime.ts
