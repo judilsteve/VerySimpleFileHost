@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Text.Json.Serialization;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
 using VerySimpleFileHost.Middleware;
@@ -28,7 +29,8 @@ RegisterConfigObject<FilesConfiguration>("FilesConfiguration");
 RegisterConfigObject<AuthenticationConfiguration>("PasswordConfiguration");
 
 builder.Services.AddControllers(o =>
-    o.Filters.Add(new AuthenticationAuthorizationFilter()));
+    o.Filters.Add(new AuthenticationAuthorizationFilter()))
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

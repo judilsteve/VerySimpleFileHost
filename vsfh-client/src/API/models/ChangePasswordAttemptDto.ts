@@ -24,6 +24,12 @@ export interface ChangePasswordAttemptDto {
      * @type {string}
      * @memberof ChangePasswordAttemptDto
      */
+    userName?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof ChangePasswordAttemptDto
+     */
     currentPassword?: string | null;
     /**
      * 
@@ -31,6 +37,12 @@ export interface ChangePasswordAttemptDto {
      * @memberof ChangePasswordAttemptDto
      */
     newPassword?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ChangePasswordAttemptDto
+     */
+    rememberMe: boolean;
 }
 
 export function ChangePasswordAttemptDtoFromJSON(json: any): ChangePasswordAttemptDto {
@@ -43,8 +55,10 @@ export function ChangePasswordAttemptDtoFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'userName': !exists(json, 'userName') ? undefined : json['userName'],
         'currentPassword': !exists(json, 'currentPassword') ? undefined : json['currentPassword'],
         'newPassword': !exists(json, 'newPassword') ? undefined : json['newPassword'],
+        'rememberMe': json['rememberMe'],
     };
 }
 
@@ -57,8 +71,10 @@ export function ChangePasswordAttemptDtoToJSON(value?: ChangePasswordAttemptDto 
     }
     return {
         
+        'userName': value.userName,
         'currentPassword': value.currentPassword,
         'newPassword': value.newPassword,
+        'rememberMe': value.rememberMe,
     };
 }
 

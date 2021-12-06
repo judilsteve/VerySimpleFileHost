@@ -25,21 +25,23 @@ public static class DbContextUtils
         ModelBuilder modelBuilder,
         Expression<Func<TDbType, TClientType>> dbToClient,
         Expression<Func<TClientType, TDbType>> clientToDb)
+        where TDbContext : notnull, DbContext
     {
-        var entityTypes = typeof(TDbContext).GetProperties()
+        var entityTypes = context.GetType().GetProperties()
             .Select(m => m.PropertyType)
+            .Where(t => t.IsGenericType)
             .Where(t => (typeof(DbSet<>).IsAssignableFrom(t.GetGenericTypeDefinition())))
-            .Select(t => t.GetGenericTypeDefinition().GenericTypeArguments[0]);
+            .Select(t => t.GenericTypeArguments[0]);
 
         foreach(var entityType in entityTypes)
         {
-            var dateTimeProperties = entityType.GetProperties()
+            var relevantProperties = entityType.GetProperties()
                 .Where(p => p.PropertyType == typeof(TClientType));
-            foreach(var dateTimeProperty in dateTimeProperties)
+            foreach(var relevantProperty in relevantProperties)
             {
                 modelBuilder
                     .Entity(entityType)
-                    .Property<TClientType>(dateTimeProperty.Name)
+                    .Property<TClientType>(relevantProperty.Name)
                     .HasConversion<TDbType>(
                         clientToDb,
                         dbToClient

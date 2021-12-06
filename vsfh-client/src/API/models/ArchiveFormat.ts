@@ -18,8 +18,8 @@
  * @enum {string}
  */
 export enum ArchiveFormat {
-    NUMBER_0 = 0,
-    NUMBER_1 = 1
+    Tar = 'Tar',
+    Zip = 'Zip'
 }
 
 export function ArchiveFormatFromJSON(json: any): ArchiveFormat {
