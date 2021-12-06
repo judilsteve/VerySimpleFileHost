@@ -1,4 +1,4 @@
-import { ArchiveFormat } from "../app/api";
+import { ArchiveFormat } from "../API";
 import { SharedPersistedState, SharedState } from "../Hooks/useSharedState";
 
 // These are basically lightweight hand-rolled observables
