@@ -191,14 +191,19 @@ public class LoginController : Controller
 
     public class ChangePasswordAttemptDto
     {
-        public string? CurrentPassword { get; init; }
+        public string UserName { get; set; } = null!;
+        public string CurrentPassword { get; init; } = null!;
         public string NewPassword { get; init; } = null!;
+        [Required] public bool? RememberMe { get; init; }
     }
 
     [HttpPut(nameof(ChangePassword))]
-    [AllowExpiredPassword]
+    [AllowAnonymous]
     public async Task<ActionResult> ChangePassword(ChangePasswordAttemptDto changePasswordAttempt)
     {
+        if(changePasswordAttempt.RememberMe!.Value && !config.AllowRememberMe)
+            return BadRequest("The administrator has disabled the \"Remember Me\" option");
+
         var score = Zxcvbn.Core.EvaluatePassword(changePasswordAttempt.NewPassword).Score;
         if(score < config.MinimumPasswordScore)
             return BadRequest("New password would be too weak");
@@ -208,16 +213,14 @@ public class LoginController : Controller
 
         var user = await context.Users
             .AsTracking()
-            .SingleAsync(u => u.Id == Guid.Parse(HttpContext.User.Identity!.Name!));
+            .Where(u => u.PasswordHash != null)
+            .SingleOrDefaultAsync(u => u.Name == changePasswordAttempt.UserName);
 
-        if(user.PasswordHash is not null)
+        if(user is null ||
+            !PasswordUtils.PasswordIsCorrect(changePasswordAttempt.CurrentPassword, user.PasswordHash!, user.PasswordSalt!))
         {
-            if(changePasswordAttempt.CurrentPassword is null
-                || !PasswordUtils.PasswordIsCorrect(changePasswordAttempt.CurrentPassword, user.PasswordHash, user.PasswordSalt!))
-            {
-                await TaskUtils.RandomWait();
-                return Unauthorized();
-            }
+            await TaskUtils.RandomWait();
+            return Unauthorized();
         }
 
         user.PasswordSalt = PasswordUtils.GenerateSalt();
@@ -227,14 +230,8 @@ public class LoginController : Controller
 
         await context.SaveChangesAsync();
 
-        // Use the user's existing auth cookie to decide
-        // if the new session should be persistent
-        var rememberMe = HttpContext.User.Claims
-            .Where(c => c.Type == RememberMeClaimName)
-            .Select(c => bool.Parse(c.Value))
-            .Single();
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        await GrantAuthCookie(user.Id, rememberMe);
+        await GrantAuthCookie(user.Id, changePasswordAttempt.RememberMe!.Value);
 
         return Ok();
     }

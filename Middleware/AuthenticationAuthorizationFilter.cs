@@ -12,11 +12,6 @@ using VerySimpleFileHost.Utils;
 namespace VerySimpleFileHost.Middleware;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public class AllowExpiredPasswordAttribute : Attribute
-{
-}
-
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class AdminOnlyAttribute : Attribute
 {
 }
@@ -78,13 +73,7 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
 
         if(PasswordUtils.PasswordExpired(userSecurityInfo.LastPasswordChangeUtc, config.PasswordExpiryDays))
         {
-            var allowExpiredPassword = attributes
-                .Any(ca => ca.AttributeType == typeof(AllowExpiredPasswordAttribute));
-
-            if(!allowExpiredPassword)
-            {
-                return CheckResult.PasswordExpired;
-            }
+            return CheckResult.PasswordExpired;
         }
 
         if(attributes.Any(ca => ca.AttributeType == typeof(AdminOnlyAttribute)))
