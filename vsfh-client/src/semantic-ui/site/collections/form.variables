@@ -1,3 +1,7 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+@inputBackground: #515151;
+@inputFocusBorderColor: #8d1b21;
+@inputFocusColor: #cdcdcd;

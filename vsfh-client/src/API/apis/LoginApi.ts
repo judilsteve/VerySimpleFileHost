@@ -18,7 +18,6 @@ import {
     AcceptInviteDto,
     ChangePasswordAttemptDto,
     LoginAttemptDto,
-    UserSecurityInfoDto,
 } from '../models';
 
 export interface LoginAcceptInvitePostRequest {
@@ -162,7 +161,7 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginPostRaw(requestParameters: LoginPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<UserSecurityInfoDto>> {
+    async loginPostRaw(requestParameters: LoginPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -177,14 +176,13 @@ export class LoginApi extends runtime.BaseAPI {
             body: requestParameters.loginAttemptDto,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
      */
-    async loginPost(requestParameters: LoginPostRequest, initOverrides?: RequestInit): Promise<UserSecurityInfoDto> {
-        const response = await this.loginPostRaw(requestParameters, initOverrides);
-        return await response.value();
+    async loginPost(requestParameters: LoginPostRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.loginPostRaw(requestParameters, initOverrides);
     }
 
 }

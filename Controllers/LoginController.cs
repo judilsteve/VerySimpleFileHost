@@ -36,12 +36,6 @@ public class LoginController : Controller
         [Required] public bool? RememberMe { get; init; }
     }
 
-    public class UserSecurityInfoDto
-    {
-        public bool IsAdministrator { get; set; }
-        public bool MustChangePassword { get; set; }
-    }
-
     private const string RememberMeClaimName = "RememberMe";
 
     private async Task GrantAuthCookie(Guid userId, bool rememberMe)
@@ -137,20 +131,24 @@ public class LoginController : Controller
 
     [HttpPost]
     [AllowAnonymous]
-    public async Task<ActionResult<UserSecurityInfoDto>> Login(LoginAttemptDto loginAttempt)
+    public async Task<ActionResult> Login(LoginAttemptDto loginAttempt)
     {
         if(loginAttempt.RememberMe!.Value && !config.AllowRememberMe)
             return BadRequest("The administrator has disabled the \"Remember Me\" option");
 
-        var userDetails = await context.Users
-            .Where(u => u.Name == loginAttempt.UserName)
+        var userDetailsQuery = context.Users
+            .Where(u => u.Name == loginAttempt.UserName);
+
+        if(config.PasswordExpiryDays.HasValue)
+            userDetailsQuery = userDetailsQuery
+                .Where(u => u.LastPasswordChangeUtc > DateTime.UtcNow.AddDays(-config.PasswordExpiryDays.Value));
+
+        var userDetails = await userDetailsQuery
             .Select(u => new
             {
                 u.Id,
-                u.IsAdministrator,
                 u.PasswordSalt,
-                u.PasswordHash,
-                u.LastPasswordChangeUtc
+                u.PasswordHash
             })
             .SingleOrDefaultAsync();
 
@@ -168,13 +166,7 @@ public class LoginController : Controller
 
         await GrantAuthCookie(userDetails.Id, loginAttempt.RememberMe!.Value);
 
-        return new UserSecurityInfoDto
-        {
-            IsAdministrator = userDetails.IsAdministrator,
-            MustChangePassword = PasswordUtils.PasswordExpired(
-                userDetails.LastPasswordChangeUtc,
-                config.PasswordExpiryDays)
-        };
+        return Ok();
     }
 
     [HttpPost(nameof(Logout))]

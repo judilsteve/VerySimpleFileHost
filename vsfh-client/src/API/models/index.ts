@@ -228,22 +228,3 @@ export interface UserResponseDto {
      */
     inviteKey?: string | null;
 }
-/**
- * 
- * @export
- * @interface UserSecurityInfoDto
- */
-export interface UserSecurityInfoDto {
-    /**
-     * 
-     * @type {boolean}
-     * @memberof UserSecurityInfoDto
-     */
-    isAdministrator?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof UserSecurityInfoDto
-     */
-    mustChangePassword?: boolean;
-}
