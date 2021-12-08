@@ -3,5 +3,6 @@
 *******************************/
 
 @inputBackground: #515151;
+@inputBorder: 1px solid #959595;
 @inputFocusBorderColor: #8d1b21;
 @inputFocusColor: #cdcdcd;

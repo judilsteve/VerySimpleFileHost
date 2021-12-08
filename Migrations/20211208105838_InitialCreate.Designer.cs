@@ -11,7 +11,7 @@ using VerySimpleFileHost.Database;
 namespace VerySimpleFileHost.Migrations
 {
     [DbContext(typeof(VsfhContext))]
-    [Migration("20211204022657_InitialCreate")]
+    [Migration("20211208105838_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,17 +25,20 @@ namespace VerySimpleFileHost.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<byte[]>("InviteKey")
                         .HasColumnType("BLOB");
 
                     b.Property<bool>("IsAdministrator")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("LastAuthChangeUtc")
+                    b.Property<DateTime>("LastPasswordChangeUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("LoginName")
                         .HasColumnType("TEXT");
 
                     b.Property<byte[]>("PasswordHash")
@@ -44,9 +47,12 @@ namespace VerySimpleFileHost.Migrations
                     b.Property<byte[]>("PasswordSalt")
                         .HasColumnType("BLOB");
 
+                    b.Property<DateTime>("RejectCookiesOlderThanUtc")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("LoginName")
                         .IsUnique();
 
                     b.ToTable("Users");

@@ -101,7 +101,7 @@ using(var scope = app.Services.CreateAsyncScope())
         var firstAdmin = new User
         {
             Id = Guid.NewGuid(),
-            Name = name,
+            FullName = name,
             IsAdministrator = true
         };
         var inviteKey = PasswordUtils.AssignInviteKey(firstAdmin);

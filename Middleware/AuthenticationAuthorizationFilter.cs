@@ -95,9 +95,9 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
             await TaskUtils.RandomWait();
             context.Result = checkResult switch
             {
-                CheckResult.FailAuthentication => new UnauthorizedResult(),
+                CheckResult.FailAuthentication => new UnauthorizedResult(), // TODO_JU Tell the user why
                 CheckResult.FailAuthorization => new ForbidResult(),
-                CheckResult.PasswordExpired => new ForbidResult(), // TODO_JU Tell the user why
+                CheckResult.PasswordExpired => new UnauthorizedResult(), // TODO_JU Tell the user why
                 _ => throw new ArgumentException("Unhandled check result", nameof(checkResult))
             };
         }

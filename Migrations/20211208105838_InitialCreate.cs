@@ -14,12 +14,14 @@ namespace VerySimpleFileHost.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    FullName = table.Column<string>(type: "TEXT", nullable: false),
+                    LoginName = table.Column<string>(type: "TEXT", nullable: true),
                     PasswordSalt = table.Column<byte[]>(type: "BLOB", nullable: true),
                     PasswordHash = table.Column<byte[]>(type: "BLOB", nullable: true),
                     InviteKey = table.Column<byte[]>(type: "BLOB", nullable: true),
                     IsAdministrator = table.Column<bool>(type: "INTEGER", nullable: false),
-                    LastAuthChangeUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    LastPasswordChangeUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    RejectCookiesOlderThanUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -27,9 +29,9 @@ namespace VerySimpleFileHost.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_Name",
+                name: "IX_Users_LoginName",
                 table: "Users",
-                column: "Name",
+                column: "LoginName",
                 unique: true);
         }
 

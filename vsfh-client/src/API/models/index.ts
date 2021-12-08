@@ -17,6 +17,12 @@ export interface AcceptInviteDto {
      * @type {string}
      * @memberof AcceptInviteDto
      */
+    userName?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcceptInviteDto
+     */
     newPassword?: string | null;
     /**
      * 
@@ -33,6 +39,25 @@ export interface AcceptInviteDto {
 export enum ArchiveFormat {
     Tar = 'Tar',
     Zip = 'Zip'
+}
+/**
+ * 
+ * @export
+ * @interface AuthConfigDto
+ */
+export interface AuthConfigDto {
+    /**
+     * 
+     * @type {number}
+     * @memberof AuthConfigDto
+     */
+    minimumPasswordScore?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AuthConfigDto
+     */
+    allowRememberMe?: boolean;
 }
 /**
  * 
@@ -145,7 +170,7 @@ export interface UserAddRequestDto {
      * @type {string}
      * @memberof UserAddRequestDto
      */
-    name?: string | null;
+    fullName?: string | null;
     /**
      * 
      * @type {boolean}
@@ -164,7 +189,7 @@ export interface UserEditDto {
      * @type {string}
      * @memberof UserEditDto
      */
-    name?: string | null;
+    fullName?: string | null;
     /**
      * 
      * @type {boolean}
@@ -195,7 +220,13 @@ export interface UserListingDto {
      * @type {string}
      * @memberof UserListingDto
      */
-    name?: string | null;
+    fullName?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserListingDto
+     */
+    loginName?: string | null;
     /**
      * 
      * @type {boolean}

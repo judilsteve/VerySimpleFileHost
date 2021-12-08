@@ -28,7 +28,8 @@ public class UsersController : Controller
     public class UserListingDto
     {
         public Guid Id { get; init; }
-        public string Name { get; init; } = null!;
+        public string FullName { get; init; } = null!;
+        public string? LoginName { get; init; }
         public bool IsAdministrator { get; init; }
         public bool Activated { get; init; }
     }
@@ -40,7 +41,8 @@ public class UsersController : Controller
             .Select(u => new UserListingDto
             {
                 Id = u.Id,
-                Name = u.Name,
+                FullName = u.FullName,
+                LoginName = u.LoginName,
                 IsAdministrator = u.IsAdministrator,
                 Activated = u.PasswordHash != null
             });
@@ -48,8 +50,8 @@ public class UsersController : Controller
 
     public class UserAddRequestDto
     {
-        public string Name { get; init; } = null!;
-        public bool IsAdministrator { get; init; }
+        [MinLength(1)] public string FullName { get; init; } = null!;
+        [Required] public bool? IsAdministrator { get; init; }
     }
 
     public class UserResponseDto
@@ -60,7 +62,7 @@ public class UsersController : Controller
 
     public class UserDto : UserAddRequestDto
     {
-        public Guid Id { get; init; }
+        [Required] public Guid? Id { get; init; }
     }
 
     [HttpPost]
@@ -70,22 +72,15 @@ public class UsersController : Controller
         var user = new Entities.User
         {
             Id = userId,
-            IsAdministrator = newUser.IsAdministrator,
-            Name = newUser.Name
+            IsAdministrator = newUser.IsAdministrator!.Value,
+            FullName = newUser.FullName
         };
 
         var inviteKey = PasswordUtils.AssignInviteKey(user);
 
         await context.Users.AddAsync(user);
 
-        try
-        {
-            await context.TrySaveChangesAsync();
-        }
-        catch(UniqueIndexConstraintViolationException)
-        {
-            return BadRequest($"A user with this name already exists");
-        }
+        await context.TrySaveChangesAsync();
 
         return new UserResponseDto
         {
@@ -96,7 +91,7 @@ public class UsersController : Controller
 
     public class UserEditDto
     {
-        public string? Name { get; init; }
+        public string? FullName { get; init; }
         [Required] public bool? ResetPassword { get; init; }
         public bool? IsAdministrator { get; init; }
     }
@@ -110,21 +105,14 @@ public class UsersController : Controller
 
         if(user is null) return NotFound();
 
-        user.Name = userDto.Name ?? user.Name;
+        user.FullName = string.IsNullOrWhiteSpace(userDto.FullName) ? user.FullName : userDto.FullName;
         user.IsAdministrator = userDto.IsAdministrator ?? user.IsAdministrator;
 
         var inviteKey = userDto.ResetPassword!.Value
             ? PasswordUtils.AssignInviteKey(user)
             : (string?)null;
 
-        try
-        {
-            await context.TrySaveChangesAsync();
-        }
-        catch(UniqueIndexConstraintViolationException)
-        {
-            return BadRequest($"A user with this name already exists");
-        }
+        await context.SaveChangesAsync();
 
         return new UserResponseDto
         {

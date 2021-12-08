@@ -1,4 +1,3 @@
-.openapi-generator-ignore
 apis/FilesApi.ts
 apis/LoginApi.ts
 apis/UsersApi.ts

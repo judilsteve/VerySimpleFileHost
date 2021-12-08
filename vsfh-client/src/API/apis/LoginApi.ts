@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import {
     AcceptInviteDto,
+    AuthConfigDto,
     ChangePasswordAttemptDto,
     LoginAttemptDto,
 } from '../models';
@@ -65,6 +66,30 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
+    async loginAuthConfigGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<AuthConfigDto>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/Login/AuthConfig`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response);
+    }
+
+    /**
+     */
+    async loginAuthConfigGet(initOverrides?: RequestInit): Promise<AuthConfigDto> {
+        const response = await this.loginAuthConfigGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
     async loginChangePasswordPutRaw(requestParameters: LoginChangePasswordPutRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
@@ -110,30 +135,6 @@ export class LoginApi extends runtime.BaseAPI {
      */
     async loginLogoutPost(initOverrides?: RequestInit): Promise<void> {
         await this.loginLogoutPostRaw(initOverrides);
-    }
-
-    /**
-     */
-    async loginMinimumPasswordScoreGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<number>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/Login/MinimumPasswordScore`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.TextApiResponse(response) as any;
-    }
-
-    /**
-     */
-    async loginMinimumPasswordScoreGet(initOverrides?: RequestInit): Promise<number> {
-        const response = await this.loginMinimumPasswordScoreGetRaw(initOverrides);
-        return await response.value();
     }
 
     /**

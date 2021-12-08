@@ -1,25 +1,61 @@
-import { useMemo, useState } from "react";
-import { Button, Checkbox, Form, Header, Icon, Input } from "semantic-ui-react";
-import { LoginAttemptDto } from "../API";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router";
+import { Button, Checkbox, Form, Header, Icon, Input, Message } from "semantic-ui-react";
+import { Configuration, LoginApi } from "../API";
+import { routes } from "../App";
+
+export const AFTER_LOGIN_PARAM_NAME = "then";
+
+const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Remove basePath hack?
 
 function Login() {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const navigate = useNavigate();
+    const params = useParams();
+
+    const [allowRememberMe, setAllowRememberMe] = useState(false);
+    useEffect(() => {
+        let cancel = false;
+        (async () => {
+            const authConfig = await api.loginAuthConfigGet();
+            if(cancel) return;
+            setAllowRememberMe(authConfig.allowRememberMe!);
+            if(!authConfig.allowRememberMe) setRememberMe(false);
+        })();
+        return () => { cancel = true; }
+    }, []);
 
     const login = async () => {
         try {
             setLoading(true);
-            const payload: LoginAttemptDto = {
+            setError('');
+            console.debug(window.location.origin);
+            await api.loginPost({ loginAttemptDto: {
                 userName,
                 password,
                 rememberMe
-            };
-            // TODO_JU Hit login endpoint
-            await new Promise(() => {});
+            }});
+            navigate(params[AFTER_LOGIN_PARAM_NAME] ?? routes.browseFiles);
         } catch(e) {
-            // TODO_JU Display errors
+            const response = e as Response;
+            if(response.status !== 401) {
+                console.error('Unexpected response from login endpoint:');
+                console.error(response);
+                console.error(await response.text());
+                setError('An unexpected error occurred.');
+            } else {
+                // TODO_JU Types and enums for this
+                const responseObject = await response.json();
+                const reasonCode = responseObject.reasonCode;
+                if(reasonCode === 'PasswordExpired') navigate(routes.changePassword);
+                else setError(responseObject.reason);
+            }
         } finally {
             setLoading(false);
             setPassword('');
@@ -29,7 +65,7 @@ function Login() {
     return <div style={{ maxWidth: 300, margin: "auto" }}>
         <div style={{ height: "10vh" }}></div>
         <Header as="h1">VSFH</Header>
-        <Form style={{ maxWidth: 300, margin: "auto" }}>
+        <Form error={!!error} style={{ maxWidth: 300, margin: "auto" }}>
             <Form.Field>
                 <Input tabIndex={1} iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)}>
                     <Icon name="user" />
@@ -42,15 +78,17 @@ function Login() {
                     <input />
                 </Input>
             </Form.Field>
+            <Message error header="Login Failed" content={error} />
             <Form.Field>
-                <Checkbox tabIndex={4} label='Remember me' onChange={e => setRememberMe(rm => !rm)}/>{/* TODO_JU Hide this if the administrator has disabled it */}
-                <Button tabIndex={3} primary type="submit" floated="right" onClick={login} loading={loading}>Log In</Button>
-            </Form.Field>
-            <Form.Field>
-                
+                {
+                    allowRememberMe
+                    ? <Checkbox tabIndex={4} label="Remember me" onChange={e => setRememberMe(rm => !rm)}/>
+                    : <></>
+                }
+                <Button tabIndex={3} primary type="submit" floated="right" onClick={login} disabled={!userName || !password} loading={loading}>Log In</Button>
             </Form.Field>
         </Form>
     </div>;
 }
 
-export default Login;   
+export default Login;

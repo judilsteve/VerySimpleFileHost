@@ -31,8 +31,8 @@ public class LoginController : Controller
 
     public class LoginAttemptDto
     {
-        public string UserName { get; init; } = null!;
-        public string Password { get; init; } = null!;
+        [MinLength(1)] public string UserName { get; init; } = null!;
+        [MinLength(1)] public string Password { get; init; } = null!;
         [Required] public bool? RememberMe { get; init; }
     }
 
@@ -72,8 +72,9 @@ public class LoginController : Controller
 
     public class AcceptInviteDto
     {
-        public string InviteKey { get; init; } = null!;
-        public string NewPassword { get; init; } = null!;
+        [MinLength(1)] public string InviteKey { get; init; } = null!;
+        [MinLength(1)] public string UserName { get; init; } = null!;
+        [MinLength(1)] public string NewPassword { get; init; } = null!;
         [Required] public bool? RememberMe { get; init; }
     }
 
@@ -99,7 +100,12 @@ public class LoginController : Controller
         if(user is null)
         {
             await TaskUtils.RandomWait();
-            return Unauthorized();
+            // TODO_JU Constant for shared response
+            return Unauthorized(new // TODO_JU Type for this
+            {
+                ReasonCode = "InvalidInviteKey", // TODO_JU Enum for this
+                Reason = "Invalid or expired invite link"
+            });
         }
 
         if(config.InviteLinkExpiryHours.HasValue)
@@ -109,7 +115,11 @@ public class LoginController : Controller
             if(inviteKeyExpiryUtc < DateTimeOffset.UtcNow)
             {
                 await TaskUtils.RandomWait();
-                return Forbid(); // TODO_JU This should tell the user why
+                return Unauthorized(new // TODO_JU Type for this
+                {
+                    ReasonCode = "InvalidInviteKey", // TODO_JU Enum for this
+                    Reason = "Invalid or expired invite link"
+                });
             }
         }
 
@@ -118,11 +128,20 @@ public class LoginController : Controller
             return BadRequest("New password would be too weak");
 
         user.InviteKey = null; // Ensure that the invite key cannot be used again
+        user.LoginName = acceptDto.UserName;
         user.PasswordSalt = PasswordUtils.GenerateSalt();
         user.PasswordHash = PasswordUtils.GenerateSaltedHash(acceptDto.NewPassword, user.PasswordSalt);
         user.LastPasswordChangeUtc = DateTime.UtcNow;
         user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
-        await context.SaveChangesAsync();
+
+        try
+        {
+            await context.TrySaveChangesAsync();
+        }
+        catch(UniqueIndexConstraintViolationException)
+        {
+            return BadRequest("A user with this name already exists");
+        }
 
         await GrantAuthCookie(user.Id, acceptDto.RememberMe!.Value);
 
@@ -136,32 +155,40 @@ public class LoginController : Controller
         if(loginAttempt.RememberMe!.Value && !config.AllowRememberMe)
             return BadRequest("The administrator has disabled the \"Remember Me\" option");
 
-        var userDetailsQuery = context.Users
-            .Where(u => u.Name == loginAttempt.UserName);
-
-        if(config.PasswordExpiryDays.HasValue)
-            userDetailsQuery = userDetailsQuery
-                .Where(u => u.LastPasswordChangeUtc > DateTime.UtcNow.AddDays(-config.PasswordExpiryDays.Value));
-
-        var userDetails = await userDetailsQuery
+        var userDetails = await context.Users
+            .Where(u => u.LoginName == loginAttempt.UserName)
             .Select(u => new
             {
                 u.Id,
+                u.LastPasswordChangeUtc,
                 u.PasswordSalt,
                 u.PasswordHash
             })
             .SingleOrDefaultAsync();
 
-        if(userDetails?.PasswordHash is null)
+        if(userDetails?.PasswordHash is null ||
+            !PasswordUtils.PasswordIsCorrect(loginAttempt.Password, userDetails.PasswordHash, userDetails.PasswordSalt!))
         {
             await TaskUtils.RandomWait();
-            return Unauthorized();
+            // TODO_JU Constant for shared response
+            return Unauthorized(new // TODO_JU Type for this
+            {
+                ReasonCode = "BadCredentials", // TODO_JU Enum for this
+                Reason = "Incorrect username or password"
+            });
         }
 
-        if(!PasswordUtils.PasswordIsCorrect(loginAttempt.Password, userDetails.PasswordHash, userDetails.PasswordSalt!))
+        if(config.PasswordExpiryDays.HasValue)
         {
-            await TaskUtils.RandomWait();
-            return Forbid();
+            if(userDetails.LastPasswordChangeUtc.AddDays(config.PasswordExpiryDays.Value) < DateTime.UtcNow)
+            {
+                await TaskUtils.RandomWait();
+                return Unauthorized(new // TODO_JU Type for this
+                {
+                    ReasonCode = "PasswordExpired", // TODO_JU Enum for this
+                    Reason = "Your password has expired and must be changed"
+                });
+            }
         }
 
         await GrantAuthCookie(userDetails.Id, loginAttempt.RememberMe!.Value);
@@ -183,9 +210,9 @@ public class LoginController : Controller
 
     public class ChangePasswordAttemptDto
     {
-        public string UserName { get; set; } = null!;
-        public string CurrentPassword { get; init; } = null!;
-        public string NewPassword { get; init; } = null!;
+        [MinLength(1)] public string UserName { get; set; } = null!;
+        [MinLength(1)] public string CurrentPassword { get; init; } = null!;
+        [MinLength(1)] public string NewPassword { get; init; } = null!;
         [Required] public bool? RememberMe { get; init; }
     }
 
@@ -206,13 +233,17 @@ public class LoginController : Controller
         var user = await context.Users
             .AsTracking()
             .Where(u => u.PasswordHash != null)
-            .SingleOrDefaultAsync(u => u.Name == changePasswordAttempt.UserName);
+            .SingleOrDefaultAsync(u => u.LoginName == changePasswordAttempt.UserName);
 
         if(user is null ||
             !PasswordUtils.PasswordIsCorrect(changePasswordAttempt.CurrentPassword, user.PasswordHash!, user.PasswordSalt!))
         {
             await TaskUtils.RandomWait();
-            return Unauthorized();
+            return Unauthorized(new // TODO_JU Type for this
+            {
+                ReasonCode = "BadCredentials", // TODO_JU Enum for this
+                Reason = "Incorrect username or password"
+            });
         }
 
         user.PasswordSalt = PasswordUtils.GenerateSalt();
@@ -228,9 +259,19 @@ public class LoginController : Controller
         return Ok();
     }
 
+    public class AuthConfigDto
+    {
+        public int MinimumPasswordScore { get; init; }
+        public bool AllowRememberMe { get; init; }
+    }
+
     [AllowAnonymous]
-    [HttpGet(nameof(MinimumPasswordScore))]
-    public int MinimumPasswordScore() => config.MinimumPasswordScore;
+    [HttpGet(nameof(AuthConfig))]
+    public AuthConfigDto AuthConfig() => new AuthConfigDto
+    {
+        MinimumPasswordScore = config.MinimumPasswordScore,
+        AllowRememberMe = config.AllowRememberMe
+    };
 
     [HttpGet(nameof(Ping))]
     public ActionResult Ping() => Ok();
