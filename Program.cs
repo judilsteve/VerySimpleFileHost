@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.
 using System.Text.Json.Serialization;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
@@ -83,6 +86,8 @@ app.UseAuthorization();
 app.UseEndpoints(e =>
     e.MapControllers().RequireAuthorization());
 
+await app.StartAsync();
+
 using(var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<VsfhContext>();
@@ -113,8 +118,10 @@ using(var scope = app.Services.CreateAsyncScope())
         var expiryMessage = authConfig.InviteLinkExpiryHours.HasValue
                 ? $" This code will expire in {authConfig.InviteLinkExpiryHours} hours, and a password *must* be set on first login"
                 : "";
-        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite code \"{inviteKey}\" to log in.{expiryMessage}");
+        var server = scope.ServiceProvider.GetRequiredService<IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
+        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(addresses[0], $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
     }
 }
 
-app.Run();
+await app.WaitForShutdownAsync();
