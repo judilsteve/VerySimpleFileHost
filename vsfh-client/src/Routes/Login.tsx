@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Button, Checkbox, Form, Header, Icon, Input, Message } from "semantic-ui-react";
+import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode, Configuration, LoginApi } from "../API";
 import { routes } from "../App";
+import RememberMe from "../Components/RememberMe";
+import SkinnyForm from "../Components/SkinnyForm";
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -20,18 +22,6 @@ function Login() {
 
     const navigate = useNavigate();
     const params = useParams();
-
-    const [allowRememberMe, setAllowRememberMe] = useState(false);
-    useEffect(() => {
-        let cancel = false;
-        (async () => {
-            const authConfig = await api.loginAuthConfigGet();
-            if(cancel) return;
-            setAllowRememberMe(authConfig.allowRememberMe!);
-            if(!authConfig.allowRememberMe) setRememberMe(false);
-        })();
-        return () => { cancel = true; }
-    }, []);
 
     const login = async () => {
         try {
@@ -63,33 +53,22 @@ function Login() {
         }
     };
 
-    return <div style={{ maxWidth: 300, margin: "auto" }}>
-        <div style={{ height: "10vh" }}></div>
+    return <SkinnyForm>
         <Header as="h1">VSFH</Header>
         <Form error={!!error} style={{ maxWidth: 300, margin: "auto" }}>
             <Form.Field>
-                <Input tabIndex={1} iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)}>
-                    <Icon name="user" />
-                    <input />
-                </Input>
+                <Input tabIndex={1} icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
             </Form.Field>
             <Form.Field>
-                <Input tabIndex={2} iconPosition="left" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}>
-                    <Icon name="key" />
-                    <input />
-                </Input>
+                <Input tabIndex={2} icon="key" iconPosition="left" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
             </Form.Field>
             <Message error header="Login Failed" content={error} />
             <Form.Field>
-                {
-                    allowRememberMe
-                    ? <Checkbox tabIndex={4} label="Remember me" onChange={e => setRememberMe(rm => !rm)}/>
-                    : <></>
-                }
+                <RememberMe setRememberMe={setRememberMe} />
                 <Button tabIndex={3} primary type="submit" floated="right" onClick={login} disabled={!userName || !password} loading={loading}>Log In</Button>
             </Form.Field>
         </Form>
-    </div>;
+    </SkinnyForm>;
 }
 
 export default Login;
