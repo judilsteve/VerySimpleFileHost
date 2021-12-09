@@ -10,9 +10,7 @@ using VerySimpleFileHost.Utils;
 
 namespace VerySimpleFileHost.Controllers;
 
-[ApiController]
-[Route("[controller]")]
-public class FilesController : Controller
+public class FilesController : ControllerBase
 {
     private readonly FilesConfiguration config;
 

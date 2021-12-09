@@ -11,32 +11,50 @@ using VerySimpleFileHost.Utils;
 
 namespace VerySimpleFileHost.Middleware;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public class AdminOnlyAttribute : Attribute
+public enum AuthenticationFailureReasonCode
 {
+    PasswordExpired,
+    InvalidCredentials,
+    InvalidInviteKey
 }
 
-public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
+public class AuthenticationFailureDto
+{
+    public static readonly AuthenticationFailureDto PasswordExpired = new()
+    {
+        ReasonCode = AuthenticationFailureReasonCode.PasswordExpired,
+        Reason = "Your password has expired and must be changed"
+    };
+
+    public static readonly AuthenticationFailureDto InvalidCredentials = new()
+    {
+        ReasonCode = AuthenticationFailureReasonCode.InvalidCredentials,
+        Reason = "Incorrect username or password"
+    };
+
+    public static readonly AuthenticationFailureDto InvalidInviteKey = new()
+    {
+        ReasonCode = AuthenticationFailureReasonCode.InvalidInviteKey,
+        Reason = "Invalid or expired invite key"
+    };
+
+    public AuthenticationFailureReasonCode? ReasonCode { get; init; }
+    public string? Reason { get; init; }
+}
+
+public class AuthenticationFilter : IAsyncAuthorizationFilter
 {
     public const string CookieCreatedOnUtcClaimType = "CookieCreatedOnUtc";
     public const string CookieCreatedOnUtcDateFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
 
-    private enum CheckResult
-    {
-        Allow,
-        FailAuthentication,
-        FailAuthorization,
-        PasswordExpired
-    }
-
-    private static async Task<CheckResult> RequestIsAllowed(AuthorizationFilterContext context)
+    private static async Task<(bool, AuthenticationFailureDto?)> RequestIsAllowed(AuthorizationFilterContext context)
     {
         var actionDescriptor = (context.ActionDescriptor as ControllerActionDescriptor);
         var attributes = (actionDescriptor?.MethodInfo.CustomAttributes ?? Enumerable.Empty<CustomAttributeData>())
             .Concat(actionDescriptor?.ControllerTypeInfo.CustomAttributes ?? Enumerable.Empty<CustomAttributeData>());
 
         if(attributes.Any(ca => ca.AttributeType == typeof(AllowAnonymousAttribute)))
-            return CheckResult.Allow;
+            return (true, null);
 
         var services = context.HttpContext.RequestServices;
         var dbContext = services.GetRequiredService<VsfhContext>();
@@ -55,7 +73,7 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
 
         if(userSecurityInfo is null)
         {
-            return CheckResult.FailAuthentication;
+            return (false, null);
         }
 
         var cookieCreatedOn = DateTimeOffset.ParseExact(
@@ -68,38 +86,24 @@ public class AuthenticationAuthorizationFilter : IAsyncAuthorizationFilter
             DateTimeStyles.AssumeUniversal);
         if(cookieCreatedOn < userSecurityInfo.RejectCookiesOlderThanUtc)
         {
-            return CheckResult.FailAuthentication;
+            return (false, null);
         }
 
         if(PasswordUtils.PasswordExpired(userSecurityInfo.LastPasswordChangeUtc, config.PasswordExpiryDays))
         {
-            return CheckResult.PasswordExpired;
+            return (false, AuthenticationFailureDto.PasswordExpired);
         }
 
-        if(attributes.Any(ca => ca.AttributeType == typeof(AdminOnlyAttribute)))
-        {
-            if(!userSecurityInfo.IsAdministrator)
-            {
-                return CheckResult.FailAuthorization;
-            }
-        }
-
-        return CheckResult.Allow;
+        return (true, null);
     }
 
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
-        var checkResult = await RequestIsAllowed(context);
-        if(checkResult != CheckResult.Allow)
+        var (allowed, failureDto) = await RequestIsAllowed(context);
+        if(!allowed)
         {
             await TaskUtils.RandomWait();
-            context.Result = checkResult switch
-            {
-                CheckResult.FailAuthentication => new UnauthorizedResult(), // TODO_JU Tell the user why
-                CheckResult.FailAuthorization => new ForbidResult(),
-                CheckResult.PasswordExpired => new UnauthorizedResult(), // TODO_JU Tell the user why
-                _ => throw new ArgumentException("Unhandled check result", nameof(checkResult))
-            };
+            context.Result = new UnauthorizedObjectResult(failureDto);
         }
     }
 }

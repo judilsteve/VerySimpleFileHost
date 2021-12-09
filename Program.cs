@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.
 using System.Text.Json.Serialization;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
@@ -31,8 +30,12 @@ void RegisterConfigObject<T>(string key) where T: class, IValidatableConfigurati
 RegisterConfigObject<FilesConfiguration>("FilesConfiguration");
 RegisterConfigObject<AuthenticationConfiguration>("PasswordConfiguration");
 
-builder.Services.AddControllers(o =>
-    o.Filters.Add(new AuthenticationAuthorizationFilter()))
+builder.Services
+    .AddControllers(o =>
+    {
+        o.Filters.Add(new AuthenticationFilter());
+        o.Filters.Add(new AdminOnlyFilter());
+    })
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddEndpointsApiExplorer();
@@ -119,8 +122,8 @@ using(var scope = app.Services.CreateAsyncScope())
                 ? $" This code will expire in {authConfig.InviteLinkExpiryHours} hours, and a password *must* be set on first login"
                 : "";
         var server = scope.ServiceProvider.GetRequiredService<IServer>();
-        var addresses = server.Features.Get<IServerAddressesFeature>();
-        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(addresses[0], $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
+        var host = new Uri(server.Features.Get<IServerAddressesFeature>()!.Addresses.First());
+        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
     }
 }
 

@@ -45,8 +45,8 @@ public class LoginController : Controller
         {
             yield return new Claim(ClaimTypes.Name, userId.ToString());
             yield return new Claim(
-                AuthenticationAuthorizationFilter.CookieCreatedOnUtcClaimType,
-                loginDateTimeUtc.ToString(AuthenticationAuthorizationFilter.CookieCreatedOnUtcDateFormat));
+                AuthenticationFilter.CookieCreatedOnUtcClaimType,
+                loginDateTimeUtc.ToString(AuthenticationFilter.CookieCreatedOnUtcDateFormat));
             yield return new Claim(RememberMeClaimName, rememberMe.ToString());
         }
 
@@ -100,12 +100,7 @@ public class LoginController : Controller
         if(user is null)
         {
             await TaskUtils.RandomWait();
-            // TODO_JU Constant for shared response
-            return Unauthorized(new // TODO_JU Type for this
-            {
-                ReasonCode = "InvalidInviteKey", // TODO_JU Enum for this
-                Reason = "Invalid or expired invite link"
-            });
+            return Unauthorized(AuthenticationFailureDto.InvalidInviteKey);
         }
 
         if(config.InviteLinkExpiryHours.HasValue)
@@ -115,11 +110,7 @@ public class LoginController : Controller
             if(inviteKeyExpiryUtc < DateTimeOffset.UtcNow)
             {
                 await TaskUtils.RandomWait();
-                return Unauthorized(new // TODO_JU Type for this
-                {
-                    ReasonCode = "InvalidInviteKey", // TODO_JU Enum for this
-                    Reason = "Invalid or expired invite link"
-                });
+                return Unauthorized(AuthenticationFailureDto.InvalidInviteKey);
             }
         }
 
@@ -170,12 +161,7 @@ public class LoginController : Controller
             !PasswordUtils.PasswordIsCorrect(loginAttempt.Password, userDetails.PasswordHash, userDetails.PasswordSalt!))
         {
             await TaskUtils.RandomWait();
-            // TODO_JU Constant for shared response
-            return Unauthorized(new // TODO_JU Type for this
-            {
-                ReasonCode = "BadCredentials", // TODO_JU Enum for this
-                Reason = "Incorrect username or password"
-            });
+            return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
         }
 
         if(config.PasswordExpiryDays.HasValue)
@@ -183,11 +169,7 @@ public class LoginController : Controller
             if(userDetails.LastPasswordChangeUtc.AddDays(config.PasswordExpiryDays.Value) < DateTime.UtcNow)
             {
                 await TaskUtils.RandomWait();
-                return Unauthorized(new // TODO_JU Type for this
-                {
-                    ReasonCode = "PasswordExpired", // TODO_JU Enum for this
-                    Reason = "Your password has expired and must be changed"
-                });
+                return Unauthorized(AuthenticationFailureDto.PasswordExpired);
             }
         }
 
@@ -239,11 +221,7 @@ public class LoginController : Controller
             !PasswordUtils.PasswordIsCorrect(changePasswordAttempt.CurrentPassword, user.PasswordHash!, user.PasswordSalt!))
         {
             await TaskUtils.RandomWait();
-            return Unauthorized(new // TODO_JU Type for this
-            {
-                ReasonCode = "BadCredentials", // TODO_JU Enum for this
-                Reason = "Incorrect username or password"
-            });
+            return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
         }
 
         user.PasswordSalt = PasswordUtils.GenerateSalt();

@@ -16,7 +16,7 @@
 import * as runtime from '../runtime';
 import {
     ArchiveFormat,
-    DirectoryDto,
+    AuthenticationFailureDto,
 } from '../models';
 
 export interface FilesDownloadGetRequest {
@@ -106,7 +106,7 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async filesListingGetRaw(requestParameters: FilesListingGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DirectoryDto>> {
+    async filesListingGetRaw(requestParameters: FilesListingGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.path !== undefined) {
@@ -126,19 +126,18 @@ export class FilesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
      */
-    async filesListingGet(requestParameters: FilesListingGetRequest, initOverrides?: RequestInit): Promise<DirectoryDto> {
-        const response = await this.filesListingGetRaw(requestParameters, initOverrides);
-        return await response.value();
+    async filesListingGet(requestParameters: FilesListingGetRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.filesListingGetRaw(requestParameters, initOverrides);
     }
 
     /**
      */
-    async filesPathSeparatorGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<string>> {
+    async filesPathSeparatorGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -150,14 +149,13 @@ export class FilesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.TextApiResponse(response) as any;
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
      */
-    async filesPathSeparatorGet(initOverrides?: RequestInit): Promise<string> {
-        const response = await this.filesPathSeparatorGetRaw(initOverrides);
-        return await response.value();
+    async filesPathSeparatorGet(initOverrides?: RequestInit): Promise<void> {
+        await this.filesPathSeparatorGetRaw(initOverrides);
     }
 
 }

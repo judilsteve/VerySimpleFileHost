@@ -126,7 +126,7 @@ export const COLLECTION_FORMATS = {
     pipes: "|",
 };
 
-export type FetchAPI = WindowOrWorkerGlobalScope['fetch']; // TODO_JU Fix this properly
+export type FetchAPI = GlobalFetch['fetch'];
 
 export interface ConfigurationParameters {
     basePath?: string; // override base path

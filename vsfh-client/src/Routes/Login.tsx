@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Button, Checkbox, Form, Header, Icon, Input, Message } from "semantic-ui-react";
-import { Configuration, LoginApi } from "../API";
+import { AuthenticationFailureDto, AuthenticationFailureReasonCode, Configuration, LoginApi } from "../API";
 import { routes } from "../App";
 
-export const AFTER_LOGIN_PARAM_NAME = "then";
+export enum LoginRouteParameters {
+    then = 'then'
+};
 
 const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Remove basePath hack?
 
@@ -41,7 +43,7 @@ function Login() {
                 password,
                 rememberMe
             }});
-            navigate(params[AFTER_LOGIN_PARAM_NAME] ?? routes.browseFiles);
+            navigate(params[LoginRouteParameters.then] ?? routes.browseFiles);
         } catch(e) {
             const response = e as Response;
             if(response.status !== 401) {
@@ -50,11 +52,10 @@ function Login() {
                 console.error(await response.text());
                 setError('An unexpected error occurred.');
             } else {
-                // TODO_JU Types and enums for this
-                const responseObject = await response.json();
+                const responseObject: AuthenticationFailureDto = await response.json();
                 const reasonCode = responseObject.reasonCode;
-                if(reasonCode === 'PasswordExpired') navigate(routes.changePassword);
-                else setError(responseObject.reason);
+                if(reasonCode === AuthenticationFailureReasonCode.PasswordExpired) navigate(routes.changePassword);
+                else setError(responseObject.reason ?? 'Unknown authentication error');
             }
         } finally {
             setLoading(false);

@@ -62,6 +62,35 @@ export interface AuthConfigDto {
 /**
  * 
  * @export
+ * @interface AuthenticationFailureDto
+ */
+export interface AuthenticationFailureDto {
+    /**
+     * 
+     * @type {AuthenticationFailureReasonCode}
+     * @memberof AuthenticationFailureDto
+     */
+    reasonCode?: AuthenticationFailureReasonCode;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthenticationFailureDto
+     */
+    reason?: string | null;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+export enum AuthenticationFailureReasonCode {
+    PasswordExpired = 'PasswordExpired',
+    InvalidCredentials = 'InvalidCredentials',
+    InvalidInviteKey = 'InvalidInviteKey'
+}
+/**
+ * 
+ * @export
  * @interface ChangePasswordAttemptDto
  */
 export interface ChangePasswordAttemptDto {
@@ -89,50 +118,6 @@ export interface ChangePasswordAttemptDto {
      * @memberof ChangePasswordAttemptDto
      */
     rememberMe: boolean;
-}
-/**
- * 
- * @export
- * @interface DirectoryDto
- */
-export interface DirectoryDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof DirectoryDto
-     */
-    displayName?: string | null;
-    /**
-     * 
-     * @type {Array<FileDto>}
-     * @memberof DirectoryDto
-     */
-    files?: Array<FileDto> | null;
-    /**
-     * 
-     * @type {Array<DirectoryDto>}
-     * @memberof DirectoryDto
-     */
-    subdirectories?: Array<DirectoryDto> | null;
-}
-/**
- * 
- * @export
- * @interface FileDto
- */
-export interface FileDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof FileDto
-     */
-    displayName?: string | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof FileDto
-     */
-    sizeBytes?: number;
 }
 /**
  * 
@@ -176,7 +161,7 @@ export interface UserAddRequestDto {
      * @type {boolean}
      * @memberof UserAddRequestDto
      */
-    isAdministrator?: boolean;
+    isAdministrator: boolean;
 }
 /**
  * 
@@ -202,60 +187,4 @@ export interface UserEditDto {
      * @memberof UserEditDto
      */
     isAdministrator?: boolean | null;
-}
-/**
- * 
- * @export
- * @interface UserListingDto
- */
-export interface UserListingDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof UserListingDto
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserListingDto
-     */
-    fullName?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserListingDto
-     */
-    loginName?: string | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof UserListingDto
-     */
-    isAdministrator?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof UserListingDto
-     */
-    activated?: boolean;
-}
-/**
- * 
- * @export
- * @interface UserResponseDto
- */
-export interface UserResponseDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof UserResponseDto
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserResponseDto
-     */
-    inviteKey?: string | null;
 }

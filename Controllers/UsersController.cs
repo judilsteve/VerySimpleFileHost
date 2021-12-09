@@ -8,10 +8,8 @@ using VerySimpleFileHost.Middleware;
 
 namespace VerySimpleFileHost.Controllers;
 
-[ApiController]
-[Route("[controller]")]
 [AdminOnly]
-public class UsersController : Controller
+public class UsersController : ControllerBase
 {
     private readonly VsfhContext context;
     private readonly AuthenticationConfiguration configuration;
