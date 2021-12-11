@@ -13,10 +13,10 @@ using VerySimpleFileHost.Utils;
 var builder = WebApplication.CreateBuilder(args);
 
 var config = builder.Configuration;
-void RegisterConfigObject<T>(string key) where T: class, IValidatableConfiguration, new()
+void RegisterConfigObject<T>() where T: class, IValidatableConfiguration, new()
 {
     var configObject = new T();
-    config.Bind(key, configObject);
+    config.Bind(typeof(T).Name, configObject);
 
     var validationErrors = configObject.Validate()
         .ToArray();
@@ -27,8 +27,8 @@ void RegisterConfigObject<T>(string key) where T: class, IValidatableConfigurati
     builder.Services.AddSingleton(configObject);
 }
 
-RegisterConfigObject<FilesConfiguration>("FilesConfiguration");
-RegisterConfigObject<AuthenticationConfiguration>("PasswordConfiguration");
+RegisterConfigObject<FilesConfiguration>();
+RegisterConfigObject<AuthenticationConfiguration>();
 
 builder.Services
     .AddControllers(o =>
@@ -123,7 +123,7 @@ using(var scope = app.Services.CreateAsyncScope())
                 : "";
         var server = scope.ServiceProvider.GetRequiredService<IServer>();
         var host = new Uri(server.Features.Get<IServerAddressesFeature>()!.Addresses.First());
-        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
+        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite?inviteKey={inviteKey}")} to log in.{expiryMessage}");
     }
 }
 

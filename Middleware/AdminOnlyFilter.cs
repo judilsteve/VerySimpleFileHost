@@ -21,21 +21,29 @@ public class AdminOnlyFilter : IAsyncAuthorizationFilter
         var attributes = (actionDescriptor?.MethodInfo.CustomAttributes ?? Enumerable.Empty<CustomAttributeData>())
             .Concat(actionDescriptor?.ControllerTypeInfo.CustomAttributes ?? Enumerable.Empty<CustomAttributeData>());
 
+        if(!attributes.Any(ca => ca.AttributeType == typeof(AdminOnlyAttribute)))
+        {
+            return;
+        }
+
         var services = context.HttpContext.RequestServices;
         var dbContext = services.GetRequiredService<VsfhContext>();
 
-        var isAdmin = await dbContext.Users
-            .Where(u => u.Id == Guid.Parse(context.HttpContext.User.Identity!.Name!))
-            .Select(u => (bool?)u.IsAdministrator)
-            .SingleOrDefaultAsync();
-
-        if(isAdmin != true)
+        var isAdmin = false;
+        var userIdString = context.HttpContext.User.Identity?.Name;
+        if(userIdString is not null)
         {
-            if(attributes.Any(ca => ca.AttributeType == typeof(AdminOnlyAttribute)))
-            {
-                await TaskUtils.RandomWait();
-                context.Result = new ForbidResult();
-            }
+            isAdmin = await dbContext.Users
+                .Where(u => u.Id == Guid.Parse(userIdString))
+                .Select(u => (bool?)u.IsAdministrator)
+                .SingleOrDefaultAsync()
+                ?? false;
+        }
+
+        if(!isAdmin)
+        {
+            await TaskUtils.RandomWait();
+            context.Result = new ForbidResult();
         }
     }
 }

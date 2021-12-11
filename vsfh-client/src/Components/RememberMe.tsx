@@ -1,30 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Checkbox } from "semantic-ui-react";
-import { Configuration, LoginApi } from "../API";
 
 export interface RememberMeProps {
     setRememberMe: (setter: (boolean | ((oldValue: boolean) => boolean))) => void;
+    allowRememberMe: boolean;
+    tabIndex?: number;
 }
 
-const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instances for these?
-
 function RememberMe(props: RememberMeProps) {
-    const { setRememberMe } = props;
+    const { setRememberMe, allowRememberMe, tabIndex } = props;
 
-    const [allowRememberMe, setAllowRememberMe] = useState(false);
     useEffect(() => {
-        let cancel = false;
-        (async () => {
-            const authConfig = await api.loginAuthConfigGet();
-            if(cancel) return;
-            setAllowRememberMe(authConfig.allowRememberMe!);
-            if(!authConfig.allowRememberMe) setRememberMe(false);
-        })();
-        return () => { cancel = true; }
-    }, [setRememberMe]);
+        if(!allowRememberMe) setRememberMe(false);
+    }, [setRememberMe, allowRememberMe]);
 
     if(allowRememberMe)
-        return <Checkbox tabIndex={4} label="Remember me" onChange={e => setRememberMe(rm => !rm)}/>;
+        return <Checkbox tabIndex={tabIndex} label="Remember me" onChange={e => setRememberMe(rm => !rm)}/>;
     else return <></>;
 }
 
