@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router";
+import { useSearchParams } from "react-router-dom";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode, Configuration, LoginApi } from "../API";
 import { routes } from "../App";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
+import useEndpointData from "../Hooks/useEndpointData";
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -21,7 +23,7 @@ function Login() {
     const [error, setError] = useState('');
 
     const navigate = useNavigate();
-    const params = useParams();
+    const then = useSearchParams()[0].get(LoginRouteParameters.then);
 
     const login = async () => {
         setLoading(true);
@@ -50,22 +52,20 @@ function Login() {
             setLoading(false);
             setPassword('');
         }
-        navigate(params[LoginRouteParameters.then] ?? routes.browseFiles);
+        navigate(then ?? routes.browseFiles);
     };
 
-    const [allowRememberMe, setAllowRememberMe] = useState(false);
-    useEffect(() => {
-        let cancel = false;
-        (async () => {
-            const authConfig = await api.loginAuthConfigGet(); // TODO_JU Catch
-            if(cancel) return;
-            setAllowRememberMe(authConfig.allowRememberMe!);
-        })();
-        return () => { cancel = true; }
-    }, []);
+    const [authConfig, ] = useEndpointData(
+        useCallback(() => api.loginAuthConfigGet(), []),
+        useCallback(async e => {
+            console.error('Unexpected response from auth config endpoint:');
+            console.error(e);
+            console.error(await e.text());
+            setError('An unexpected error occurred');
+    }, []));
 
     const rememberMeProps = {
-        allowRememberMe,
+        allowRememberMe: authConfig?.allowRememberMe ?? false,
         setRememberMe,
         tabIndex: 4
     };

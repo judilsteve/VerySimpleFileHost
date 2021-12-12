@@ -1,3 +1,4 @@
+using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -67,11 +68,21 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
     });
 
+var lettuceEncryptConfig = new LettuceEncryptConfiguration();
+config.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
+if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
+{
+    builder.Services.AddLettuceEncrypt()
+        // TODO_JU Configurable directory and PFX password
+        .PersistDataToDirectory(new DirectoryInfo("LettuceEncrypt"), null);
+}
+
 var app = builder.Build();
 
 if(!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
+    app.UseHsts();
 }
 
 app.UseCookiePolicy(new CookiePolicyOptions
@@ -123,7 +134,7 @@ using(var scope = app.Services.CreateAsyncScope())
                 : "";
         var server = scope.ServiceProvider.GetRequiredService<IServer>();
         var host = new Uri(server.Features.Get<IServerAddressesFeature>()!.Addresses.First());
-        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite?inviteKey={inviteKey}")} to log in.{expiryMessage}");
+        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
     }
 }
 

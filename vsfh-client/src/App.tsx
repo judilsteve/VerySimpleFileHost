@@ -2,9 +2,10 @@ import { BrowserRouter, Routes, Navigate, Route } from 'react-router-dom';
 import { Icon } from 'semantic-ui-react';
 import SuspensefulComponent from './Routing/SuspensefulComponent';
 
+export const inviteKeyParamName = 'inviteKey';
 export const routes = {
     login: '/Login',
-    acceptInvite: '/AcceptInvite',
+    acceptInvite: `/AcceptInvite/:${inviteKeyParamName}`,
     changePassword: '/ChangePassword',
     manageUsers: '/Admin/ManageUsers',
     browseFiles: '/Browse',
