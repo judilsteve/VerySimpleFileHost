@@ -26,11 +26,10 @@ function AcceptInvite() {
     const activateAccount = async () => {
         setLoading(true);
         setError('');
-        const frozenUserName = userName;
         try {
             await api.loginAcceptInvitePost({ acceptInviteDto: {
                 inviteKey,
-                userName: frozenUserName,
+                userName,
                 newPassword: password,
                 rememberMe
             }});
@@ -40,7 +39,7 @@ function AcceptInvite() {
                 const responseObject: AuthenticationFailureDto = await response.json();
                 setError(responseObject.reason ?? 'Unknown authentication error');
             } else if(response.status === 400) {
-                setError(`A user with the name '${frozenUserName}' already exists`)
+                setError(`A user with the name '${userName}' already exists`)
             } else {
                 console.error('Unexpected response from login endpoint:');
                 console.error(response);
@@ -81,7 +80,8 @@ function AcceptInvite() {
         checkPassword, setCheckPassword,
         authConfig,
         passwordPlaceholder: 'Password',
-        setPasswordValid
+        setPasswordValid,
+        startTabIndex: 2
     };
 
     return <SkinnyForm maxWidth={350}>

@@ -7,6 +7,7 @@ import { routes } from "../App";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
+import { ChangePasswordProps, ChangePasswordRouteParameters } from "./ChangePassword";
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -44,7 +45,15 @@ function Login() {
             } else {
                 const responseObject: AuthenticationFailureDto = await response.json();
                 const reasonCode = responseObject.reasonCode;
-                if(reasonCode === AuthenticationFailureReasonCode.PasswordExpired) navigate(routes.changePassword);
+                if(reasonCode === AuthenticationFailureReasonCode.PasswordExpired) {
+                    const changePasswordProps: ChangePasswordProps = {
+                        message: responseObject.reason!,
+                        userName: userName
+                    };
+                    let destination = routes.changePassword;
+                    if(then) destination += `?${ChangePasswordRouteParameters.then}=${then}`;
+                    navigate(destination, { state: changePasswordProps });
+                }
                 else setError(responseObject.reason ?? 'Unknown authentication error');
             }
             return;

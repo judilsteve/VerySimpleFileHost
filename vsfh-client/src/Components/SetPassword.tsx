@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Form, Input } from "semantic-ui-react";
 import zxcvbn from "zxcvbn";
 import { AuthConfigDto } from "../API";
@@ -36,6 +36,7 @@ export interface SetPasswordProps {
     authConfig: AuthConfigDto | undefined;
     passwordPlaceholder: string;
     setPasswordValid: (valid: boolean) => void;
+    startTabIndex: number;
 }
 
 function SetPassword(props: SetPasswordProps) {
@@ -44,7 +45,8 @@ function SetPassword(props: SetPasswordProps) {
         checkPassword, setCheckPassword,
         authConfig,
         passwordPlaceholder,
-        setPasswordValid
+        setPasswordValid,
+        startTabIndex
     } = props;
 
     const passwordsMatch = password === checkPassword;
@@ -64,7 +66,7 @@ function SetPassword(props: SetPasswordProps) {
 
     return <>
         <Form.Field>
-            <Input tabIndex={2}
+            <Input tabIndex={startTabIndex}
                 action={passwordStrength ? zxcvbnScores[passwordStrength.score] : null} 
                 icon="key" iconPosition="left"
                 type="password" placeholder={passwordPlaceholder}
@@ -74,7 +76,7 @@ function SetPassword(props: SetPasswordProps) {
             {passwordStrength?.feedback.suggestions && passwordStrength.feedback.suggestions.map(s => <p><em>{s}</em></p>)}
         </Form.Field>
         <Form.Field>
-            <Input tabIndex={3} icon="key" iconPosition="left" type="password" placeholder="Verify" value={checkPassword} onChange={e => setCheckPassword(e.target.value)} />
+            <Input tabIndex={startTabIndex + 1} icon="key" iconPosition="left" type="password" placeholder="Verify" value={checkPassword} onChange={e => setCheckPassword(e.target.value)} />
             {checkPassword && !passwordsMatch && <ErrorText>Passwords do not match</ErrorText>}
         </Form.Field>
     </>;

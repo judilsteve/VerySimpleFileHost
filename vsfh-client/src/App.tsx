@@ -14,6 +14,8 @@ export const routes = {
     notFound: '/Error/NotFound'
 };
 
+// TODO_JU Page titles and favicons
+
 function App() {
     return <>
         <BrowserRouter>
