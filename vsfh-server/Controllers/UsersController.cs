@@ -78,7 +78,7 @@ public class UsersController : ControllerBase
 
         await context.Users.AddAsync(user);
 
-        await context.TrySaveChangesAsync();
+        await context.SaveChangesAsync();
 
         return new UserResponseDto
         {
@@ -95,7 +95,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{userId}")]
-    public async Task<ActionResult<UserResponseDto>> EditUser([Required]Guid userId, UserEditDto userDto)
+    public async Task<ActionResult<UserResponseDto>> EditUser([Required]Guid? userId, UserEditDto userDto)
     {
         var user = await context.Users
             .AsTracking()
