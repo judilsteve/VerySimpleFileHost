@@ -56,9 +56,6 @@ public class LoginController : Controller
         var authProperties = new AuthenticationProperties
         {
             AllowRefresh = true,
-            ExpiresUtc = config.CookieExpiryMinutes.HasValue
-                ? loginDateTimeUtc.AddMinutes(config.CookieExpiryMinutes.Value)
-                : null,
             IsPersistent = rememberMe,
             IssuedUtc = loginDateTimeUtc
         };

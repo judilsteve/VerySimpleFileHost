@@ -49,6 +49,8 @@ builder.Services.AddDbContext<VsfhContext>(options => options
 // System.IO.Compression.ZipArchive requires synchronous IO
 builder.Services.Configure<KestrelServerOptions>(o => o.AllowSynchronousIO = true);
 
+var authenticationConfiguration = new AuthenticationConfiguration();
+config.Bind(nameof(AuthenticationConfiguration), authenticationConfiguration);
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     // By default, the cookie auth scheme assumes you are running an MVC application
     // with a few special routes. Thus it uses redirect responses to these routes
@@ -56,6 +58,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     // return plain 401/403 responses, respectively.
     .AddCookie(o => 
     {
+        o.SlidingExpiration = true;
+        if(authenticationConfiguration.CookieExpiryMinutes.HasValue)
+            o.ExpireTimeSpan = TimeSpan.FromMinutes(authenticationConfiguration.CookieExpiryMinutes.Value);
         o.Events.OnRedirectToAccessDenied = ctx =>
         {
             ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
