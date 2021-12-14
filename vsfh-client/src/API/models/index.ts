@@ -122,6 +122,50 @@ export interface ChangePasswordAttemptDto {
 /**
  * 
  * @export
+ * @interface DirectoryDto
+ */
+export interface DirectoryDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof DirectoryDto
+     */
+    displayName?: string | null;
+    /**
+     * 
+     * @type {Array<FileDto>}
+     * @memberof DirectoryDto
+     */
+    files?: Array<FileDto> | null;
+    /**
+     * 
+     * @type {Array<DirectoryDto>}
+     * @memberof DirectoryDto
+     */
+    subdirectories?: Array<DirectoryDto> | null;
+}
+/**
+ * 
+ * @export
+ * @interface FileDto
+ */
+export interface FileDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof FileDto
+     */
+    displayName?: string | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof FileDto
+     */
+    sizeBytes?: number;
+}
+/**
+ * 
+ * @export
  * @interface LoginAttemptDto
  */
 export interface LoginAttemptDto {
@@ -187,4 +231,60 @@ export interface UserEditDto {
      * @memberof UserEditDto
      */
     isAdministrator?: boolean | null;
+}
+/**
+ * 
+ * @export
+ * @interface UserListingDto
+ */
+export interface UserListingDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserListingDto
+     */
+    id?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserListingDto
+     */
+    fullName?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserListingDto
+     */
+    loginName?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UserListingDto
+     */
+    isAdministrator?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UserListingDto
+     */
+    activated?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface UserResponseDto
+ */
+export interface UserResponseDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserResponseDto
+     */
+    id?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserResponseDto
+     */
+    inviteKey?: string | null;
 }

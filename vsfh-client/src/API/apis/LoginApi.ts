@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import {
     AcceptInviteDto,
     AuthConfigDto,
+    AuthenticationFailureDto,
     ChangePasswordAttemptDto,
     LoginAttemptDto,
 } from '../models';

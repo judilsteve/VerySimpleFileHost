@@ -18,6 +18,8 @@ import {
     AuthenticationFailureDto,
     UserAddRequestDto,
     UserEditDto,
+    UserListingDto,
+    UserResponseDto,
 } from '../models';
 
 export interface UsersPostRequest {
@@ -40,7 +42,7 @@ export class UsersApi extends runtime.BaseAPI {
 
     /**
      */
-    async usersGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async usersGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<Array<UserListingDto>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -52,18 +54,19 @@ export class UsersApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response);
     }
 
     /**
      */
-    async usersGet(initOverrides?: RequestInit): Promise<void> {
-        await this.usersGetRaw(initOverrides);
+    async usersGet(initOverrides?: RequestInit): Promise<Array<UserListingDto>> {
+        const response = await this.usersGetRaw(initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async usersPostRaw(requestParameters: UsersPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async usersPostRaw(requestParameters: UsersPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<UserResponseDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -78,13 +81,14 @@ export class UsersApi extends runtime.BaseAPI {
             body: requestParameters.userAddRequestDto,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response);
     }
 
     /**
      */
-    async usersPost(requestParameters: UsersPostRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.usersPostRaw(requestParameters, initOverrides);
+    async usersPost(requestParameters: UsersPostRequest, initOverrides?: RequestInit): Promise<UserResponseDto> {
+        const response = await this.usersPostRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
@@ -116,7 +120,7 @@ export class UsersApi extends runtime.BaseAPI {
 
     /**
      */
-    async usersUserIdPutRaw(requestParameters: UsersUserIdPutRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async usersUserIdPutRaw(requestParameters: UsersUserIdPutRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<UserResponseDto>> {
         if (requestParameters.userId === null || requestParameters.userId === undefined) {
             throw new runtime.RequiredError('userId','Required parameter requestParameters.userId was null or undefined when calling usersUserIdPut.');
         }
@@ -135,13 +139,14 @@ export class UsersApi extends runtime.BaseAPI {
             body: requestParameters.userEditDto,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response);
     }
 
     /**
      */
-    async usersUserIdPut(requestParameters: UsersUserIdPutRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.usersUserIdPutRaw(requestParameters, initOverrides);
+    async usersUserIdPut(requestParameters: UsersUserIdPutRequest, initOverrides?: RequestInit): Promise<UserResponseDto> {
+        const response = await this.usersUserIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
 }
