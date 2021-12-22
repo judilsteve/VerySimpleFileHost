@@ -6,10 +6,9 @@ function useEndpointData<T>(
     : [T | undefined, boolean] {
 
     const [endpointData, setEndpointData] = useState<T | undefined>(undefined);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setLoading(true);
+        setEndpointData(undefined);
         let cancel = false;
         (async () => {
             let newEndpointData;
@@ -21,15 +20,13 @@ function useEndpointData<T>(
                     return;
                 }
                 else throw e;
-            } finally {
-                if(!cancel) setLoading(false);
             }
             if(!cancel) setEndpointData(newEndpointData);
         })();
         return () => { cancel = true; }
     }, [getEndpointData, handleError]);
 
-    return [endpointData, loading];
+    return [endpointData, !endpointData];
 }
 
 export default useEndpointData;

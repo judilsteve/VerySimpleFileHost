@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import CenteredSpinner from "../Components/CenteredSpinner";
 
 interface SuspensefulComponentProps {
-    importFunc: () => Promise<{ default: () => JSX.Element }>;
+    importFunc: () => Promise<{ default: (props: any) => JSX.Element }>;
 }
 
 function SuspensefulComponent(props: SuspensefulComponentProps) {
