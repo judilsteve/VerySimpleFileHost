@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
-import { Button, Checkbox, Container, Input, Popup } from "semantic-ui-react";
+import { Button, Card, Checkbox, Container, Icon, Popup } from "semantic-ui-react";
 import { Configuration, UserListingDto, UsersApi } from "../../API";
 import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
@@ -42,23 +42,26 @@ function ManageUsers() {
 
     if(loadingUsers) return <CenteredSpinner />;
 
-    return <>
-    {
-        users!.map(u => <Container key={u.id}>
-            <Input placeholder="Full Name" value={u.fullName} />
-            {u.loginName}
-            <Checkbox label="Administrator" checked={u.isAdministrator} />
-            <Popup trigger={<Button icon="save" />} content="Save Changes" />
-            <Popup trigger={<Button icon="redo"/>} content="Clear Changes" />
-            TODO_JU Active/inactive indicator
-            <Popup trigger={<Button icon="unlock" />} content="Reset Password" />
-            <Popup trigger={<Button icon="remove user" />} content="Delete User" />
-        </Container>)
-    }
-        <Container>
-            TODO_JU Controls for new user
-        </Container>
-    </>;
+    return <Container>
+        <Card.Group>
+        {
+            users!.map(u => <Card key={u.id}>
+                <Card.Content>
+                    <Card.Header><Icon name="user"/>{u.loginName}<span style={{color: "#FF00FF"}}>{u.isAdministrator ? " (Admin)" : ""}</span></Card.Header>
+                    <Card.Meta>{u.fullName}</Card.Meta>{/*TODO_JU Edit mode for these*/}
+                </Card.Content>
+                <Card.Content extra>
+                    TODO_JU Active/inactive indicator
+                    <Popup trigger={<Button icon="unlock" />} content="Reset Password" />
+                    <Popup trigger={<Button negative icon="remove user" />} content="Delete User" />
+                </Card.Content>
+            </Card>)
+        }
+            <Card>
+                TODO_JU Controls for new user
+            </Card>
+        </Card.Group>
+    </Container>;
 }
 
 export default ManageUsers;
