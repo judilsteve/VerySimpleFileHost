@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Button, Card, Checkbox, Container, Form, Header, Icon, Input, Popup } from "semantic-ui-react";
+import { Button, Card, Checkbox, Container, Form, Header, Icon, Input, Modal, Popup } from "semantic-ui-react";
 import { Configuration, UserListingDto, UsersApi } from "../../API";
 import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
@@ -48,6 +48,54 @@ class FakeApi
 }
 const api = new FakeApi();
 
+interface InviteLinkModalProps {
+    inviteKey: string;
+    userFullName: string;
+    open: boolean;
+    close: () => void;
+}
+
+function InviteLinkModal(props: InviteLinkModalProps) {
+    const { inviteKey, userFullName, open, close } = props;
+
+    return <Modal size="small" open={open}>
+        <Modal.Header>Invite Link for {userFullName}</Modal.Header>
+        <Modal.Content>
+            <p>Copy the link below and send it securely to your user</p>
+            <Input fluid
+                value={`${window.location.origin}/AcceptInvite/${inviteKey}`}
+                action={{ icon: 'copy'}} />
+        </Modal.Content>
+        <Modal.Actions>
+            <p>Once you close this modal, you will not be able to view the link again</p>
+            <Button onClick={close} icon="check">Done</Button>
+        </Modal.Actions>
+    </Modal>
+}
+
+interface DeleteUserModalProps {
+    userLoginName: string;
+    userFullName: string;
+    open: boolean;
+    deleteUser: () => void;
+    cancel: () => void;
+}
+
+function DeleteUserModal(props: DeleteUserModalProps) {
+    const { userLoginName, userFullName, open, deleteUser, cancel } = props;
+
+    return <Modal size="tiny" open={open} onClose={cancel}>
+        <Modal.Header>Delete User "{userLoginName}" ({userFullName})</Modal.Header>
+        <Modal.Content>
+            <p>Are you sure?</p>
+        </Modal.Content>
+        <Modal.Actions>
+            <Button onClick={deleteUser} icon="remove user" negative>Delete</Button>
+            <Button onClick={cancel} icon="cross" secondary>Cancel</Button>
+        </Modal.Actions>
+    </Modal>
+}
+
 function ManageUsers() {
     // TODO_JU This route and file browser should have navigation and a logout button
 
@@ -94,6 +142,11 @@ function ManageUsers() {
     }, []);
 
     if(loadingUsers) return <CenteredSpinner />;
+
+    // TODO_JU:
+    // "Are you sure?" modal for deleting a user
+    // Modal with copyable invite link when adding a user or resetting their password
+    // Colour scheme for everything here
 
     return <Container>
         <Header as="h1">Manage Users</Header>
@@ -143,6 +196,8 @@ function ManageUsers() {
                 </Card.Content>
             </Card>
         </Card.Group>
+        <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={false} close={() => {}} />
+        <DeleteUserModal userLoginName="TODO_JU" userFullName="TODO_JU" open={true} cancel={() => {}} deleteUser={() => {}} />
     </Container>;
 }
 
