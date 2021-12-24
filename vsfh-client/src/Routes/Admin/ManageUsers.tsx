@@ -115,6 +115,11 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     </Modal>
 }
 
+interface UserEditModel {
+    fullName: string;
+    isAdministrator: boolean;
+}
+
 function ManageUsers() {
     // TODO_JU This route and file browser should have navigation and a logout button
 
@@ -129,12 +134,12 @@ function ManageUsers() {
         }, [navigate]));
 
     const [newUserFullName, setNewUserFullName] = useState('');
-    const [editUsers, setEditUsers] = useState<{[userId: string]: UserListingDto}>({});
+    const [editUsers, setEditUsers] = useState<{[userId: string]: UserEditModel}>({});
 
     useEffect(() => {
         setEditUsers(editUsers => {
             // Filter out any users currently being edited that no longer exist
-            const newEditUsers: {[userId: string]: UserListingDto} = {};
+            const newEditUsers: {[userId: string]: UserEditModel} = {};
             for(const user of users ?? []) {
                 const editUser = editUsers[user.id!];
                 if(editUser)
@@ -144,10 +149,20 @@ function ManageUsers() {
         });
     }, [users]);
 
+    const editUser = useCallback((user: UserListingDto) => {
+        setEditUsers(editUsers => {
+            const newEditUser = {
+                fullName: user.fullName!,
+                isAdministrator: user.isAdministrator!
+            };
+            return { ...editUsers, [user.id!]: newEditUser };
+        })
+    }, []);
+
     const setUserFullName = useCallback((userId: string, fullName: string) => {
         setEditUsers(editUsers => {
             const user = editUsers[userId];
-            user.fullName = fullName;    
+            user.fullName = fullName;
             return { ...editUsers };
         });
     }, []);
@@ -174,23 +189,37 @@ function ManageUsers() {
             users!.map(u => <Card key={u.id}>
                 <Card.Content>
                     <Card.Header>
-                        <Icon name="user" />
+                        {u.activated
+                            ? <Icon name="user" />
+                            : <Popup trigger={<Icon name="lock" />} content={`'${u.loginName}' is locked out pending password reset`} />
+                        }
                         {u.loginName}
-                        {!u.activated && <Popup trigger={<Icon corner name="lock" />} content={`'${u.loginName}' is locked out pending password reset`} />}
                     </Card.Header>
                     <Card.Meta>{u.fullName}{u.isAdministrator ? " (Admin)" : ""}</Card.Meta>{/*TODO_JU Function to enter edit mode*/}
                     {
-                        /* TODO_JU Probably split this into its own component */
-                        editUsers[u.id!] && <Form>
-                            <Form.Input placeholder="Full Name" value={editUsers[u.id!].fullName} onChange={e => setUserFullName(u.id!, e.target.value)} />
-                            <Checkbox label="Admin" onChange={() => toggleUserIsAdmin(u.id!)} />
-                        </Form>
-                       /* TODO_JU Discard and save changes button (with validation)*/
+                        /* TODO_JU Probably split this into its own component to make state a bit cleaner */
+                        editUsers[u.id!] && <>
+                            <Form style={{ paddingTop: '1.5rem' }}>
+                                <Form.Field>
+                                    <Form.Input placeholder="Full Name" value={editUsers[u.id!].fullName} onChange={e => setUserFullName(u.id!, e.target.value)} />
+                                </Form.Field>
+                                <Form.Field>
+                                    <Checkbox label="Admin" onChange={() => toggleUserIsAdmin(u.id!)} />
+                                </Form.Field>
+                            </Form>
+                        </>
                     }
                 </Card.Content>
                 <Card.Content extra>
                     <div style={{float: 'right'}}>
-                        <Popup trigger={<Button size="small" icon="write" primary />} content="Edit" />
+                        {
+                            editUsers[u.id!] ? <>
+                                <Popup trigger={<Button size="small" icon="close" secondary />} content="Discard" />
+                                <Popup trigger={<Button size="small" icon="check" positive disabled={!editUsers[u.id!].fullName} />} content="Save" />
+                            </> : <>
+                                <Popup trigger={<Button size="small" icon="write" primary onClick={() => editUser(u)} />} content="Edit" />
+                            </>
+                        }
                         <Popup trigger={<Button size="small" icon="unlock" color="teal" />} content="Reset Password" />
                         <Popup trigger={<Button size="small" icon="remove user" color="orange" />} content="Delete" />
                     </div>
@@ -200,7 +229,7 @@ function ManageUsers() {
             <Card>
                 <Card.Content>
                     <Card.Header>
-                        <Icon name="user" />
+                        <Icon name="add user" />
                         New User
                     </Card.Header>
                     <Form style={{ paddingTop: '1.5rem' }}>
@@ -210,8 +239,8 @@ function ManageUsers() {
                 </Card.Content>
                 <Card.Content extra>
                     <div style={{float: 'right'}}>
-                        {/* TODO_JU Callback for this (and validation) */}
-                        <Popup trigger={<Button positive size="small" icon="add user" />} content="Add User" />
+                        {/* TODO_JU Callback for this */}
+                        <Popup trigger={<Button disabled={!newUserFullName} positive size="small" icon="check" />} content="Add" />
                     </div>
                 </Card.Content>
             </Card>
