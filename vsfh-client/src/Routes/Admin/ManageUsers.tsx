@@ -78,7 +78,7 @@ function InviteLinkModal(props: InviteLinkModalProps) {
         trigger={<Button icon="copy" primary onClick={copyLink} />} />
 
     return <Modal size="small" open={open}>
-        <Modal.Header>Invite Link for {userFullName}</Modal.Header>
+        <Modal.Header>Invite link for {userFullName}</Modal.Header>
         <Modal.Content>
             <p>Copy the link below and send it securely to your user</p>
             <p>Once you close this modal, you will not be able to view the link again</p>
@@ -104,9 +104,9 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const { userLoginName, userFullName, open, deleteUser, cancel } = props;
 
     return <Modal size="tiny" open={open} onClose={cancel}>
-        <Modal.Header>Delete User "{userLoginName}" ({userFullName})</Modal.Header>
+        <Modal.Header>Delete user "{userLoginName}" ({userFullName})?</Modal.Header>
         <Modal.Content>
-            <p>Are you sure?</p>
+            <p>This action is permanent</p>
         </Modal.Content>
         <Modal.Actions>
             <Button onClick={deleteUser} icon="remove user" negative>Delete</Button>
@@ -215,7 +215,7 @@ function ManageUsers() {
                 </Card.Content>
             </Card>
         </Card.Group>
-        <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={true} close={() => {}} />
+        <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={false} close={() => {}} />
         <DeleteUserModal userLoginName="TODO_JU" userFullName="TODO_JU" open={false} cancel={() => {}} deleteUser={() => {}} />
     </Container>;
 }
