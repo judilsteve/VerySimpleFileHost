@@ -1,0 +1,7 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+.ui.action.input:not([class*="left action"]) > input:focus {
+  border-right: none !important;
+}

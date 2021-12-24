@@ -1,0 +1,7 @@
+/*******************************
+    User Variable Overrides
+*******************************/
+
+@errorBackgroundColor: #634040;
+@errorTextColor: #e0b4b4;
+@errorHeaderColor: #e0b4b4;

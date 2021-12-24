@@ -1,0 +1,22 @@
+/*******************************
+    User Variable Overrides
+*******************************/
+
+@checkboxBackground: #515151;
+
+@solidBorderColor: #959595;
+
+@checkboxHoverBorderColor: #cdcdcd;
+
+@checkboxFocusBackground: #515151;
+@checkboxFocusBorderColor: #8d1b21;
+
+@checkboxActiveBackground: #515151;
+@checkboxActiveBorderColor: #959595;
+@checkboxActiveCheckColor: #cdcdcd;
+
+@checkboxActiveFocusBackground: #515151;
+@checkboxActiveFocusCheckColor: #cdcdcd;
+
+@labelHoverColor: #cdcdcd;
+@labelFocusColor: #cdcdcd;
