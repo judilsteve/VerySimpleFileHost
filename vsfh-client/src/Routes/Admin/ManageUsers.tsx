@@ -58,14 +58,33 @@ interface InviteLinkModalProps {
 function InviteLinkModal(props: InviteLinkModalProps) {
     const { inviteKey, userFullName, open, close } = props;
 
+    const inviteLink = `${window.location.origin}/AcceptInvite/${inviteKey}`;
+
+    const [justCopied, setJustCopied] = useState(false);
+    const copyLink = () => {
+        navigator.clipboard.writeText(inviteLink);
+        setJustCopied(true);
+    };
+
+    useEffect(() => {
+        if(!justCopied) return;
+        const timer = window.setTimeout(() => setJustCopied(false), 1000);
+        return () => window.clearTimeout(timer);
+    }, [justCopied]);
+
+    const copyButton = <Popup
+        open={justCopied}
+        content="Copied to clipboard"
+        trigger={<Button icon="copy" primary onClick={copyLink} />} />
+
     return <Modal size="small" open={open}>
         <Modal.Header>Invite Link for {userFullName}</Modal.Header>
         <Modal.Content>
             <p>Copy the link below and send it securely to your user</p>
             <p>Once you close this modal, you will not be able to view the link again</p>
             <Input fluid
-                value={`${window.location.origin}/AcceptInvite/${inviteKey}`}
-                action={{ icon: 'copy', color: 'primary' }} />
+                value={inviteLink}
+                action={copyButton} />
         </Modal.Content>
         <Modal.Actions>
             <Button onClick={close} icon="check" secondary>Done</Button>
@@ -196,7 +215,7 @@ function ManageUsers() {
                 </Card.Content>
             </Card>
         </Card.Group>
-        <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={false} close={() => {}} />
+        <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={true} close={() => {}} />
         <DeleteUserModal userLoginName="TODO_JU" userFullName="TODO_JU" open={false} cancel={() => {}} deleteUser={() => {}} />
     </Container>;
 }

@@ -1,3 +1,7 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+@background: #252525;
+@border: 1px solid #959595;
+@arrowBoxShadow: 1px 1px 0px 0px #b5b5b5;
