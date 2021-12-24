@@ -104,7 +104,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const { userLoginName, userFullName, open, deleteUser, cancel } = props;
 
     return <Modal size="tiny" open={open} onClose={cancel}>
-        <Modal.Header>Delete user "{userLoginName}" ({userFullName})?</Modal.Header>
+        <Modal.Header>Delete user '{userLoginName}' ({userFullName})?</Modal.Header>
         <Modal.Content>
             <p>This action is permanent</p>
         </Modal.Content>
@@ -174,11 +174,11 @@ function ManageUsers() {
             users!.map(u => <Card key={u.id}>
                 <Card.Content>
                     <Card.Header>
-                        <Icon.Group>
-                            <Icon name="user" />
-                            {!u.activated && <Popup trigger={<Icon corner name="lock" />} content={`${u.loginName} is locked out pending password reset`} />}
-                        </Icon.Group>{u.loginName}</Card.Header>
-                    <Card.Meta>{u.fullName}{u.isAdministrator ? " (Admin)" : ""} <Popup trigger={<Button size="mini" icon="edit" inverted />} content="Edit" /></Card.Meta>{/*TODO_JU Function to enter edit mode*/}
+                        <Icon name="user" />
+                        {u.loginName}
+                        {!u.activated && <Popup trigger={<Icon corner name="lock" />} content={`'${u.loginName}' is locked out pending password reset`} />}
+                    </Card.Header>
+                    <Card.Meta>{u.fullName}{u.isAdministrator ? " (Admin)" : ""}</Card.Meta>{/*TODO_JU Function to enter edit mode*/}
                     {
                         /* TODO_JU Probably split this into its own component */
                         editUsers[u.id!] && <Form>
@@ -190,8 +190,9 @@ function ManageUsers() {
                 </Card.Content>
                 <Card.Content extra>
                     <div style={{float: 'right'}}>
-                        <Popup trigger={<Button size="small" icon="unlock" />} content="Reset Password" />
-                        <Popup trigger={<Button negative size="small" icon="remove user" />} content="Delete User" />
+                        <Popup trigger={<Button size="small" icon="write" primary />} content="Edit" />
+                        <Popup trigger={<Button size="small" icon="unlock" color="teal" />} content="Reset Password" />
+                        <Popup trigger={<Button size="small" icon="remove user" color="orange" />} content="Delete" />
                     </div>
                 </Card.Content>
             </Card>)
@@ -202,7 +203,7 @@ function ManageUsers() {
                         <Icon name="user" />
                         New User
                     </Card.Header>
-                    <Form>
+                    <Form style={{ paddingTop: '1.5rem' }}>
                         <Form.Input placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
                         <Checkbox label="Admin"/>
                     </Form>

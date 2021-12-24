@@ -1,3 +1,13 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+@background: #171717;
+@border: 1px solid #515151;
+@boxShadow: none;
+
+@extraBackground: #252525;
+@extraDivider: none;
+
+@headerColor: #cdcdcd;
+@metaColor: #959595;
