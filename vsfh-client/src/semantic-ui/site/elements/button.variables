@@ -1,3 +1,9 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+@secondaryColor: #252525;
+@secondaryColorHover: #4a4a4a;
+@secondaryColorFocus: #4a4a4a;
+@secondaryColorDown: #606060;
+@secondaryTextColor: #cdcdcd;

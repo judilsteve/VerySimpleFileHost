@@ -62,13 +62,13 @@ function InviteLinkModal(props: InviteLinkModalProps) {
         <Modal.Header>Invite Link for {userFullName}</Modal.Header>
         <Modal.Content>
             <p>Copy the link below and send it securely to your user</p>
+            <p>Once you close this modal, you will not be able to view the link again</p>
             <Input fluid
                 value={`${window.location.origin}/AcceptInvite/${inviteKey}`}
-                action={{ icon: 'copy'}} />
+                action={{ icon: 'copy', color: 'primary' }} />
         </Modal.Content>
         <Modal.Actions>
-            <p>Once you close this modal, you will not be able to view the link again</p>
-            <Button onClick={close} icon="check">Done</Button>
+            <Button onClick={close} icon="check" secondary>Done</Button>
         </Modal.Actions>
     </Modal>
 }
@@ -149,7 +149,7 @@ function ManageUsers() {
     // Colour scheme for everything here
 
     return <Container>
-        <Header as="h1">Manage Users</Header>
+        <Header as="h1" style={{ paddingTop: "1rem" }}>Manage Users</Header>
         <Card.Group>
         {
             users!.map(u => <Card key={u.id}>
@@ -197,7 +197,7 @@ function ManageUsers() {
             </Card>
         </Card.Group>
         <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={false} close={() => {}} />
-        <DeleteUserModal userLoginName="TODO_JU" userFullName="TODO_JU" open={true} cancel={() => {}} deleteUser={() => {}} />
+        <DeleteUserModal userLoginName="TODO_JU" userFullName="TODO_JU" open={false} cancel={() => {}} deleteUser={() => {}} />
     </Container>;
 }
 
