@@ -5,48 +5,9 @@ import { Configuration, UserListingDto, UsersApi } from "../../API";
 import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
 import useEndpointData from "../../Hooks/useEndpointData";
+import { LoginRouteParameters } from "../Login";
 
-//const api = new UsersApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instances for this?
-
-const fakeUsers: UserListingDto[] = [
-    {
-        id: '1',
-        fullName: 'Duke Nukem',
-        loginName: 'duke123',
-        isAdministrator: true,
-        activated: true
-    },
-    {
-        id: '2',
-        fullName: 'Ash Williams',
-        loginName: 's_mart_groovy_dude',
-        isAdministrator: false,
-        activated: false
-    },
-    {
-        id: '3',
-        fullName: 'Marco Pagot',
-        loginName: 'bigredplane33',
-        isAdministrator: false,
-        activated: true
-    },
-    {
-        id: '4',
-        fullName: 'Miss Pauling',
-        loginName: 'purplegirl47',
-        isAdministrator: true,
-        activated: false
-    }
-];
-
-class FakeApi
-{
-    async usersGet() {
-        return await new Promise<UserListingDto[]>(res =>
-            window.setTimeout(() => res(fakeUsers), 200));
-    }
-}
-const api = new FakeApi();
+const api = new UsersApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instances for this?
 
 interface InviteLinkModalProps {
     inviteKey: string;
@@ -80,37 +41,96 @@ function InviteLinkModal(props: InviteLinkModalProps) {
     return <Modal size="small" open={open}>
         <Modal.Header>Invite link for {userFullName}</Modal.Header>
         <Modal.Content>
-            <p>Copy the link below and send it securely to your user</p>
+            <p>Copy the link below and send it securely to the user</p>
             <p>Once you close this modal, you will not be able to view the link again</p>
             <Input fluid
                 value={inviteLink}
                 action={copyButton} />
         </Modal.Content>
         <Modal.Actions>
-            <Button onClick={close} icon="check" secondary>Done</Button>
+            <Button onClick={close} secondary><Icon name="check" />Done</Button>
+        </Modal.Actions>
+    </Modal>
+}
+
+interface ConfirmResetPasswordModalProps {
+    userDto: UserListingDto | null;
+    open: boolean;
+    afterResetPassword: (inviteKey: string) => void;
+    cancel: () => void;
+}
+
+function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
+    const { userDto, open, afterResetPassword, cancel } = props;
+
+    const [loading, setLoading] = useState(false);
+    const resetPassword = () => {
+        let cancel = false;
+        setLoading(true);
+        (async () => {
+            let response;
+            try {
+                response = await api.usersUserIdPut({
+                    userId: userDto?.id!,
+                    userEditDto: {
+                        fullName: null,
+                        isAdministrator: null,
+                        resetPassword: true
+                    }
+                });
+            } catch(e) {
+                // TODO_JU handle errors
+            }
+            if(cancel) return;
+            if(response) afterResetPassword(response.inviteKey!);
+        })();
+    }
+
+    return <Modal size="tiny" open={open} onClose={cancel}>
+        <Modal.Header>Reset password for {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
+        <Modal.Content>
+            <p>This will disable their account until they open the new invite link.</p>
+        </Modal.Content>
+        <Modal.Actions>
+            <Button onClick={resetPassword} color="teal" loading={loading ? true : undefined}><Icon name="unlock" />Reset</Button>
+            <Button onClick={cancel} secondary><Icon name="close" />Cancel</Button>
         </Modal.Actions>
     </Modal>
 }
 
 interface DeleteUserModalProps {
-    userLoginName: string;
-    userFullName: string;
+    userDto: UserListingDto | null;
     open: boolean;
-    deleteUser: () => void;
+    afterDeleteUser: () => void;
     cancel: () => void;
 }
 
 function DeleteUserModal(props: DeleteUserModalProps) {
-    const { userLoginName, userFullName, open, deleteUser, cancel } = props;
+    const { userDto, open, afterDeleteUser, cancel } = props;
+
+    const [loading, setLoading] = useState(false);
+    const deleteUser = () => {
+        let cancel = false;
+        setLoading(true);
+        (async () => {
+            try {
+                await api.usersUserIdDelete({ userId: userDto?.id! });
+            } catch(e) {
+                // TODO_JU handle errors
+            }
+            if(cancel) return;
+            afterDeleteUser();
+        })();
+    }
 
     return <Modal size="tiny" open={open} onClose={cancel}>
-        <Modal.Header>Delete user {userLoginName} ({userFullName})?</Modal.Header>
+        <Modal.Header>Delete user {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
         <Modal.Content>
             <p>This action is permanent</p>
         </Modal.Content>
         <Modal.Actions>
-            <Button onClick={deleteUser} icon="remove user" negative>Delete</Button>
-            <Button onClick={cancel} icon="cross" secondary>Cancel</Button>
+            <Button onClick={deleteUser} negative loading={loading ? true : undefined}><Icon name="remove user" />Delete</Button>
+            <Button onClick={cancel} secondary><Icon name="close" />Cancel</Button>
         </Modal.Actions>
     </Modal>
 }
@@ -118,12 +138,16 @@ function DeleteUserModal(props: DeleteUserModalProps) {
 interface UserEditProps {
     userDto: UserListingDto;
     setConfirmDeleteUser: () => void;
+    reloadList: () => void;
+    resetPassword: () => void;
 }
 
 function UserCard(props: UserEditProps) {
     const {
-        userDto: { fullName, activated, loginName, isAdministrator },
-        setConfirmDeleteUser
+        userDto: { id, fullName, activated, loginName, isAdministrator },
+        setConfirmDeleteUser,
+        reloadList,
+        resetPassword
     } = props;
 
     const [editMode, setEditMode] = useState(false);
@@ -143,12 +167,37 @@ function UserCard(props: UserEditProps) {
         setNewIsAdministrator(isAdministrator!);
     }, [isAdministrator]);
 
+    const [loading, setLoading] = useState(false);
+
+    const save = useCallback(() => {
+        let cancel = false;
+        setLoading(true);
+        (async () => {
+            try {
+                await api.usersUserIdPut({
+                    userId: id!,
+                    userEditDto: {
+                        fullName: newFullName,
+                        isAdministrator: newIsAdministrator,
+                        resetPassword: false
+                    }
+                });
+            } catch(e) {
+                // TODO_JU Handle errors
+            }
+            if(cancel) return;
+            reloadList();
+            setLoading(false);
+        })();
+        return () => { cancel = true; };
+    }, [newFullName, newIsAdministrator, id, reloadList]);
+
     return <Card>
         <Card.Content>
             <Card.Header>
                 {activated
                     ? <Icon name="user" />
-                    : <Popup trigger={<Icon name="lock" />} content={`'${loginName}' is locked out pending password reset`} />
+                    : <Popup trigger={<Icon name="lock" />} content={`'${loginName ?? '<unnamed>'}' is locked out pending password reset`} />
                 }
                 {loginName}
             </Card.Header>
@@ -157,10 +206,10 @@ function UserCard(props: UserEditProps) {
                 editMode && <>
                     <Form style={{ paddingTop: '1.5rem' }}>
                         <Form.Field>
-                            <Form.Input placeholder="Full Name" value={newFullName} onChange={e => setNewFullName(e.target.value)} />
+                            <Form.Input placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
                         </Form.Field>
                         <Form.Field>
-                            <Checkbox label="Admin" checked={newIsAdministrator} onChange={() => setNewIsAdministrator(!newIsAdministrator)} />
+                            <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={() => setNewIsAdministrator(!newIsAdministrator)} />
                         </Form.Field>
                     </Form>
                 </>
@@ -170,14 +219,69 @@ function UserCard(props: UserEditProps) {
             <div style={{float: 'right'}}>
                 {
                     editMode ? <>
+                        <Popup trigger={<Button size="small" icon="check" positive disabled={!newFullName} onClick={save} loading={loading ? true : undefined} />} content="Save" />
                         <Popup trigger={<Button size="small" icon="close" secondary onClick={() => setEditMode(false)} />} content="Discard" />
-                        <Popup trigger={<Button size="small" icon="check" positive disabled={!newFullName} />} onClick={() => console.debug("TODO_JU")} content="Save" />
                     </> : <>
                         <Popup trigger={<Button size="small" icon="write" primary onClick={startEditing} />} content="Edit" />
                     </>
                 }
-                <Popup trigger={<Button size="small" icon="unlock" color="teal" />} onClick={() => console.debug("TODO_JU")} content="Reset Password" />
-                <Popup trigger={<Button size="small" icon="remove user" color="orange" onClick={setConfirmDeleteUser} />} content="Delete" />
+                <Popup trigger={<Button size="small" icon="unlock" onClick={resetPassword} color="teal" />} content="Reset Password" />
+                <Popup trigger={<Button size="small" icon="remove user" onClick={setConfirmDeleteUser} color="orange" />} content="Delete" />
+            </div>
+        </Card.Content>
+    </Card>;
+}
+
+interface NewUserCardProps {
+    afterAddUser: () => void;
+}
+
+function NewUserCard(props: NewUserCardProps) {
+    const { afterAddUser } = props;
+
+    const [newUserFullName, setNewUserFullName] = useState('');
+    const [newUserIsAdmin, setNewUserIsAdmin] = useState(false);
+
+    const [loading, setLoading] = useState(false);
+    const add = useCallback(() => {
+        let cancel = false;
+        setLoading(true);
+        (async () => {
+            try {
+                await api.usersPost({
+                    userAddRequestDto: {
+                        fullName: newUserFullName,
+                        isAdministrator: newUserIsAdmin
+                    }
+                });
+            } catch(e) {
+                // TODO_JU Handle errors
+            }
+            if(cancel) return;
+            afterAddUser();
+            setLoading(false);
+        })();
+        return () => { cancel = true; };
+    }, [newUserFullName, newUserIsAdmin, afterAddUser]);
+
+    return <Card>
+        <Card.Content>
+            <Card.Header>
+                <Icon name="add user" />
+                New User
+            </Card.Header>
+            <Form style={{ paddingTop: '1.5rem' }}>
+                <Form.Field>
+                    <Form.Input disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
+                </Form.Field>
+                <Form.Field>
+                    <Checkbox disabled={loading} label="Admin" checked={newUserIsAdmin} onChange={e => setNewUserIsAdmin(!newUserIsAdmin)}/>
+                </Form.Field>
+            </Form>
+        </Card.Content>
+        <Card.Content extra>
+            <div style={{float: 'right'}}>
+                <Popup trigger={<Button onClick={add} disabled={!newUserFullName} loading={loading} positive size="small" icon="check" />} content="Add" />
             </div>
         </Card.Content>
     </Card>;
@@ -187,16 +291,16 @@ function ManageUsers() {
     // TODO_JU This route and file browser should have navigation and a logout button
 
     const navigate = useNavigate();
-    const [users, loadingUsers] = useEndpointData(
+    const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.usersGet(), []),
         useCallback(e => {
             const response = e as Response;
             if(response.status === 403)
                 navigate(routes.unauthorised);
+            else if(response.status === 401)
+                navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
             else navigate(routes.serverError);
         }, [navigate]));
-
-    const [newUserFullName, setNewUserFullName] = useState('');
 
     const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
 
@@ -211,7 +315,7 @@ function ManageUsers() {
         if(!!textFilter) {
             predicates.push(u =>
                 u.fullName!.toLocaleLowerCase().includes(textFilter)
-                || u.loginName!.toLocaleLowerCase().includes(textFilter));
+                || (u.loginName?.toLocaleLowerCase().includes(textFilter) ?? false));
         }
         if(activeStatusFilter !== null) {
             predicates.push(u => u.activated === activeStatusFilter);
@@ -223,6 +327,9 @@ function ManageUsers() {
         if(!predicates.length) return users!;
         return users!.filter(u => predicates.every(p => p(u)));
     }, [users, loadingUsers, textFilter, activeStatusFilter, adminFilter]);
+
+    const [resetPasswordUser, setResetPasswordUser] = useState<UserListingDto | null>(null);
+    const [inviteKey, setInviteKey] = useState('');
 
     if(loadingUsers) return <CenteredSpinner />;
 
@@ -250,38 +357,31 @@ function ManageUsers() {
         </Grid>
         <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
         {
-            filteredUsers!.map(u =>
-                <UserCard key={u.id!} userDto={u} setConfirmDeleteUser={() => setConfirmDeleteUser(u)} />)
+            filteredUsers!.map(u => <UserCard
+                key={u.id!}
+                userDto={u}
+                setConfirmDeleteUser={() => setConfirmDeleteUser(u)}
+                reloadList={reloadUsers}
+                resetPassword={() => setResetPasswordUser(u)}
+                />)
         }
-            <Card>
-                <Card.Content>
-                    <Card.Header>
-                        <Icon name="add user" />
-                        New User
-                    </Card.Header>
-                    <Form style={{ paddingTop: '1.5rem' }}>
-                        <Form.Field>
-                            <Form.Input placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
-                        </Form.Field>
-                        <Form.Field>
-                            <Checkbox label="Admin"/>
-                        </Form.Field>
-                    </Form>
-                </Card.Content>
-                <Card.Content extra>
-                    <div style={{float: 'right'}}>
-                        <Popup trigger={<Button onclick={() => console.debug("TODO_JU")} disabled={!newUserFullName} positive size="small" icon="check" />} content="Add" />
-                    </div>
-                </Card.Content>
-            </Card>
+            <NewUserCard afterAddUser={reloadUsers}/>
         </Card.Group>
-        <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={false} close={() => {}} />
+        <ConfirmResetPasswordModal
+            userDto={resetPasswordUser}
+            open={!!resetPasswordUser && !inviteKey}
+            afterResetPassword={invKey => { setInviteKey(invKey); reloadUsers(); }}
+            cancel={() => setResetPasswordUser(null)} />
+        <InviteLinkModal
+            inviteKey={inviteKey}
+            userFullName={resetPasswordUser?.fullName ?? ''}
+            open={!!inviteKey}
+            close={() => { setResetPasswordUser(null); setInviteKey(''); }} />
         <DeleteUserModal
-            userLoginName={confirmDeleteUser?.loginName!}
-            userFullName={confirmDeleteUser?.fullName!}
             open={!!confirmDeleteUser}
+            userDto={confirmDeleteUser}
             cancel={() => setConfirmDeleteUser(null)}
-            deleteUser={() => {}} />
+            afterDeleteUser={() => { setConfirmDeleteUser(null); reloadUsers(); }} />
     </Container>;
 }
 

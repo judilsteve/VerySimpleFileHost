@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function useEndpointData<T>(
     getEndpointData: () => Promise<T>,
     handleError?: (error: any) => void)
-    : [T | undefined, boolean] {
+    : [T | undefined, boolean, () => void] {
 
     const [endpointData, setEndpointData] = useState<T | undefined>(undefined);
 
-    useEffect(() => {
+    const reloadEndpointData = useCallback(() => {
         setEndpointData(undefined);
         let cancel = false;
         (async () => {
@@ -26,7 +26,9 @@ function useEndpointData<T>(
         return () => { cancel = true; }
     }, [getEndpointData, handleError]);
 
-    return [endpointData, !endpointData];
+    useEffect(reloadEndpointData, [reloadEndpointData]);
+
+    return [endpointData, !endpointData, reloadEndpointData];
 }
 
 export default useEndpointData;

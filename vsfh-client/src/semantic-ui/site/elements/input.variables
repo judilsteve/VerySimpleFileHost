@@ -7,3 +7,5 @@
 @inputAutoFillBorder: 1px solid #a9a47e;
 @focusBorderColor: #8d1b21;
 @focusColor: #cdcdcd;
+
+// TODO_JU Fix text highlight colour

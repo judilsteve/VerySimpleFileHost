@@ -115,6 +115,7 @@ using(var scope = app.Services.CreateAsyncScope())
 
     if(!await context.Users.AnyAsync(u => u.IsAdministrator))
     {
+        // TODO_JU What if all admins are locked out?
         await Console.Out.WriteLineAsync("No administrators were found in the database. Creating one now. What should their name be?");
         string? name;
         do
