@@ -23,7 +23,7 @@ function useErrorHandler() {
                     message: responseObject.reason!,
                     userName: responseObject.userName!
                 };
-                let then = `${location.pathname}${location.search}${location.hash}`; // TODO_JU Test this
+                let then = `${location.pathname}${location.search}${location.hash}`;
                 const destination = `${routes.changePassword}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
                 navigate(destination, { state: changePasswordProps });
                 return true;
