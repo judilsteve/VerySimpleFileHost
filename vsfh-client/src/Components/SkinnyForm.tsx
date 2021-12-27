@@ -8,7 +8,7 @@ export interface SkinnyFormProps {
 function SkinnyForm(props: SkinnyFormProps) {
     const { maxWidth, children } = props;
 
-    return <div style={{ maxWidth: maxWidth ?? 300, margin: "auto", paddingTop: "10vh" }}>
+    return <div style={{ maxWidth: maxWidth ?? 300, marginLeft: "auto", marginRight: "auto", paddingTop: "10vh" }}>
         {children}
     </div>
 }

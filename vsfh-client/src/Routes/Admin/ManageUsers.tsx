@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { Button, Card, Checkbox, Container, Form, Grid, Header, Icon, Input, Modal, Popup } from "semantic-ui-react";
+import { Button, Card, Checkbox, Container, Form, Grid, Header, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
 import { Configuration, UserListingDto, UsersApi } from "../../API";
 import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
@@ -65,9 +65,14 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
     const { userDto, open, afterResetPassword, cancel } = props;
 
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    useEffect(() => { if(open) setError(''); }, [open]);
+
+    const navigate = useNavigate();
     const resetPassword = () => {
         let cancel = false;
         setLoading(true);
+        setError('');
         (async () => {
             let response;
             try {
@@ -80,7 +85,22 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
                     }
                 });
             } catch(e) {
-                // TODO_JU handle errors
+                if(cancel) return;
+                const errorResponse = e as Response;
+                if(errorResponse.status === 403) {
+                    navigate(routes.unauthorised);
+                    return;
+                }
+                else if(errorResponse.status === 401) {
+                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
+                    return;
+                }
+                else if (errorResponse.status === 404)
+                    setError('User does not exist');
+                else {
+                    navigate(routes.serverError);
+                    return;
+                }
             }
             if(cancel) return;
             if(response) afterResetPassword(response.inviteKey!);
@@ -92,6 +112,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
         <Modal.Header>Reset password for {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
         <Modal.Content>
             <p>This will disable their account until they open the new invite link.</p>
+            {error && <Message error header="Reset Failed" content={error} />}
         </Modal.Content>
         <Modal.Actions>
             <Button onClick={resetPassword} color="teal" loading={loading ? true : undefined}><Icon name="unlock" />Reset</Button>
@@ -111,14 +132,34 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const { userDto, open, afterDeleteUser, cancel } = props;
 
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    useEffect(() => { if(open) setError(''); }, [open]);
+
+    const navigate = useNavigate();
     const deleteUser = () => {
         let cancel = false;
         setLoading(true);
+        setError('');
         (async () => {
             try {
                 await api.usersUserIdDelete({ userId: userDto?.id! });
             } catch(e) {
-                // TODO_JU handle errors
+                if(cancel) return;
+                const errorResponse = e as Response;
+                if(errorResponse.status === 403) {
+                    navigate(routes.unauthorised);
+                }
+                else if(errorResponse.status === 401) {
+                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
+                }
+                else if (errorResponse.status === 404) {
+                    setError('User does not exist');
+                    setLoading(false);
+                }
+                else {
+                    navigate(routes.serverError);
+                }
+                return;
             }
             if(cancel) return;
             afterDeleteUser();
@@ -130,6 +171,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
         <Modal.Header>Delete user {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
         <Modal.Content>
             <p>This action is permanent</p>
+            {error && <Message error header="Reset Failed" content={error} />}
         </Modal.Content>
         <Modal.Actions>
             <Button onClick={deleteUser} negative loading={loading ? true : undefined}><Icon name="remove user" />Delete</Button>
@@ -157,6 +199,7 @@ function UserCard(props: UserEditProps) {
     const startEditing = useCallback(() => {
         setNewFullName(fullName!);
         setNewIsAdministrator(isAdministrator!);
+        setError('');
         setEditMode(true);
     }, [fullName, isAdministrator]);
 
@@ -171,10 +214,12 @@ function UserCard(props: UserEditProps) {
     }, [isAdministrator]);
 
     const [loading, setLoading] = useState(false);
-
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
     const save = useCallback(() => {
         let cancel = false;
         setLoading(true);
+        setError('');
         (async () => {
             try {
                 await api.usersUserIdPut({
@@ -186,14 +231,29 @@ function UserCard(props: UserEditProps) {
                     }
                 });
             } catch(e) {
-                // TODO_JU Handle errors
+                if(cancel) return;
+                const errorResponse = e as Response;
+                if(errorResponse.status === 403) {
+                    navigate(routes.unauthorised);
+                }
+                else if(errorResponse.status === 401) {
+                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
+                }
+                else if (errorResponse.status === 404) {
+                    setError('User does not exist');
+                    setLoading(false);
+                }
+                else {
+                    navigate(routes.serverError);
+                }
+                return;
             }
             if(cancel) return;
             reloadList();
             setLoading(false);
         })();
         return () => { cancel = true; };
-    }, [newFullName, newIsAdministrator, id, reloadList]);
+    }, [newFullName, newIsAdministrator, id, reloadList, navigate]);
 
     return <Card>
         <Card.Content>
@@ -207,13 +267,14 @@ function UserCard(props: UserEditProps) {
             <Card.Meta>{fullName}{isAdministrator ? " (Admin)" : ""}</Card.Meta>
             {
                 editMode && <>
-                    <Form style={{ paddingTop: '1.5rem' }}>
+                    <Form error={!!error} style={{ paddingTop: '1.5rem' }}>
                         <Form.Field>
                             <Form.Input placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
                         </Form.Field>
                         <Form.Field>
                             <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={() => setNewIsAdministrator(!newIsAdministrator)} />
                         </Form.Field>
+                        <Message error header="Edit Failed" content={error} />
                     </Form>
                 </>
             }
@@ -246,9 +307,12 @@ function NewUserCard(props: NewUserCardProps) {
     const [newUserIsAdmin, setNewUserIsAdmin] = useState(false);
 
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
     const add = useCallback(() => {
         let cancel = false;
         setLoading(true);
+        setError('');
         (async () => {
             try {
                 await api.usersPost({
@@ -258,14 +322,26 @@ function NewUserCard(props: NewUserCardProps) {
                     }
                 });
             } catch(e) {
-                // TODO_JU Handle errors
+                if(cancel) return;
+                const errorResponse = e as Response;
+                if(errorResponse.status === 403) {
+                    navigate(routes.unauthorised);
+                }
+                else if(errorResponse.status === 401) {
+                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
+                }
+                else {
+                    setError('An unexpected error occurred');
+                    setLoading(false);
+                }
+                return;
             }
             if(cancel) return;
             afterAddUser();
             setLoading(false);
         })();
         return () => { cancel = true; };
-    }, [newUserFullName, newUserIsAdmin, afterAddUser]);
+    }, [newUserFullName, newUserIsAdmin, afterAddUser, navigate]);
 
     return <Card>
         <Card.Content>
@@ -273,13 +349,14 @@ function NewUserCard(props: NewUserCardProps) {
                 <Icon name="add user" />
                 New User
             </Card.Header>
-            <Form style={{ paddingTop: '1.5rem' }}>
+            <Form error={!!error} style={{ paddingTop: '1.5rem' }}>
                 <Form.Field>
                     <Form.Input disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
                 </Form.Field>
                 <Form.Field>
                     <Checkbox disabled={loading} label="Admin" checked={newUserIsAdmin} onChange={e => setNewUserIsAdmin(!newUserIsAdmin)}/>
                 </Form.Field>
+                <Message error header="Add Failed" content={error} />
             </Form>
         </Card.Content>
         <Card.Content extra>

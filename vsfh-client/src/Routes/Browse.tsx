@@ -1,10 +1,15 @@
 import { usePageTitle } from "../Hooks/usePageTitle";
-import AuthenticatedRoute from "../Routing/AuthenticatedRoute";
 
 function Browse() {
     usePageTitle('Browse');
 
-    return <AuthenticatedRoute>TODO_JU File Browser page</AuthenticatedRoute>;
+    // TODO_JU
+    // Text filter
+    // Toggle for archive download format
+    // Hash parsing
+    // Navigation and Log Out
+
+    return <></>;
 }
 
 export default Browse;
