@@ -8,6 +8,7 @@ function useErrorHandler() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // TODO_JU It would be cool to have modals before redirecting to login/change password, to let the user know what's happening
     return useCallback(async (e: Response) => {
         if(e.status === 401) {
             let responseObject: AuthenticationFailureDto;
