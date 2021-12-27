@@ -20,10 +20,11 @@ public enum AuthenticationFailureReasonCode
 
 public class AuthenticationFailureDto
 {
-    public static readonly AuthenticationFailureDto PasswordExpired = new()
+    public static AuthenticationFailureDto PasswordExpired(string userName) => new()
     {
         ReasonCode = AuthenticationFailureReasonCode.PasswordExpired,
-        Reason = "Your password has expired and must be changed"
+        Reason = "Your password has expired and must be changed",
+        UserName = userName
     };
 
     public static readonly AuthenticationFailureDto InvalidCredentials = new()
@@ -40,6 +41,7 @@ public class AuthenticationFailureDto
 
     public AuthenticationFailureReasonCode? ReasonCode { get; init; }
     public string? Reason { get; init; }
+    public string? UserName { get; init; }
 }
 
 public class AuthenticationFilter : IAsyncAuthorizationFilter
@@ -65,6 +67,7 @@ public class AuthenticationFilter : IAsyncAuthorizationFilter
             .Select(u => new
             {
                 u.IsAdministrator,
+                u.LoginName,
                 u.LastPasswordChangeUtc,
                 u.RejectCookiesOlderThanUtc,
                 HasPassword = u.PasswordHash != null
@@ -91,7 +94,7 @@ public class AuthenticationFilter : IAsyncAuthorizationFilter
 
         if(PasswordUtils.PasswordExpired(userSecurityInfo.LastPasswordChangeUtc, config.PasswordExpiryDays))
         {
-            return (false, AuthenticationFailureDto.PasswordExpired);
+            return (false, AuthenticationFailureDto.PasswordExpired(userSecurityInfo.LoginName!));
         }
 
         return (true, null);

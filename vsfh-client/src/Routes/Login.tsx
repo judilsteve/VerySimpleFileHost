@@ -55,7 +55,7 @@ function Login() {
                         userName: userName
                     };
                     let destination = routes.changePassword;
-                    if(then) destination += `?${ChangePasswordRouteParameters.then}=${then}`;
+                    if(then) destination += `?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
                     navigate(destination, { state: changePasswordProps });
                 }
                 else setError(responseObject.reason ?? 'Unknown authentication error');

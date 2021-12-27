@@ -6,12 +6,9 @@ import { apiConfig, loginApi } from "../../apiInstances";
 import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
 import IconLink from "../../Components/IconLink";
+import useErrorHandler from "../../Hooks/useErrorHandler";
 import useEndpointData from "../../Hooks/useEndpointData";
 import { usePageTitle } from "../../Hooks/usePageTitle";
-import { LoginRouteParameters } from "../Login";
-
-// TODO_JU The error handlers in here do not interrogate 401s for expired passwords
-// And I should realllly centralise the error handling logic somehow
 
 const api = new UsersApi(apiConfig);
 
@@ -73,7 +70,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
     const [error, setError] = useState('');
     useEffect(() => { if(open) setError(''); }, [open]);
 
-    const navigate = useNavigate();
+    const errorHandler = useErrorHandler();
     const resetPassword = () => {
         let cancel = false;
         setLoading(true);
@@ -92,14 +89,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
             } catch(e) {
                 if(cancel) return;
                 const errorResponse = e as Response;
-                if(errorResponse.status === 403) {
-                    navigate(routes.unauthorised);
-                    return;
-                }
-                else if(errorResponse.status === 401) {
-                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
-                    return;
-                }
+                if(await errorHandler(errorResponse)) {}
                 else if (errorResponse.status === 404)
                     setError('User does not exist');
                 else {
@@ -139,7 +129,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const [error, setError] = useState('');
     useEffect(() => { if(open) setError(''); }, [open]);
 
-    const navigate = useNavigate();
+    const errorHandler = useErrorHandler();
     const deleteUser = () => {
         let cancel = false;
         setLoading(true);
@@ -150,12 +140,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
             } catch(e) {
                 if(cancel) return;
                 const errorResponse = e as Response;
-                if(errorResponse.status === 403) {
-                    navigate(routes.unauthorised);
-                }
-                else if(errorResponse.status === 401) {
-                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
-                }
+                if(await errorHandler(errorResponse)) return;
                 else if (errorResponse.status === 404) {
                     setError('User does not exist');
                     setLoading(false);
@@ -219,7 +204,7 @@ function UserCard(props: UserEditProps) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
+    const errorHandler = useErrorHandler();
     const save = useCallback(() => {
         let cancel = false;
         setLoading(true);
@@ -237,12 +222,7 @@ function UserCard(props: UserEditProps) {
             } catch(e) {
                 if(cancel) return;
                 const errorResponse = e as Response;
-                if(errorResponse.status === 403) {
-                    navigate(routes.unauthorised);
-                }
-                else if(errorResponse.status === 401) {
-                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
-                }
+                if(await errorHandler(errorResponse)) return;
                 else if (errorResponse.status === 404) {
                     setError('User does not exist');
                     setLoading(false);
@@ -257,7 +237,7 @@ function UserCard(props: UserEditProps) {
             setLoading(false);
         })();
         return () => { cancel = true; };
-    }, [newFullName, newIsAdministrator, id, reloadList, navigate]);
+    }, [newFullName, newIsAdministrator, id, reloadList, errorHandler]);
 
     return <Card>
         <Card.Content>
@@ -312,7 +292,7 @@ function NewUserCard(props: NewUserCardProps) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
+    const errorHandler = useErrorHandler();
     const add = useCallback(() => {
         let cancel = false;
         setLoading(true);
@@ -328,12 +308,7 @@ function NewUserCard(props: NewUserCardProps) {
             } catch(e) {
                 if(cancel) return;
                 const errorResponse = e as Response;
-                if(errorResponse.status === 403) {
-                    navigate(routes.unauthorised);
-                }
-                else if(errorResponse.status === 401) {
-                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
-                }
+                if(await errorHandler(errorResponse)) return;
                 else {
                     setError('An unexpected error occurred');
                     setLoading(false);
@@ -345,7 +320,7 @@ function NewUserCard(props: NewUserCardProps) {
             setLoading(false);
         })();
         return () => { cancel = true; };
-    }, [newUserFullName, newUserIsAdmin, afterAddUser, navigate]);
+    }, [newUserFullName, newUserIsAdmin, afterAddUser, errorHandler]);
 
     return <Card>
         <Card.Content>
@@ -374,17 +349,15 @@ function NewUserCard(props: NewUserCardProps) {
 function ManageUsers() {
     usePageTitle('Manage Users');
 
+    const errorHandler = useErrorHandler();
     const navigate = useNavigate();
     const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.usersGet(), []),
-        useCallback(e => {
+        useCallback(async e => {
             const response = e as Response;
-            if(response.status === 403)
-                navigate(routes.unauthorised);
-            else if(response.status === 401)
-                navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(routes.manageUsers)}`);
+            if(await errorHandler(response)) return;
             else navigate(routes.serverError);
-        }, [navigate]));
+        }, [navigate, errorHandler]));
 
     const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
 

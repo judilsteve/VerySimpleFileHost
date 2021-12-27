@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 function useEndpointData<T>(
     getEndpointData: () => Promise<T>,
-    handleError?: (error: any) => void)
+    handleError?: (error: any) => Promise<void> | void)
     : [T | undefined, boolean, () => void] {
 
     const [endpointData, setEndpointData] = useState<T | undefined>(undefined);
@@ -16,7 +16,7 @@ function useEndpointData<T>(
                 newEndpointData = await getEndpointData();
             } catch(e) {
                 if(handleError) {
-                    handleError(e);
+                    await handleError(e);
                     return;
                 }
                 else throw e;

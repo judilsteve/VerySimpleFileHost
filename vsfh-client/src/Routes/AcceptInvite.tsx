@@ -87,7 +87,7 @@ function AcceptInvite() {
         startTabIndex: 2
     };
 
-    return <SkinnyForm maxWidth={350}>
+    return <SkinnyForm width={350}>
         <Header as="h1" style={{ marginBottom: 0 }}>Welcome</Header>
         <p>Choose a username and password</p>
         <Form error={!!error}>

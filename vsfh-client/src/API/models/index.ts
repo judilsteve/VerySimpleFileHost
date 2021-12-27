@@ -77,6 +77,12 @@ export interface AuthenticationFailureDto {
      * @memberof AuthenticationFailureDto
      */
     reason?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthenticationFailureDto
+     */
+    userName?: string | null;
 }
 /**
  * 

@@ -92,7 +92,7 @@ function ChangePassword(props: ChangePasswordProps) {
         navigate(then ?? routes.browseFiles);
     };
 
-    return <SkinnyForm maxWidth={350}>
+    return <SkinnyForm width={350}>
         <Header as="h1" style={{ marginBottom: 0 }}>Change Password</Header>
         {
             message && <p><em>{message}</em></p>

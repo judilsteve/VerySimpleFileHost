@@ -1,14 +1,14 @@
 import React from "react";
 
 export interface SkinnyFormProps {
-    maxWidth?: number;
+    width?: number;
     children: React.ReactNode;
 }
 
 function SkinnyForm(props: SkinnyFormProps) {
-    const { maxWidth, children } = props;
+    const { width, children } = props;
 
-    return <div style={{ maxWidth: maxWidth ?? 300, marginLeft: "auto", marginRight: "auto", paddingTop: "10vh" }}>
+    return <div style={{ width: width ?? 300, marginLeft: "auto", marginRight: "auto", paddingTop: "10vh" }}>
         {children}
     </div>
 }

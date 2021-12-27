@@ -166,7 +166,7 @@ public class LoginController : Controller
             if(userDetails.LastPasswordChangeUtc.AddDays(config.PasswordExpiryDays.Value) < DateTime.UtcNow)
             {
                 await TaskUtils.RandomWait();
-                return Unauthorized(AuthenticationFailureDto.PasswordExpired);
+                return Unauthorized(AuthenticationFailureDto.PasswordExpired(loginAttempt.UserName));
             }
         }
 
