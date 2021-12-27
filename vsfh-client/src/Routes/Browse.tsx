@@ -46,12 +46,11 @@ function Browse() {
         }, [])
     );
 
-    const fileList = treeLoading ? <Loader indeterminate /> : <List>
+    const fileList = treeLoading ? <Loader indeterminate /> : <List size="large">
         {
             tree!.subdirectories?.map(d => <List.Item>
-                <Icon fitted link name="triangle right" />
-                <Icon fitted name="folder" />
-                {d.displayName}
+                <Icon fitted name="folder" /> {/* TODO_JU Change to "folder open" when expanded */}
+                {d.displayName /* TODO_JU Make this the link and/or the expand button for easier clicking? */}
                 <IconLink name="download" fitted href={`${window.location.origin}/Files/Download?path=${encodeURIComponent(d.displayName!)}&archiveFormat=${ArchiveFormat.Tar}`} newTab />
             </List.Item>)
         }
