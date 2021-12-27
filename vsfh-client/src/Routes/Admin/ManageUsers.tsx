@@ -104,7 +104,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const { userLoginName, userFullName, open, deleteUser, cancel } = props;
 
     return <Modal size="tiny" open={open} onClose={cancel}>
-        <Modal.Header>Delete user '{userLoginName}' ({userFullName})?</Modal.Header>
+        <Modal.Header>Delete user {userLoginName} ({userFullName})?</Modal.Header>
         <Modal.Content>
             <p>This action is permanent</p>
         </Modal.Content>
@@ -159,6 +159,17 @@ function ManageUsers() {
         })
     }, []);
 
+    const stopEditing = useCallback((userId: string) => {
+        setEditUsers(editUsers => {
+            const newEditUsers: {[userId: string]: UserEditModel} = {};
+            for(const editUserId of Object.keys(editUsers)) {
+                if(editUserId !== userId)
+                    newEditUsers[editUserId] = editUsers[editUserId]; 
+            }
+            return newEditUsers;
+        })
+    }, []);
+
     const setUserFullName = useCallback((userId: string, fullName: string) => {
         setEditUsers(editUsers => {
             const user = editUsers[userId];
@@ -175,12 +186,11 @@ function ManageUsers() {
         });
     }, []);
 
+    const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
+
     if(loadingUsers) return <CenteredSpinner />;
 
-    // TODO_JU:
-    // "Are you sure?" modal for deleting a user
-    // Modal with copyable invite link when adding a user or resetting their password
-    // Colour scheme for everything here
+    // TODO_JU Text filter, combo buttons for admin/user/all and active/locked/all
 
     return <Container>
         <Header as="h1" style={{ paddingTop: "1rem" }}>Manage Users</Header>
@@ -214,14 +224,14 @@ function ManageUsers() {
                     <div style={{float: 'right'}}>
                         {
                             editUsers[u.id!] ? <>
-                                <Popup trigger={<Button size="small" icon="close" secondary />} content="Discard" />
+                                <Popup trigger={<Button size="small" icon="close" secondary onClick={() => stopEditing(u.id!)} />} content="Discard" />
                                 <Popup trigger={<Button size="small" icon="check" positive disabled={!editUsers[u.id!].fullName} />} content="Save" />
                             </> : <>
                                 <Popup trigger={<Button size="small" icon="write" primary onClick={() => editUser(u)} />} content="Edit" />
                             </>
                         }
                         <Popup trigger={<Button size="small" icon="unlock" color="teal" />} content="Reset Password" />
-                        <Popup trigger={<Button size="small" icon="remove user" color="orange" />} content="Delete" />
+                        <Popup trigger={<Button size="small" icon="remove user" color="orange" onClick={() => setConfirmDeleteUser(u)} />} content="Delete" />
                     </div>
                 </Card.Content>
             </Card>)
@@ -246,7 +256,12 @@ function ManageUsers() {
             </Card>
         </Card.Group>
         <InviteLinkModal inviteKey="TODO_JU" userFullName="TODO_JU" open={false} close={() => {}} />
-        <DeleteUserModal userLoginName="TODO_JU" userFullName="TODO_JU" open={false} cancel={() => {}} deleteUser={() => {}} />
+        <DeleteUserModal
+            userLoginName={confirmDeleteUser?.loginName!}
+            userFullName={confirmDeleteUser?.fullName!}
+            open={!!confirmDeleteUser}
+            cancel={() => setConfirmDeleteUser(null)}
+            deleteUser={() => {}} />
     </Container>;
 }
 
