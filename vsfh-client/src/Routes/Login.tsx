@@ -7,6 +7,7 @@ import { routes } from "../App";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
+import { usePageTitle } from "../Hooks/usePageTitle";
 import { ChangePasswordProps, ChangePasswordRouteParameters } from "./ChangePassword";
 
 export enum LoginRouteParameters {
@@ -16,6 +17,8 @@ export enum LoginRouteParameters {
 const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Remove basePath hack?
 
 function Login() {
+    usePageTitle('Log In');
+
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);

@@ -5,6 +5,7 @@ import { Configuration, UserListingDto, UsersApi } from "../../API";
 import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
 import useEndpointData from "../../Hooks/useEndpointData";
+import { usePageTitle } from "../../Hooks/usePageTitle";
 import { LoginRouteParameters } from "../Login";
 
 const api = new UsersApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instances for this?
@@ -291,6 +292,8 @@ function NewUserCard(props: NewUserCardProps) {
 
 function ManageUsers() {
     // TODO_JU This route and file browser should have navigation and a logout button
+
+    usePageTitle('Manage Users');
 
     const navigate = useNavigate();
     const [users, loadingUsers, reloadUsers] = useEndpointData(

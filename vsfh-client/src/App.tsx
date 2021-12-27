@@ -14,7 +14,7 @@ export const routes = {
     notFound: '/Error/NotFound'
 };
 
-// TODO_JU Page titles and favicons
+// TODO_JU favicons
 
 function App() {
     return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', justifyContent: 'space-between' }}>

@@ -8,10 +8,13 @@ import { inviteKeyParamName, routes } from "../App";
 import useEndpointData from "../Hooks/useEndpointData";
 import SetPassword from "../Components/SetPassword";
 import { useParams } from "react-router";
+import { usePageTitle } from "../Hooks/usePageTitle";
 
 const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instances for this?
 
 function AcceptInvite() {
+    usePageTitle('Accept Invite');
+
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [checkPassword, setCheckPassword] = useState('');

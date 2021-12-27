@@ -8,6 +8,7 @@ import RememberMe from "../Components/RememberMe";
 import SetPassword from "../Components/SetPassword";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
+import { usePageTitle } from "../Hooks/usePageTitle";
 
 export interface ChangePasswordProps {
     message?: string;
@@ -22,6 +23,8 @@ const api = new LoginApi(new Configuration({ basePath: window.location.origin })
 
 function ChangePassword(props: ChangePasswordProps) {
     const { message, userName } = props;
+
+    usePageTitle('Change Password');
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
