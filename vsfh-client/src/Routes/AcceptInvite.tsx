@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
-import { AuthenticationFailureDto, Configuration, LoginApi } from "../API";
+import { AuthenticationFailureDto } from "../API";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import { useNavigate } from "react-router";
@@ -9,8 +9,9 @@ import useEndpointData from "../Hooks/useEndpointData";
 import SetPassword from "../Components/SetPassword";
 import { useParams } from "react-router";
 import { usePageTitle } from "../Hooks/usePageTitle";
-
-const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instances for this?
+import { loginApi as api } from '../apiInstances';
+import { useSharedState } from "../Hooks/useSharedState";
+import { rememberMeState } from "../State/sharedState";
 
 function AcceptInvite() {
     usePageTitle('Accept Invite');
@@ -18,7 +19,7 @@ function AcceptInvite() {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [checkPassword, setCheckPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
+    const [rememberMe, ] = useSharedState(rememberMeState);
     const [passwordValid, setPasswordValid] = useState(false);
 
     const [loading, setLoading] = useState(false);
@@ -73,8 +74,7 @@ function AcceptInvite() {
         && passwordValid;
 
     const rememberMeProps = {
-        allowRememberMe: authConfig?.allowRememberMe ?? false,
-        setRememberMe,
+        allowRememberMe: authConfig?.allowRememberMe,
         tabIndex: 5
     };
 

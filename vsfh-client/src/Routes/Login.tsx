@@ -2,26 +2,27 @@ import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 import { useSearchParams } from "react-router-dom";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
-import { AuthenticationFailureDto, AuthenticationFailureReasonCode, Configuration, LoginApi } from "../API";
+import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
 import { routes } from "../App";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
 import { usePageTitle } from "../Hooks/usePageTitle";
 import { ChangePasswordProps, ChangePasswordRouteParameters } from "./ChangePassword";
+import { loginApi as api } from "../apiInstances";
+import { useSharedState } from "../Hooks/useSharedState";
+import { rememberMeState } from "../State/sharedState";
 
 export enum LoginRouteParameters {
     then = 'then'
 };
-
-const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Remove basePath hack?
 
 function Login() {
     usePageTitle('Log In');
 
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
+    const [rememberMe, ] = useSharedState(rememberMeState);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -77,8 +78,7 @@ function Login() {
     }, []));
 
     const rememberMeProps = {
-        allowRememberMe: authConfig?.allowRememberMe ?? false,
-        setRememberMe,
+        allowRememberMe: authConfig?.allowRememberMe,
         tabIndex: 4
     };
 

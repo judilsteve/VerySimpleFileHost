@@ -2,13 +2,16 @@ import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 import { useSearchParams } from "react-router-dom";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
-import { AuthenticationFailureDto, Configuration, LoginApi } from "../API";
+import { AuthenticationFailureDto } from "../API";
 import { routes } from "../App";
 import RememberMe from "../Components/RememberMe";
 import SetPassword from "../Components/SetPassword";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
 import { usePageTitle } from "../Hooks/usePageTitle";
+import { loginApi as api } from '../apiInstances';
+import { useSharedState } from "../Hooks/useSharedState";
+import { rememberMeState } from "../State/sharedState";
 
 export interface ChangePasswordProps {
     message?: string;
@@ -18,8 +21,6 @@ export interface ChangePasswordProps {
 export enum ChangePasswordRouteParameters {
     then = 'then'
 };
-
-const api = new LoginApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instance for this?
 
 function ChangePassword(props: ChangePasswordProps) {
     const { message, userName } = props;
@@ -51,10 +52,9 @@ function ChangePassword(props: ChangePasswordProps) {
         currentPassword
     };
 
-    const [rememberMe, setRememberMe] = useState(false);
+    const [rememberMe, ] = useSharedState(rememberMeState);
     const rememberMeProps = {
-        allowRememberMe: authConfig?.allowRememberMe ?? false,
-        setRememberMe,
+        allowRememberMe: authConfig?.allowRememberMe,
         tabIndex: 5
     };
 

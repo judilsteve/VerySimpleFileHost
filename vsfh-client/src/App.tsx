@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Navigate, Route } from 'react-router-dom';
-import { Icon } from 'semantic-ui-react';
+import IconLink from './Components/IconLink';
 import SuspensefulComponent from './Routing/SuspensefulComponent';
 
 export const inviteKeyParamName = 'inviteKey';
@@ -15,7 +15,7 @@ export const routes = {
 };
 
 function App() {
-    return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', justifyContent: 'space-between' }}>
+    return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Navigate to={routes.browseFiles}/>}/>
@@ -26,14 +26,11 @@ function App() {
                 <Route path={routes.browseFiles} element={<SuspensefulComponent importFunc={() => import('./Routes/Browse')}/>}/>
                 <Route path={routes.serverError} element={<SuspensefulComponent importFunc={() => import('./Routes/Error/ServerError')}/>}/>
                 <Route path={routes.unauthorised} element={<SuspensefulComponent importFunc={() => import('./Routes/Error/Unauthorised')}/>}/>
-                <Route path={routes.notFound} element={<SuspensefulComponent importFunc={() => import('./Routes/Error/NotFound')}/>}/>
-                <Route path="*" element={<Navigate to={routes.notFound}/>}/>
+                <Route path="*" element={<SuspensefulComponent importFunc={() => import('./Routes/Error/NotFound')}/>}/>
             </Routes>
         </BrowserRouter>
-        <div style={{ width: '100%', padding: '5px', textAlign: 'right' }}>
-            <a style={{ all: 'unset' }} href="https://github.com/judilsteve/VerySimpleFileHost">
-                <Icon link name="github" size="large" />
-            </a>
+        <div style={{ width: '100%', padding: '5px', textAlign: 'right', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <IconLink href="https://github.com/judilsteve/VerySimpleFileHost" name="github" size="large" />
         </div>
     </div>;
 }

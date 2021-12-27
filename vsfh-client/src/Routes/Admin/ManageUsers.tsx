@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { Button, Card, Checkbox, Container, Form, Grid, Header, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
-import { Configuration, UserListingDto, UsersApi } from "../../API";
+import { Button, Card, Checkbox, Container, Form, Grid, Header, Icon, Input, Message, Modal, ModalProps, Popup } from "semantic-ui-react";
+import { UserListingDto, UsersApi } from "../../API";
+import { apiConfig, loginApi } from "../../apiInstances";
 import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
+import IconLink from "../../Components/IconLink";
 import useEndpointData from "../../Hooks/useEndpointData";
 import { usePageTitle } from "../../Hooks/usePageTitle";
 import { LoginRouteParameters } from "../Login";
 
-const api = new UsersApi(new Configuration({ basePath: window.location.origin })); // TODO_JU Shared instances for this?
+// TODO_JU The error handlers in here do not interrogate 401s for expired passwords
+// And I should realllly centralise the error handling logic somehow
+
+const api = new UsersApi(apiConfig);
 
 interface InviteLinkModalProps {
     inviteKey: string;
@@ -98,8 +103,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
                 else if (errorResponse.status === 404)
                     setError('User does not exist');
                 else {
-                    navigate(routes.serverError);
-                    return;
+                    setError('An unexpected error occurred');
                 }
             }
             if(cancel) return;
@@ -157,7 +161,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
                     setLoading(false);
                 }
                 else {
-                    navigate(routes.serverError);
+                    setError('An unexpected error occurred');
                 }
                 return;
             }
@@ -244,7 +248,7 @@ function UserCard(props: UserEditProps) {
                     setLoading(false);
                 }
                 else {
-                    navigate(routes.serverError);
+                    setError('An unexpected error occurred');
                 }
                 return;
             }
@@ -368,8 +372,6 @@ function NewUserCard(props: NewUserCardProps) {
 }
 
 function ManageUsers() {
-    // TODO_JU This route and file browser should have navigation and a logout button
-
     usePageTitle('Manage Users');
 
     const navigate = useNavigate();
@@ -413,6 +415,8 @@ function ManageUsers() {
     const [resetPasswordUser, setResetPasswordUser] = useState<UserListingDto | null>(null);
     const [inviteKey, setInviteKey] = useState('');
 
+    const [loggingOut, setLoggingOut] = useState(false);
+
     const cards = loadingUsers ? <CenteredSpinner />
         : <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
         {
@@ -428,7 +432,13 @@ function ManageUsers() {
         </Card.Group>;
 
     return <Container>
-        <Header as="h1" style={{ paddingTop: "1rem" }}>Manage Users</Header>
+        <div style={{ paddingTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+            <Header as="h1">Manage Users</Header>
+            <div>
+                <Popup trigger={<IconLink style={{ marginRight: '1em' }} href={routes.browseFiles} name="folder open" size="large" />} content="Browse" />
+                <Popup trigger={<Icon link name="sign-out" size="large" onClick={() => setLoggingOut(true)} />} content="Log Out" />
+            </div>
+        </div>
         <Grid stackable columns={3}>
             <Grid.Column>
                 <Input fluid icon="filter" iconPosition="left" placeholder="Filter"
@@ -465,7 +475,56 @@ function ManageUsers() {
             userDto={confirmDeleteUser}
             cancel={() => setConfirmDeleteUser(null)}
             afterDeleteUser={() => { setConfirmDeleteUser(null); reloadUsers(); }} />
+        <LogOutModal
+            open={loggingOut}
+            cancel={() => setLoggingOut(false)} />
     </Container>;
+}
+
+interface LogOutModalProps extends ModalProps {
+    cancel: () => void;
+}
+
+function LogOutModal(props: LogOutModalProps) {
+    const { cancel } = props;
+
+    const navigate = useNavigate();
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const logOut = useCallback(() => {
+        let cancel = false;
+        (async () => {
+            setLoading(true);
+            setError('');
+            try {
+                await loginApi.loginLogoutPost();
+            } catch(e) {
+                const response = e as Response;
+                console.error('Unexpected response from logout endpoint:');
+                console.error(e);
+                console.error(await response.text());
+                if(cancel) return;
+                setError('An unexpected error occurred');
+                return;
+            }
+            if(cancel) return;
+            navigate(routes.login);
+        })();
+        return () => { cancel = true; };
+    }, [navigate]);
+
+    return <Modal size="tiny" {...props}>
+        <Modal.Header>Log Out</Modal.Header>
+        <Modal.Content>
+            <p>Are you sure?</p>
+            {error && <Message error content={error} />}
+        </Modal.Content>
+        <Modal.Actions>
+            <Button onClick={logOut} primary loading={loading} ><Icon name="sign-out" />Log Out</Button>
+            <Button onClick={cancel} secondary><Icon name="close" />Cancel</Button>
+        </Modal.Actions>
+    </Modal>
 }
 
 export default ManageUsers;
