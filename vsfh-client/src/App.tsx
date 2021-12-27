@@ -17,7 +17,7 @@ export const routes = {
 // TODO_JU Page titles and favicons
 
 function App() {
-    return <>
+    return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', justifyContent: 'space-between' }}>
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Navigate to={routes.browseFiles}/>}/>
@@ -32,12 +32,12 @@ function App() {
                 <Route path="*" element={<Navigate to={routes.notFound}/>}/>
             </Routes>
         </BrowserRouter>
-        <div style={{ position: 'fixed', bottom: 0, width: '100%', padding: '5px' }}>
-            <a style={{ all: 'unset', float: 'right' }} href="https://github.com/judilsteve/VerySimpleFileHost">
+        <div style={{ width: '100%', padding: '5px', textAlign: 'right' }}>
+            <a style={{ all: 'unset' }} href="https://github.com/judilsteve/VerySimpleFileHost">
                 <Icon link name="github" size="large" />
             </a>
         </div>
-    </>;
+    </div>;
 }
 
 export default App;
