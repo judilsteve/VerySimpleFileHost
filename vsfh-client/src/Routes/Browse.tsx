@@ -1,3 +1,4 @@
+import NavHeader from "../Components/NavHeader";
 import { usePageTitle } from "../Hooks/usePageTitle";
 
 function Browse() {
@@ -9,7 +10,9 @@ function Browse() {
     // Hash parsing
     // Navigation and Log Out
 
-    return <></>;
+    return <div style={{ marginLeft: "1em", marginRight: "1em" }}>
+        <NavHeader pageTitle="Browse" />
+    </div>;
 }
 
 export default Browse;
