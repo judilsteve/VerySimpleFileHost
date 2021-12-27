@@ -8,5 +8,4 @@
 @inputAutoFillBorder: 1px solid #a9a47e;
 @inputFocusBorderColor: #8d1b21;
 @inputFocusColor: #cdcdcd;
-
-// TODO_JU Fix input text highlight colour
+@inputHighlightBackground: rgba(141, 27, 33, 0.4);

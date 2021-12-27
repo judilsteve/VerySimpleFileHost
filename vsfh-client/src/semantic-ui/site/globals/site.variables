@@ -3,5 +3,9 @@
 *******************************/
 
 @pageBackground: #090909;
+
 @primaryColor: #c91e27;
+
 @textColor: #cdcdcd;
+
+@inputHighlightBackground: rgba(141, 27, 33, 0.6);

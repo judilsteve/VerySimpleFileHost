@@ -83,6 +83,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
             }
             if(cancel) return;
             if(response) afterResetPassword(response.inviteKey!);
+            setLoading(false);
         })();
     }
 
@@ -120,6 +121,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
             }
             if(cancel) return;
             afterDeleteUser();
+            setLoading(false);
         })();
     }
 
@@ -199,7 +201,7 @@ function UserCard(props: UserEditProps) {
                     ? <Icon name="user" />
                     : <Popup trigger={<Icon name="lock" />} content={`'${loginName ?? '<unnamed>'}' is locked out pending password reset`} />
                 }
-                {loginName}
+                {loginName ?? '<unnamed>'}
             </Card.Header>
             <Card.Meta>{fullName}{isAdministrator ? " (Admin)" : ""}</Card.Meta>
             {
@@ -331,31 +333,8 @@ function ManageUsers() {
     const [resetPasswordUser, setResetPasswordUser] = useState<UserListingDto | null>(null);
     const [inviteKey, setInviteKey] = useState('');
 
-    if(loadingUsers) return <CenteredSpinner />;
-
-    return <Container>
-        <Header as="h1" style={{ paddingTop: "1rem" }}>Manage Users</Header>
-        <Grid stackable columns={3}>
-            <Grid.Column>
-                <Input fluid icon="filter" iconPosition="left" placeholder="Filter"
-                    value={textFilter} onChange={e => setTextFilter(e.target.value.toLocaleLowerCase())} />
-            </Grid.Column>
-            <Grid.Column>
-                <Button.Group fluid>
-                    <Button active={activeStatusFilter === true} onClick={() => setActiveStatusFilter(true)}>Active</Button>
-                    <Button active={activeStatusFilter === false} onClick={() => setActiveStatusFilter(false)}>Locked</Button>
-                    <Button active={activeStatusFilter === null} onClick={() => setActiveStatusFilter(null)}>All</Button>
-                </Button.Group>
-            </Grid.Column>
-            <Grid.Column>
-                <Button.Group fluid>
-                    <Button active={adminFilter === true} onClick={() => setAdminFilter(true)}>Admins</Button>
-                    <Button active={adminFilter === false} onClick={() => setAdminFilter(false)}>Users</Button>
-                    <Button active={adminFilter === null} onClick={() => setAdminFilter(null)}>All</Button>
-                </Button.Group>
-            </Grid.Column>
-        </Grid>
-        <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
+    const cards = loadingUsers ? <CenteredSpinner />
+        : <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
         {
             filteredUsers!.map(u => <UserCard
                 key={u.id!}
@@ -366,7 +345,31 @@ function ManageUsers() {
                 />)
         }
             <NewUserCard afterAddUser={reloadUsers}/>
-        </Card.Group>
+        </Card.Group>;
+
+    return <Container>
+        <Header as="h1" style={{ paddingTop: "1rem" }}>Manage Users</Header>
+        <Grid stackable columns={3}>
+            <Grid.Column>
+                <Input fluid icon="filter" iconPosition="left" placeholder="Filter"
+                    value={textFilter} onChange={e => setTextFilter(e.target.value.toLocaleLowerCase())} />
+            </Grid.Column>
+            <Grid.Column>
+                <Button.Group fluid>
+                    <Button secondary active={activeStatusFilter === true} onClick={() => setActiveStatusFilter(true)}>Active</Button>
+                    <Button secondary active={activeStatusFilter === false} onClick={() => setActiveStatusFilter(false)}>Locked</Button>
+                    <Button secondary active={activeStatusFilter === null} onClick={() => setActiveStatusFilter(null)}>All</Button>
+                </Button.Group>
+            </Grid.Column>
+            <Grid.Column>
+                <Button.Group fluid>
+                    <Button secondary active={adminFilter === true} onClick={() => setAdminFilter(true)}>Admins</Button>
+                    <Button secondary active={adminFilter === false} onClick={() => setAdminFilter(false)}>Users</Button>
+                    <Button secondary active={adminFilter === null} onClick={() => setAdminFilter(null)}>All</Button>
+                </Button.Group>
+            </Grid.Column>
+        </Grid>
+        {cards}
         <ConfirmResetPasswordModal
             userDto={resetPasswordUser}
             open={!!resetPasswordUser && !inviteKey}
