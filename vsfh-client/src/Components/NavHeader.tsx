@@ -4,6 +4,7 @@ import { Button, Header, Icon, Message, Modal, Popup } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../App";
 import IconLink from "./IconLink";
+import StandardModals from "./StandardModals";
 
 export interface NavHeaderProps {
     pageTitle: string;
@@ -58,13 +59,14 @@ function NavHeader(props: NavHeaderProps) {
             <Modal.Header>Log Out</Modal.Header>
             <Modal.Content>
                 <p>Are you sure?</p>
-                {error && <Message error content={error} />}
+                {error && <Message error header="Logout Failed" content={error} />}
             </Modal.Content>
             <Modal.Actions>
                 <Button onClick={logOut} primary loading={loading} ><Icon name="sign-out" />Log Out</Button>
                 <Button onClick={() => setLoggingOut(false)} secondary><Icon name="close" />Cancel</Button>
             </Modal.Actions>
         </Modal>
+        <StandardModals />
     </>;
 }
 

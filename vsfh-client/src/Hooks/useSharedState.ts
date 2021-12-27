@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export class SharedState<T> {
     private readonly watchers: ((v: T) => void)[] = [];
@@ -45,5 +45,5 @@ export function useSharedState<T>(sharedState: SharedState<T>): [T, (newValue: T
         const watcherIndex = sharedState.watch(setValue);
         return () => sharedState.removeWatcher(watcherIndex);
     }, [sharedState]);
-    return [value, (newValue: T) => sharedState.setValue(newValue)];
+    return [value, useCallback((newValue: T) => sharedState.setValue(newValue), [sharedState])];
 }

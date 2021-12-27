@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
 import { Button, Card, Checkbox, Container, Form, Grid, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
 import { UserListingDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
-import { routes } from "../../App";
 import CenteredSpinner from "../../Components/CenteredSpinner";
 import useErrorHandler from "../../Hooks/useErrorHandler";
 import useEndpointData from "../../Hooks/useEndpointData";
@@ -350,14 +348,19 @@ function ManageUsers() {
     usePageTitle('Manage Users');
 
     const errorHandler = useErrorHandler();
-    const navigate = useNavigate();
+    const [listingError, setListingError] = useState(false);
     const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.usersGet(), []),
         useCallback(async e => {
             const response = e as Response;
             if(await errorHandler(response)) return;
-            else navigate(routes.serverError);
-        }, [navigate, errorHandler]));
+            else {
+                console.error('Unexpected response from user listing endpoint:');
+                console.error(e);
+                console.error(await response.text());
+                setListingError(true);
+            }
+        }, [errorHandler]));
 
     const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
 
@@ -388,7 +391,8 @@ function ManageUsers() {
     const [resetPasswordUser, setResetPasswordUser] = useState<UserListingDto | null>(null);
     const [inviteKey, setInviteKey] = useState('');
 
-    const cards = loadingUsers ? <CenteredSpinner />
+    const cards = listingError ? <Message error header="Loading Users Failed" content='An unexpected error occurred' />
+        : loadingUsers ? <CenteredSpinner />
         : <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
         {
             filteredUsers!.map(u => <UserCard
