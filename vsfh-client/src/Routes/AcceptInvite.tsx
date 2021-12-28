@@ -29,6 +29,7 @@ function AcceptInvite() {
     const inviteKey = useParams()[inviteKeyParamName];
     const navigate = useNavigate();
     const activateAccount = async () => {
+        if(loading) return;
         setLoading(true);
         setError('');
         try {
@@ -76,7 +77,8 @@ function AcceptInvite() {
 
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
-        tabIndex: 5
+        tabIndex: 5,
+        disabled: loading
     };
 
     const setPasswordProps = {
@@ -85,7 +87,8 @@ function AcceptInvite() {
         authConfig,
         passwordPlaceholder: 'Password',
         setPasswordValid,
-        startTabIndex: 2
+        startTabIndex: 2,
+        disabled: loading
     };
 
     return <SkinnyForm width={350}>
@@ -96,6 +99,7 @@ function AcceptInvite() {
                 <Input autoFocus tabIndex={1}
                     icon="user" iconPosition="left"
                     placeholder="Username"
+                    disabled={loading}
                     value={userName} onChange={e => setUserName(e.target.value)} />
             </Form.Field>
             <SetPassword {...setPasswordProps} />

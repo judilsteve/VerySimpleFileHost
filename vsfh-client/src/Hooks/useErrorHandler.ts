@@ -1,15 +1,12 @@
 import { useCallback } from "react";
-import { useNavigate } from "react-router";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
-import { routes } from "../App";
-import { passwordExpiredPromptState, sessionExpiredPromptState } from "../State/sharedState";
+import { passwordExpiredPromptState, sessionExpiredPromptState, unauthorisedBlockState } from "../State/sharedState";
 import { useSharedState } from "./useSharedState";
 
 function useErrorHandler() {
-    const navigate = useNavigate();
-
     const [, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
     const [, setSessionExpiredPrompt] = useSharedState(sessionExpiredPromptState);
+    const [, setUnauthorisedBlock] = useSharedState(unauthorisedBlockState);
 
     return useCallback(async (e: Response) => {
         if(e.status === 401) {
@@ -32,11 +29,11 @@ function useErrorHandler() {
                 return true;
             }
         } else if(e.status === 403) {
-            navigate(routes.unauthorised);
+            setUnauthorisedBlock(true);
             return true;
         }
         return false;
-    }, [navigate, setPasswordExpiredPrompt, setSessionExpiredPrompt]);
+    }, [setPasswordExpiredPrompt, setSessionExpiredPrompt, setUnauthorisedBlock]);
 }
 
 export default useErrorHandler;

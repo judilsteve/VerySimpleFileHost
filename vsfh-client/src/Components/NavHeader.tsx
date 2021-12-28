@@ -1,8 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
-import { Button, Header, Icon, Message, Modal, Popup } from "semantic-ui-react";
+import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../App";
+import useEndpointData from "../Hooks/useEndpointData";
 import IconLink from "./IconLink";
 import StandardModals from "./StandardModals";
 import ThemeRule from "./ThemeRule";
@@ -11,6 +13,36 @@ export interface NavHeaderProps {
     pageTitle: string;
 }
 
+interface RouteLink {
+    route: string;
+    icon: SemanticICONS;
+    name: string;
+    adminOnly: boolean;
+}
+
+const routeLinks: RouteLink[] = [
+    {
+        route: routes.browseFiles,
+        icon: 'folder open',
+        name: 'Browse',
+        adminOnly: false
+    },
+    {
+        route: routes.manageUsers,
+        icon: 'users',
+        name: 'Manage Users',
+        adminOnly: true
+    }
+];
+
+const getAdminStatus = () => loginApi.loginAdminStatusGet();
+const handleError = async (e: any) => {
+    const response = e as Response;
+    console.error('Unexpected response from admin status endpoint:');
+    console.error(response);
+    console.error(await response.text());
+};
+
 function NavHeader(props: NavHeaderProps) {
     const { pageTitle } = props;
 
@@ -18,9 +50,12 @@ function NavHeader(props: NavHeaderProps) {
 
     const [loggingOut, setLoggingOut] = useState(false);
 
+    const [isAdmin, , ] = useEndpointData(getAdminStatus, handleError);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const logOut = useCallback(() => {
+        if(loading) return;
         let cancel = false;
         (async () => {
             setLoading(true);
@@ -32,32 +67,33 @@ function NavHeader(props: NavHeaderProps) {
                 console.error('Unexpected response from logout endpoint:');
                 console.error(e);
                 console.error(await response.text());
-                if(cancel) return;
-                setError('An unexpected error occurred');
+                if(!cancel) setError('An unexpected error occurred');
                 return;
             }
-            if(cancel) return;
-            navigate(routes.login);
+            if(!cancel) navigate(routes.login);
         })();
         return () => { cancel = true; };
-    }, [navigate]);
+    }, [navigate, loading]);
 
-    // TODO_JU Conditionally build this array based on current route and whether or not the user is an admin
-    const routeIcons = [
-        { href: routes.browseFiles, name: 'folder open', popupContent: 'Browse' },
-        { href: routes.manageUsers, name: 'users', popupContent: 'Manage Users' }
-    ]
+    const { pathname } = useLocation();
+    const links = useMemo(() => routeLinks
+        .filter(r => r.route !== pathname)
+        .filter(r => isAdmin || !r.adminOnly)
+    , [isAdmin, pathname]);
 
     return <>
         <div style={{ paddingTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
             <Header as="h1" style={{ marginBottom: 0 }}>{pageTitle}</Header>
             <div>
-                <Popup trigger={<IconLink style={{ marginRight: '1em' }} href={routes.browseFiles} name="folder open" size="large" />} content="Browse" />
+                {
+                    links.map(l =>
+                        <Popup key={l.route} trigger={<IconLink style={{ marginRight: '1em' }} href={l.route} name={l.icon} size="large" />} content={l.name} />)
+                }
                 <Popup trigger={<Icon link name="sign-out" size="large" onClick={() => setLoggingOut(true)} />} content="Log Out" />
             </div>
         </div>
         <ThemeRule />
-        <Modal size="tiny" open={loggingOut} onClose={() => setLoggingOut(false)}>
+        <Modal size="tiny" open={loggingOut} onClose={() => setLoggingOut(false)} closeOnDimmerClick={!loading} closeOnEscape={!loading}>
             <Modal.Header>Log Out</Modal.Header>
             <Modal.Content>
                 <p>Are you sure?</p>
@@ -65,7 +101,7 @@ function NavHeader(props: NavHeaderProps) {
             </Modal.Content>
             <Modal.Actions>
                 <Button onClick={logOut} primary loading={loading} ><Icon name="sign-out" />Log Out</Button>
-                <Button onClick={() => setLoggingOut(false)} secondary><Icon name="close" />Cancel</Button>
+                <Button onClick={() => setLoggingOut(false)} secondary disabled={loading}><Icon name="close" />Cancel</Button>
             </Modal.Actions>
         </Modal>
         <StandardModals />

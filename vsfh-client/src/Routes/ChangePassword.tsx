@@ -41,6 +41,9 @@ function ChangePassword(props: ChangePasswordProps) {
             console.error(await e.text());
             setError('An unexpected error occurred');
     }, []));
+
+    const [loading, setLoading] = useState(false);
+
     const setPasswordProps = {
         password: newPassword,
         setPassword: setNewPassword,
@@ -50,19 +53,21 @@ function ChangePassword(props: ChangePasswordProps) {
         passwordPlaceholder: 'New Password',
         setPasswordValid,
         startTabIndex: 2,
-        currentPassword
+        currentPassword,
+        disabled: loading
     };
 
     const [rememberMe, ] = useSharedState(rememberMeState);
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
-        tabIndex: 5
+        tabIndex: 5,
+        disabled: loading
     };
 
-    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const then = useSearchParams()[0].get(ChangePasswordRouteParameters.then);
     const changePassword = async () => {
+        if(loading) return;
         setLoading(true);
         try {
             const changePasswordAttemptDto = {
@@ -103,7 +108,7 @@ function ChangePassword(props: ChangePasswordProps) {
                 <Input icon="user" iconPosition="left" placeholder="Username" value={userName} disabled={true} />
             </Form.Field>
             <Form.Field>
-                <Input autoFocus icon="key" iconPosition="left" placeholder="Current Password" value={userName} type="password" tabIndex={1} />
+                <Input autoFocus disabled={loading} icon="key" iconPosition="left" placeholder="Current Password" value={userName} type="password" tabIndex={1} />
             </Form.Field>
             <SetPassword {...setPasswordProps}/>
             <Message error header="Change Password Failed" content={error} />

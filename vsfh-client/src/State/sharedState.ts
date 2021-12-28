@@ -12,4 +12,6 @@ export interface PasswordExpiredPromptParams {
 };
 export const passwordExpiredPromptState = new SharedState<PasswordExpiredPromptParams | null>(null);
 
+export const unauthorisedBlockState = new SharedState(false);
+
 export const archiveFormatState = new SharedPersistedState('archiveFormat', ArchiveFormat.Zip);

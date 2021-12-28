@@ -6,10 +6,11 @@ import { rememberMeState } from "../State/sharedState";
 export interface RememberMeProps {
     allowRememberMe: boolean | undefined;
     tabIndex?: number;
+    disabled: boolean;
 }
 
 function RememberMe(props: RememberMeProps) {
-    const { allowRememberMe, tabIndex } = props;
+    const { allowRememberMe, tabIndex, disabled } = props;
 
     const [rememberMe, setRememberMe] = useSharedState(rememberMeState);
 
@@ -18,7 +19,7 @@ function RememberMe(props: RememberMeProps) {
     }, [setRememberMe, allowRememberMe]);
 
     if(allowRememberMe)
-        return <Checkbox checked={rememberMe} tabIndex={tabIndex} label="Remember me" onChange={() => setRememberMe(!rememberMe)}/>;
+        return <Checkbox checked={rememberMe} disabled={disabled} tabIndex={tabIndex} label="Remember me" onChange={() => setRememberMe(!rememberMe)}/>;
     else return <></>;
 }
 

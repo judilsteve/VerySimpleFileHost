@@ -67,6 +67,30 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
+    async loginAdminStatusGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<boolean>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/Login/AdminStatus`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.TextApiResponse(response) as any;
+    }
+
+    /**
+     */
+    async loginAdminStatusGet(initOverrides?: RequestInit): Promise<boolean> {
+        const response = await this.loginAdminStatusGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
     async loginAuthConfigGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<AuthConfigDto>> {
         const queryParameters: any = {};
 
@@ -136,29 +160,6 @@ export class LoginApi extends runtime.BaseAPI {
      */
     async loginLogoutPost(initOverrides?: RequestInit): Promise<void> {
         await this.loginLogoutPostRaw(initOverrides);
-    }
-
-    /**
-     */
-    async loginPingGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/Login/Ping`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async loginPingGet(initOverrides?: RequestInit): Promise<void> {
-        await this.loginPingGetRaw(initOverrides);
     }
 
     /**

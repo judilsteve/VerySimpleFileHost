@@ -10,9 +10,6 @@ import NavHeader from "../../Components/NavHeader";
 
 const api = new UsersApi(apiConfig);
 
-// TODO_JU Disable all buttons and modal exits whenever something is loading (across whole application)
-// TODO_JU Another pass on the error handling here: Sometimes spinners don't stop spinning etc
-
 interface InviteLinkModalProps {
     inviteKeyUser: InviteKeyUserInfo | null;
     close: () => void;
@@ -57,19 +54,19 @@ function InviteLinkModal(props: InviteLinkModalProps) {
 
 interface ConfirmResetPasswordModalProps {
     userDto: UserListingDto | null;
-    open: boolean;
     afterResetPassword: (inviteKeyUser: InviteKeyUserInfo) => void;
     cancel: () => void;
 }
 
 function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
-    const { userDto, open, afterResetPassword, cancel } = props;
+    const { userDto, afterResetPassword, cancel } = props;
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const errorHandler = useErrorHandler();
     const resetPassword = () => {
+        if(loading) return;
         let cancel = false;
         setLoading(true);
         setError('');
@@ -85,47 +82,52 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
                     }
                 });
             } catch(e) {
-                if(cancel) return;
                 const errorResponse = e as Response;
-                if(await errorHandler(errorResponse)) {}
-                else if (errorResponse.status === 404)
-                    setError('User does not exist');
-                else {
-                    setError('An unexpected error occurred');
+                if(!await errorHandler(errorResponse)) {
+                    let newError;
+                    if (errorResponse.status === 404) newError = 'User does not exist';
+                    else {
+                        console.error('Unexpected response from reset password endpoint:');
+                        console.error(e);
+                        console.error(await errorResponse.text());
+                        newError = 'An unexpected error occurred';
+                    }
+                    if(!cancel) setError(newError);
                 }
+                return;
+            } finally {
+                if(!cancel) setLoading(false);
             }
-            if(cancel) return;
-            if(response) afterResetPassword({
+            if(!cancel) afterResetPassword({
                 inviteKey: response.inviteKey!,
                 userName: userDto!.loginName!,
                 fullName: userDto!.fullName!
             });
-            setLoading(false);
         })();
     }
 
-    return <Modal size="tiny" open={open} onClose={() => { setError(''); setLoading(false); cancel(); }}>
+    return <Modal size="tiny" open={!!userDto} onOpen={() => { setError(''); setLoading(false); }} closeOnDimmerClick={!loading} closeOnEscape={!loading}>
         <Modal.Header>Reset password for {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
         <Modal.Content>
             <p>This will disable their account until they open the new invite link.</p>
             {error && <Message error header="Reset Failed" content={error} />}
         </Modal.Content>
         <Modal.Actions>
-            <Button onClick={resetPassword} color="teal" loading={loading ? true : undefined}><Icon name="unlock" />Reset</Button>
-            <Button onClick={cancel} secondary><Icon name="close" />Cancel</Button>
+            <Button onClick={resetPassword} color="teal" loading={loading}><Icon name="unlock" />Reset</Button>
+            <Button onClick={cancel} secondary disabled={loading}><Icon name="close" />Cancel</Button>
         </Modal.Actions>
     </Modal>
 }
 
 interface DeleteUserModalProps {
     userDto: UserListingDto | null;
-    open: boolean;
     afterDeleteUser: () => void;
     cancel: () => void;
 }
 
 function DeleteUserModal(props: DeleteUserModalProps) {
-    const { userDto, open, afterDeleteUser, cancel } = props;
+    const { userDto, afterDeleteUser, cancel } = props;
+    const open = !!userDto;
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -133,6 +135,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
 
     const errorHandler = useErrorHandler();
     const deleteUser = () => {
+        if(loading) return;
         let cancel = false;
         setLoading(true);
         setError('');
@@ -140,33 +143,35 @@ function DeleteUserModal(props: DeleteUserModalProps) {
             try {
                 await api.usersUserIdDelete({ userId: userDto?.id! });
             } catch(e) {
-                if(cancel) return;
                 const errorResponse = e as Response;
-                if(await errorHandler(errorResponse)) return;
-                else if (errorResponse.status === 404) {
-                    setError('User does not exist');
-                    setLoading(false);
-                }
-                else {
-                    setError('An unexpected error occurred');
+                if(!await errorHandler(errorResponse)) {
+                    let newError;
+                    if (errorResponse.status === 404) newError = 'User does not exist';
+                    else {
+                        console.error('Unexpected response from delete user endpoint:');
+                        console.error(e);
+                        console.error(await errorResponse.text());
+                        newError = 'An unexpected error occurred';
+                    }
+                    if(!cancel) setError(newError);
                 }
                 return;
+            } finally {
+                if(!cancel) setLoading(false);
             }
-            if(cancel) return;
-            afterDeleteUser();
-            setLoading(false);
+            if(!cancel) afterDeleteUser();
         })();
     }
 
-    return <Modal size="tiny" open={open} onClose={cancel}>
+    return <Modal size="tiny" open={open} onClose={cancel} onOpen={() => { setError(''); setLoading(false); }} closeOnEscape={!loading} closeOnDimmerClick={!loading}>
         <Modal.Header>Delete user {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
         <Modal.Content>
             <p>This action is permanent</p>
             {error && <Message error header="Reset Failed" content={error} />}
         </Modal.Content>
         <Modal.Actions>
-            <Button onClick={deleteUser} negative loading={loading ? true : undefined}><Icon name="remove user" />Delete</Button>
-            <Button onClick={cancel} secondary><Icon name="close" />Cancel</Button>
+            <Button onClick={deleteUser} negative loading={loading}><Icon name="remove user" />Delete</Button>
+            <Button onClick={cancel} secondary diabled={loading}><Icon name="close" />Cancel</Button>
         </Modal.Actions>
     </Modal>
 }
@@ -208,6 +213,7 @@ function UserCard(props: UserEditProps) {
     const [error, setError] = useState('');
     const errorHandler = useErrorHandler();
     const save = useCallback(() => {
+        if(loading) return;
         let cancel = false;
         setLoading(true);
         setError('');
@@ -222,24 +228,26 @@ function UserCard(props: UserEditProps) {
                     }
                 });
             } catch(e) {
-                if(cancel) return;
                 const errorResponse = e as Response;
-                if(await errorHandler(errorResponse)) return;
-                else if (errorResponse.status === 404) {
-                    setError('User does not exist');
-                    setLoading(false);
-                }
-                else {
-                    setError('An unexpected error occurred');
+                if(!await errorHandler(errorResponse)) {
+                    let newError;
+                    if (errorResponse.status === 404) newError = 'User does not exist';
+                    else {
+                        console.error('Unexpected response from edit user endpoint:');
+                        console.error(e);
+                        console.error(await errorResponse.text());
+                        newError = 'An unexpected error occurred';
+                    }
+                    if(!cancel) setError(newError);
                 }
                 return;
+            } finally {
+                if(!cancel) setLoading(false);
             }
-            if(cancel) return;
-            reloadList();
-            setLoading(false);
+            if(!cancel) reloadList();
         })();
         return () => { cancel = true; };
-    }, [newFullName, newIsAdministrator, id, reloadList, errorHandler]);
+    }, [newFullName, loading, newIsAdministrator, id, reloadList, errorHandler]);
 
     return <Card>
         <Card.Content>
@@ -270,7 +278,7 @@ function UserCard(props: UserEditProps) {
                 {
                     editMode ? <>
                         <Popup trigger={<Button size="small" icon="check" positive disabled={!newFullName} onClick={save} loading={loading ? true : undefined} />} content="Save" />
-                        <Popup trigger={<Button size="small" icon="close" secondary onClick={() => setEditMode(false)} />} content="Discard" />
+                        <Popup trigger={<Button size="small" icon="close" secondary disabled={loading} onClick={() => setEditMode(false)} />} content="Discard" />
                     </> : <>
                         <Popup trigger={<Button size="small" icon="write" primary onClick={startEditing} />} content="Edit" />
                     </>
@@ -296,6 +304,7 @@ function NewUserCard(props: NewUserCardProps) {
     const [error, setError] = useState('');
     const errorHandler = useErrorHandler();
     const add = useCallback(() => {
+        if(loading) return;
         let cancel = false;
         setLoading(true);
         setError('');
@@ -309,25 +318,25 @@ function NewUserCard(props: NewUserCardProps) {
                     }
                 });
             } catch(e) {
-                if(cancel) return;
                 const errorResponse = e as Response;
-                if(await errorHandler(errorResponse)) return;
-                else {
-                    setError('An unexpected error occurred');
-                    setLoading(false);
+                if(!await errorHandler(errorResponse)) {
+                    console.error('Unexpected response from add user endpoint:');
+                    console.error(e);
+                    console.error(await errorResponse.text());
+                    if(!cancel) setError('An unexpected error occurred');
                 }
                 return;
+            } finally {
+                if(!cancel) setLoading(false);
             }
-            if(cancel) return;
-            afterAddUser({
+            if(!cancel) afterAddUser({
                 userName: null,
                 fullName: newUserFullName,
                 inviteKey: response.inviteKey!
             });
-            setLoading(false);
         })();
         return () => { cancel = true; };
-    }, [newUserFullName, newUserIsAdmin, afterAddUser, errorHandler]);
+    }, [loading, newUserFullName, newUserIsAdmin, afterAddUser, errorHandler]);
 
     return <Card>
         <Card.Content>
@@ -446,14 +455,12 @@ function ManageUsers() {
         {cards}
         <ConfirmResetPasswordModal
             userDto={resetPasswordUser}
-            open={!!resetPasswordUser && !inviteKeyUser}
-            afterResetPassword={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }}
+            afterResetPassword={inviteKeyUser => { setResetPasswordUser(null); setInviteKeyUser(inviteKeyUser); reloadUsers(); }}
             cancel={() => setResetPasswordUser(null)} />
         <InviteLinkModal
             inviteKeyUser={inviteKeyUser}
             close={() => { setInviteKeyUser(null); }} />
         <DeleteUserModal
-            open={!!confirmDeleteUser}
             userDto={confirmDeleteUser}
             cancel={() => setConfirmDeleteUser(null)}
             afterDeleteUser={() => { setConfirmDeleteUser(null); reloadUsers(); }} />

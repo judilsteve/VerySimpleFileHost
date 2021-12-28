@@ -1,9 +1,9 @@
 import { Header } from "semantic-ui-react";
-import { routes } from "../../App";
-import IconLink from "../../Components/IconLink";
-import SkinnyForm from "../../Components/SkinnyForm";
-import ThemeRule from "../../Components/ThemeRule";
-import { usePageTitle } from "../../Hooks/usePageTitle";
+import { routes } from "../App";
+import IconLink from "./IconLink";
+import SkinnyForm from "./SkinnyForm";
+import ThemeRule from "./ThemeRule";
+import { usePageTitle } from "../Hooks/usePageTitle";
 
 function Unauthorised() {
     usePageTitle('Unauthorised');

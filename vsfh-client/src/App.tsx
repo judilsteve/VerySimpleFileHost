@@ -8,8 +8,7 @@ export const routes = {
     acceptInvite: `/AcceptInvite/:${inviteKeyParamName}`,
     changePassword: '/ChangePassword',
     manageUsers: '/Admin/ManageUsers',
-    browseFiles: '/Browse',
-    unauthorised: '/Error/Unauthorised', // TODO_JU This shouldn't be a route/redirect
+    browseFiles: '/Browse'
 };
 
 function App() {
@@ -22,7 +21,6 @@ function App() {
                 <Route path={routes.changePassword} element={<SuspensefulComponent importFunc={() => import('./Routes/ChangePassword')}/>}/>
                 <Route path={routes.manageUsers} element={<SuspensefulComponent importFunc={() => import('./Routes/Admin/ManageUsers')}/>}/>
                 <Route path={routes.browseFiles} element={<SuspensefulComponent importFunc={() => import('./Routes/Browse')}/>}/>
-                <Route path={routes.unauthorised} element={<SuspensefulComponent importFunc={() => import('./Routes/Error/Unauthorised')}/>}/>
                 <Route path="*" element={<SuspensefulComponent importFunc={() => import('./Routes/Error/NotFound')}/>}/>
             </Routes>
         </BrowserRouter>

@@ -38,6 +38,7 @@ export interface SetPasswordProps {
     setPasswordValid: (valid: boolean) => void;
     startTabIndex: number;
     currentPassword?: string;
+    disabled: boolean;
 }
 
 function SetPassword(props: SetPasswordProps) {
@@ -48,7 +49,8 @@ function SetPassword(props: SetPasswordProps) {
         passwordPlaceholder,
         setPasswordValid,
         startTabIndex,
-        currentPassword
+        currentPassword,
+        disabled
     } = props;
 
     const passwordsMatch = password === checkPassword;
@@ -71,7 +73,7 @@ function SetPassword(props: SetPasswordProps) {
 
     return <>
         <Form.Field>
-            <Input tabIndex={startTabIndex}
+            <Input tabIndex={startTabIndex} diabled={disabled}
                 action={passwordStrength ? zxcvbnScores[passwordStrength.score] : null} 
                 icon="key" iconPosition="left"
                 type="password" placeholder={passwordPlaceholder}
@@ -82,7 +84,7 @@ function SetPassword(props: SetPasswordProps) {
             {passwordStrength?.feedback.suggestions && passwordStrength.feedback.suggestions.map(s => <p><em>{s}</em></p>)}
         </Form.Field>
         <Form.Field>
-            <Input tabIndex={startTabIndex + 1} icon="key" iconPosition="left" type="password" placeholder="Confirm" value={checkPassword} onChange={e => setCheckPassword(e.target.value)} />
+            <Input tabIndex={startTabIndex + 1} diabled={disabled} icon="key" iconPosition="left" type="password" placeholder="Confirm" value={checkPassword} onChange={e => setCheckPassword(e.target.value)} />
             {checkPassword && !passwordsMatch && <ErrorText>Passwords do not match</ErrorText>}
         </Form.Field>
     </>;

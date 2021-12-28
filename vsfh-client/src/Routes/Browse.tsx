@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Icon, List, Loader } from "semantic-ui-react";
+import { Container, Icon, List, Loader } from "semantic-ui-react";
 import { ArchiveFormat, FilesApi } from "../API";
 import { apiConfig } from "../apiInstances";
 import IconLink from "../Components/IconLink";
@@ -48,24 +48,26 @@ function Browse() {
 
     const fileList = treeLoading ? <Loader indeterminate /> : <List size="large">
         {
-            tree!.subdirectories?.map(d => <List.Item>
+            tree!.subdirectories?.map(d => <List.Item key={d.displayName}>
+                {/* TODO_JU Checkboxes for multi-select */}
+                {/* TODO_JU Sticky card for multi-select (show count, claer button, and download button) */}
                 <Icon fitted name="folder" /> {/* TODO_JU Change to "folder open" when expanded */}
                 {d.displayName /* TODO_JU Make this the link and/or the expand button for easier clicking? */}
-                <IconLink name="download" fitted href={`${window.location.origin}/Files/Download?path=${encodeURIComponent(d.displayName!)}&archiveFormat=${ArchiveFormat.Tar}`} newTab />
+                <IconLink name="archive" fitted href={`${window.location.origin}/Files/Download?path=${encodeURIComponent(d.displayName!)}&archiveFormat=${ArchiveFormat.Tar}`} newTab />
             </List.Item>)
         }
         {
-            tree!.files?.map(f => <List.Item>
+            tree!.files?.map(f => <List.Item key={f.displayName}>
                 <List.Icon name="file" />
                 <List.Content>{f.displayName} ({humaniseBytes(f.sizeBytes!)})</List.Content>
             </List.Item>)
         }
     </List>
 
-    return <div style={{ marginLeft: "1em", marginRight: "1em" }}>
+    return <Container>
         <NavHeader pageTitle="Browse" />
         {fileList}
-    </div>;
+    </Container>;
 }
 
 export default Browse;

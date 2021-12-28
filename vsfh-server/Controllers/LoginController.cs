@@ -248,6 +248,9 @@ public class LoginController : Controller
         AllowRememberMe = config.AllowRememberMe
     };
 
-    [HttpGet(nameof(Ping))]
-    public ActionResult Ping() => Ok();
+    [HttpGet(nameof(AdminStatus))]
+    public Task<bool> AdminStatus() => context.Users
+        .Where(u => u.Id == Guid.Parse(HttpContext.User.Identity!.Name!))
+        .Select(u => u.IsAdministrator)
+        .SingleAsync();
 }

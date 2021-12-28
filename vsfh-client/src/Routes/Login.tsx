@@ -32,6 +32,7 @@ function Login() {
     const then = useSearchParams()[0].get(LoginRouteParameters.then);
 
     const login = async () => {
+        if(loading) return;
         setLoading(true);
         setError('');
         try {
@@ -80,17 +81,18 @@ function Login() {
 
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
-        tabIndex: 4
+        tabIndex: 4,
+        disabled: loading
     };
 
     return <SkinnyForm>
         <Header as="h1">VSFH<ThemeRule /></Header>
         <Form error={!!error}>
             <Form.Field>
-                <Input autoFocus tabIndex={1} icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
+                <Input disabled={loading} autoFocus tabIndex={1} icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
             </Form.Field>
             <Form.Field>
-                <Input tabIndex={2} icon="key" iconPosition="left" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+                <Input disabled={loading} tabIndex={2} icon="key" iconPosition="left" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
             </Form.Field>
             <Message error header="Login Failed" content={error} />
             <Form.Field>
