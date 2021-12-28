@@ -46,6 +46,7 @@ function Browse() {
         }, [])
     );
 
+    // TODO_JU Root node (to facilitate full reload and download of the entire share as an archive)
     const fileList = treeLoading ? <Loader indeterminate /> : <List size="large">
         {
             // TODO_JU In one line:

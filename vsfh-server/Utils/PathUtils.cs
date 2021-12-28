@@ -43,7 +43,7 @@ public static class PathUtils
             isDirectory = false;
             return false;
         }
-        // TODO_JU Catch read permission errors here
+        // TODO_JU Catch read permission errors here and when traversing the tree
         isDirectory = attributes.HasFlag(FileAttributes.Directory);
         return IsVisible(attributes, config);
     }

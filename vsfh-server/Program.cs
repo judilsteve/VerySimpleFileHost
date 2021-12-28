@@ -79,8 +79,7 @@ config.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
 if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
 {
     builder.Services.AddLettuceEncrypt()
-        // TODO_JU Configurable directory and PFX password
-        .PersistDataToDirectory(new DirectoryInfo("LettuceEncrypt"), null);
+        .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? "LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
 }
 
 var app = builder.Build();
@@ -113,10 +112,9 @@ using(var scope = app.Services.CreateAsyncScope())
     var context = scope.ServiceProvider.GetRequiredService<VsfhContext>();
     await context.Database.MigrateAsync();
 
-    if(!await context.Users.AnyAsync(u => u.IsAdministrator))
+    if(!await context.Users.AnyAsync(u => u.IsAdministrator && u.PasswordHash != null))
     {
-        // TODO_JU What if all admins are locked out?
-        await Console.Out.WriteLineAsync("No administrators were found in the database. Creating one now. What should their name be?");
+        await Console.Out.WriteLineAsync("No active admins were found. Creating one now. What should their name be?");
         string? name;
         do
         {
@@ -141,7 +139,7 @@ using(var scope = app.Services.CreateAsyncScope())
                 : "";
         var server = scope.ServiceProvider.GetRequiredService<IServer>();
         var host = new Uri(server.Features.Get<IServerAddressesFeature>()!.Addresses.First());
-        await Console.Out.WriteLineAsync($"Administrator \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
+        await Console.Out.WriteLineAsync($"Admin \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
     }
 }
 
