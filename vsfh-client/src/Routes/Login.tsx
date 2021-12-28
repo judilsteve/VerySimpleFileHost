@@ -12,6 +12,7 @@ import { ChangePasswordProps, ChangePasswordRouteParameters } from "./ChangePass
 import { loginApi as api } from "../apiInstances";
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
+import ThemeRule from "../Components/ThemeRule";
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -83,10 +84,10 @@ function Login() {
     };
 
     return <SkinnyForm>
-        <Header as="h1">VSFH</Header>
+        <Header as="h1">VSFH<ThemeRule /></Header>
         <Form error={!!error}>
             <Form.Field>
-                <Input tabIndex={1} icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
+                <Input autoFocus tabIndex={1} icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
             </Form.Field>
             <Form.Field>
                 <Input tabIndex={2} icon="key" iconPosition="left" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />

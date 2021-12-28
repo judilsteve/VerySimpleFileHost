@@ -12,6 +12,7 @@ import { usePageTitle } from "../Hooks/usePageTitle";
 import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
+import ThemeRule from "../Components/ThemeRule";
 
 function AcceptInvite() {
     usePageTitle('Accept Invite');
@@ -88,11 +89,11 @@ function AcceptInvite() {
     };
 
     return <SkinnyForm width={350}>
-        <Header as="h1" style={{ marginBottom: 0 }}>Welcome</Header>
+        <Header as="h1" style={{ marginBottom: 0 }}>Welcome<ThemeRule /></Header>
         <p>Choose a username and password</p>
         <Form error={!!error}>
             <Form.Field>
-                <Input tabIndex={1}
+                <Input autoFocus tabIndex={1}
                     icon="user" iconPosition="left"
                     placeholder="Username"
                     value={userName} onChange={e => setUserName(e.target.value)} />

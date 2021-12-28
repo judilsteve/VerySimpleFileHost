@@ -5,6 +5,7 @@ import { loginApi } from "../apiInstances";
 import { routes } from "../App";
 import IconLink from "./IconLink";
 import StandardModals from "./StandardModals";
+import ThemeRule from "./ThemeRule";
 
 export interface NavHeaderProps {
     pageTitle: string;
@@ -49,12 +50,13 @@ function NavHeader(props: NavHeaderProps) {
 
     return <>
         <div style={{ paddingTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-            <Header as="h1">{pageTitle}</Header>
+            <Header as="h1" style={{ marginBottom: 0 }}>{pageTitle}</Header>
             <div>
                 <Popup trigger={<IconLink style={{ marginRight: '1em' }} href={routes.browseFiles} name="folder open" size="large" />} content="Browse" />
                 <Popup trigger={<Icon link name="sign-out" size="large" onClick={() => setLoggingOut(true)} />} content="Log Out" />
             </div>
         </div>
+        <ThemeRule />
         <Modal size="tiny" open={loggingOut} onClose={() => setLoggingOut(false)}>
             <Modal.Header>Log Out</Modal.Header>
             <Modal.Content>

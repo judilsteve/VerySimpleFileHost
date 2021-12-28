@@ -12,6 +12,7 @@ import { usePageTitle } from "../Hooks/usePageTitle";
 import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
+import ThemeRule from "../Components/ThemeRule";
 
 export interface ChangePasswordProps {
     message?: string;
@@ -93,22 +94,24 @@ function ChangePassword(props: ChangePasswordProps) {
     };
 
     return <SkinnyForm width={350}>
-        <Header as="h1" style={{ marginBottom: 0 }}>Change Password</Header>
+        <Header as="h1" style={{ marginBottom: 0 }}>Change Password<ThemeRule /></Header>
         {
             message && <p><em>{message}</em></p>
         }
-        <Form.Field>
-            <Input icon="user" iconPosition="left" placeholder="Username" value={userName} disabled={true} />
-        </Form.Field>
-        <Form.Field>
-            <Input icon="key" iconPosition="left" placeholder="Current Password" value={userName} type="password" tabIndex={1} />
-        </Form.Field>
-        <SetPassword {...setPasswordProps}/>
-        <Message error header="Change Password Failed" content={error} />
-        <Form.Field>
-            <RememberMe {...rememberMeProps} />
-            <Button tabIndex={4} primary type="submit" floated="right" onClick={changePassword} disabled={!passwordValid} loading={loading}>Change Password</Button>
-        </Form.Field>
+        <Form>
+            <Form.Field>
+                <Input icon="user" iconPosition="left" placeholder="Username" value={userName} disabled={true} />
+            </Form.Field>
+            <Form.Field>
+                <Input autoFocus icon="key" iconPosition="left" placeholder="Current Password" value={userName} type="password" tabIndex={1} />
+            </Form.Field>
+            <SetPassword {...setPasswordProps}/>
+            <Message error header="Change Password Failed" content={error} />
+            <Form.Field>
+                <RememberMe {...rememberMeProps} />
+                <Button tabIndex={4} primary type="submit" floated="right" onClick={changePassword} disabled={!passwordValid} loading={loading}>Change Password</Button>
+            </Form.Field>
+        </Form>
     </SkinnyForm>
 }
 

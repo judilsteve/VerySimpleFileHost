@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Checkbox, Container, Form, Grid, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
-import { UserListingDto, UsersApi } from "../../API";
+import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
 import CenteredSpinner from "../../Components/CenteredSpinner";
 import useErrorHandler from "../../Hooks/useErrorHandler";
@@ -10,17 +10,16 @@ import NavHeader from "../../Components/NavHeader";
 
 const api = new UsersApi(apiConfig);
 
+// TODO_JU Disable all buttons and modal exits whenever something is loading (across whole application)
+// TODO_JU Another pass on the error handling here: Sometimes spinners don't stop spinning etc
+
 interface InviteLinkModalProps {
-    inviteKey: string;
-    userFullName: string;
-    open: boolean;
+    inviteKeyUser: InviteKeyUserInfo | null;
     close: () => void;
 }
 
 function InviteLinkModal(props: InviteLinkModalProps) {
-    const { inviteKey, userFullName, open, close } = props;
-
-    const inviteLink = `${window.location.origin}/AcceptInvite/${inviteKey}`;
+    const { inviteKeyUser, close } = props;
 
     const [justCopied, setJustCopied] = useState(false);
     const copyLink = () => {
@@ -34,13 +33,15 @@ function InviteLinkModal(props: InviteLinkModalProps) {
         return () => window.clearTimeout(timer);
     }, [justCopied]);
 
+    const inviteLink = `${window.location.origin}/AcceptInvite/${inviteKeyUser?.inviteKey}`;
+
     const copyButton = <Popup
         open={justCopied}
         content="Copied to clipboard"
         trigger={<Button icon="copy" primary onClick={copyLink} />} />
 
-    return <Modal size="small" open={open}>
-        <Modal.Header>Invite link for {userFullName}</Modal.Header>
+    return <Modal size="small" open={!!inviteKeyUser}>
+        <Modal.Header>Invite link for {inviteKeyUser?.userName ?? '<unnamed>'} ({inviteKeyUser?.fullName})</Modal.Header>
         <Modal.Content>
             <p>Copy the link below and send it securely to the user</p>
             <p>Once you close this modal, you will not be able to view the link again</p>
@@ -57,7 +58,7 @@ function InviteLinkModal(props: InviteLinkModalProps) {
 interface ConfirmResetPasswordModalProps {
     userDto: UserListingDto | null;
     open: boolean;
-    afterResetPassword: (inviteKey: string) => void;
+    afterResetPassword: (inviteKeyUser: InviteKeyUserInfo) => void;
     cancel: () => void;
 }
 
@@ -66,7 +67,6 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    useEffect(() => { if(open) setError(''); }, [open]);
 
     const errorHandler = useErrorHandler();
     const resetPassword = () => {
@@ -95,12 +95,16 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
                 }
             }
             if(cancel) return;
-            if(response) afterResetPassword(response.inviteKey!);
+            if(response) afterResetPassword({
+                inviteKey: response.inviteKey!,
+                userName: userDto!.loginName!,
+                fullName: userDto!.fullName!
+            });
             setLoading(false);
         })();
     }
 
-    return <Modal size="tiny" open={open} onClose={cancel}>
+    return <Modal size="tiny" open={open} onClose={() => { setError(''); setLoading(false); cancel(); }}>
         <Modal.Header>Reset password for {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
         <Modal.Content>
             <p>This will disable their account until they open the new invite link.</p>
@@ -279,7 +283,7 @@ function UserCard(props: UserEditProps) {
 }
 
 interface NewUserCardProps {
-    afterAddUser: () => void;
+    afterAddUser: (user: InviteKeyUserInfo) => void;
 }
 
 function NewUserCard(props: NewUserCardProps) {
@@ -296,8 +300,9 @@ function NewUserCard(props: NewUserCardProps) {
         setLoading(true);
         setError('');
         (async () => {
+            let response: UserResponseDto;
             try {
-                await api.usersPost({
+                response = await api.usersPost({
                     userAddRequestDto: {
                         fullName: newUserFullName,
                         isAdministrator: newUserIsAdmin
@@ -314,7 +319,11 @@ function NewUserCard(props: NewUserCardProps) {
                 return;
             }
             if(cancel) return;
-            afterAddUser();
+            afterAddUser({
+                userName: null,
+                fullName: newUserFullName,
+                inviteKey: response.inviteKey!
+            });
             setLoading(false);
         })();
         return () => { cancel = true; };
@@ -342,6 +351,12 @@ function NewUserCard(props: NewUserCardProps) {
             </div>
         </Card.Content>
     </Card>;
+}
+
+interface InviteKeyUserInfo {
+    inviteKey: string;
+    fullName: string;
+    userName: string | null;
 }
 
 function ManageUsers() {
@@ -389,7 +404,7 @@ function ManageUsers() {
     }, [users, loadingUsers, textFilter, activeStatusFilter, adminFilter]);
 
     const [resetPasswordUser, setResetPasswordUser] = useState<UserListingDto | null>(null);
-    const [inviteKey, setInviteKey] = useState('');
+    const [inviteKeyUser, setInviteKeyUser] = useState<InviteKeyUserInfo | null>(null);
 
     const cards = listingError ? <Message error header="Loading Users Failed" content='An unexpected error occurred' />
         : loadingUsers ? <CenteredSpinner />
@@ -403,25 +418,25 @@ function ManageUsers() {
                 resetPassword={() => setResetPasswordUser(u)}
                 />)
         }
-            <NewUserCard afterAddUser={reloadUsers}/>
+            <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         </Card.Group>;
 
     return <Container>
         <NavHeader pageTitle="Manage Users" />
         <Grid stackable columns={3}>
             <Grid.Column>
-                <Input fluid icon="filter" iconPosition="left" placeholder="Filter"
+                <Input autoFocus fluid icon="filter" iconPosition="left" placeholder="Filter"
                     value={textFilter} onChange={e => setTextFilter(e.target.value.toLocaleLowerCase())} />
             </Grid.Column>
             <Grid.Column>
-                <Button.Group fluid>
+                <Button.Group fluid style={{ height: '100%' }}>
                     <Button secondary active={activeStatusFilter === true} onClick={() => setActiveStatusFilter(true)}>Active</Button>
                     <Button secondary active={activeStatusFilter === false} onClick={() => setActiveStatusFilter(false)}>Locked</Button>
                     <Button secondary active={activeStatusFilter === null} onClick={() => setActiveStatusFilter(null)}>All</Button>
                 </Button.Group>
             </Grid.Column>
             <Grid.Column>
-                <Button.Group fluid>
+                <Button.Group fluid style={{ height: '100%' }}>
                     <Button secondary active={adminFilter === true} onClick={() => setAdminFilter(true)}>Admins</Button>
                     <Button secondary active={adminFilter === false} onClick={() => setAdminFilter(false)}>Users</Button>
                     <Button secondary active={adminFilter === null} onClick={() => setAdminFilter(null)}>All</Button>
@@ -431,14 +446,12 @@ function ManageUsers() {
         {cards}
         <ConfirmResetPasswordModal
             userDto={resetPasswordUser}
-            open={!!resetPasswordUser && !inviteKey}
-            afterResetPassword={invKey => { setInviteKey(invKey); reloadUsers(); }}
+            open={!!resetPasswordUser && !inviteKeyUser}
+            afterResetPassword={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }}
             cancel={() => setResetPasswordUser(null)} />
         <InviteLinkModal
-            inviteKey={inviteKey}
-            userFullName={resetPasswordUser?.fullName ?? ''}
-            open={!!inviteKey}
-            close={() => { setResetPasswordUser(null); setInviteKey(''); }} />
+            inviteKeyUser={inviteKeyUser}
+            close={() => { setInviteKeyUser(null); }} />
         <DeleteUserModal
             open={!!confirmDeleteUser}
             userDto={confirmDeleteUser}
