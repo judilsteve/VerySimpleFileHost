@@ -48,15 +48,26 @@ function Browse() {
 
     const fileList = treeLoading ? <Loader indeterminate /> : <List size="large">
         {
+            // TODO_JU In one line:
+            // - Multi-select checkbox
+            // - "folder [open]" icon (toggles expand when clicked)
+            // - Name (toggles expand when clicked) (highlight matching text portion?)
+            // - Archive icon (archive download link with popup for "Download as (tar|zip)")
+            // - "linkify" icon (copies hash URL to clipboard when clicked)
             tree!.subdirectories?.map(d => <List.Item key={d.displayName}>
                 {/* TODO_JU Checkboxes for multi-select */}
-                {/* TODO_JU Sticky card for multi-select (show count, claer button, and download button) */}
-                <Icon fitted name="folder" /> {/* TODO_JU Change to "folder open" when expanded */}
-                {d.displayName /* TODO_JU Make this the link and/or the expand button for easier clicking? */}
+                
+                <Icon fitted name="folder" />
+                {d.displayName}
                 <IconLink name="archive" fitted href={`${window.location.origin}/Files/Download?path=${encodeURIComponent(d.displayName!)}&archiveFormat=${ArchiveFormat.Tar}`} newTab />
             </List.Item>)
         }
         {
+            // TODO_JU In one line:
+            // - Multi-select checkbox
+            // - "file" icon (download link)
+            // - Name (download link) (highlight matching text portion?)
+            // - "linkify" icon (copies hash URL to clipboard when clicked)
             tree!.files?.map(f => <List.Item key={f.displayName}>
                 <List.Icon name="file" />
                 <List.Content>{f.displayName} ({humaniseBytes(f.sizeBytes!)})</List.Content>
@@ -64,6 +75,7 @@ function Browse() {
         }
     </List>
 
+    // TODO_JU Sticky card for multi-select (show selected count, clear button, and download button)
     return <Container>
         <NavHeader pageTitle="Browse" />
         {fileList}
