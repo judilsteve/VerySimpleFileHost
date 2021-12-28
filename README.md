@@ -12,7 +12,7 @@ VerySimpleFileHost (VSFH) is a RESTful HTTP File Server with a web interface. VS
 
   - **API driven.** VSFH is a RESTful JSON API with OpenAPI and Swagger UI integration (available in debug builds only). Don't like the included web interface? Build your own! Need to interact with a VSFH for automation/machine-to-machine purposes? No worries! Use the [OpenAPI toolkit](https://github.com/judilsteve/marvel-test/blob/master/openapi-generator-cli) to get up and running quickly with an auto-generated API client in your chosen language.
 
-  - **Secure.** VSFH has configuration options that allow administrators to enforce the use (and frequent change of) strong passwords. It encrypts all traffic via HTTPS (with optional certificates from Let's Encrypt) (TODO_JU) and runs inside a Docker container (TODO_JU) to provide you with a virtual demilitarised-zone (DMZ).
+  - **Secure.** VSFH has configuration options that allow administrators to enforce the use (and frequent change of) strong passwords. It encrypts all traffic via HTTPS (with optional certificates from Let's Encrypt) and runs inside a Docker container (TODO_JU) to provide you with a virtual demilitarised-zone (DMZ).
 
 # Features
 TODO_JU Screenshots
@@ -37,6 +37,7 @@ TODO_JU AuthenticationConfiguration
 ## Host Binding
 
 ## Let's Encrypt
+TODO_JU LettuceEncryptConfiguration
 
 # Build and run
 
