@@ -32,6 +32,12 @@ const routeLinks: RouteLink[] = [
         icon: 'users',
         name: 'Manage Users',
         adminOnly: true
+    },
+    {
+        route: routes.changePassword,
+        icon: 'key',
+        name: 'Change Password',
+        adminOnly: false
     }
 ];
 
