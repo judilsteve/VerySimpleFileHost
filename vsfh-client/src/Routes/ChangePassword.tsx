@@ -34,7 +34,7 @@ function ChangePassword(props: ChangePasswordProps) {
     const [passwordValid, setPasswordValid] = useState(false);
     const [error, setError] = useState('');
     const [authConfig, ] = useEndpointData(
-        useCallback(() => api.loginAuthConfigGet(), []),
+        useCallback(() => api.apiLoginAuthConfigGet(), []),
         useCallback(async e => {
             console.error('Unexpected response from auth config endpoint:');
             console.error(e);
@@ -76,7 +76,7 @@ function ChangePassword(props: ChangePasswordProps) {
                 newPassword,
                 rememberMe
             }
-            await api.loginChangePasswordPut({ changePasswordAttemptDto });
+            await api.apiLoginChangePasswordPut({ changePasswordAttemptDto });
         } catch(e) {
             const response = e as Response;
             if(response.status !== 401) {

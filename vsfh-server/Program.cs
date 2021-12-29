@@ -100,6 +100,8 @@ app.UseSwaggerUI();
 
 app.UseAuthentication();
 
+// TODO_JU Serve frontend
+
 app.UseRouting();
 app.UseAuthorization();
 app.UseEndpoints(e =>

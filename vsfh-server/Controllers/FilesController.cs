@@ -99,6 +99,8 @@ public class FilesController : ControllerBase
     [HttpGet(nameof(Download))]
     public ActionResult Download(string? path, ArchiveFormat? archiveFormat)
     {
+        // TODO_JU Set name with Content-Disposition https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+
         path ??= "";
 
         var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
@@ -127,7 +129,10 @@ public class FilesController : ControllerBase
                 .GetValueOrDefault(path.Substring(lastDotIndex + 1), "application/octet-stream");
         }
 
-        return new PhysicalFileResult(absolutePath, mimeType);
+        return new PhysicalFileResult(absolutePath, mimeType)
+        {
+            EnableRangeProcessing = true
+        };
     }
 
     private Task WriteArchiveToStream(
@@ -209,6 +214,8 @@ public class FilesController : ControllerBase
     [HttpPost(nameof(DownloadMany))]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat)
     {
+        // TODO_JU Set name with Content-Disposition https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+
         var absolutePaths = new List<string>(paths.Length);
         foreach(var path in paths)
         {

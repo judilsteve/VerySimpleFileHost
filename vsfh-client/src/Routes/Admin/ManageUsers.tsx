@@ -73,7 +73,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
         (async () => {
             let response;
             try {
-                response = await api.usersUserIdPut({
+                response = await api.apiUsersUserIdPut({
                     userId: userDto?.id!,
                     userEditDto: {
                         fullName: null,
@@ -104,6 +104,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
                 fullName: userDto!.fullName!
             });
         })();
+        return () => { cancel = true; };
     }
 
     return <Modal size="tiny" open={!!userDto} onOpen={() => { setError(''); setLoading(false); }} closeOnDimmerClick={!loading} closeOnEscape={!loading}>
@@ -141,7 +142,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
         setError('');
         (async () => {
             try {
-                await api.usersUserIdDelete({ userId: userDto?.id! });
+                await api.apiUsersUserIdDelete({ userId: userDto?.id! });
             } catch(e) {
                 const errorResponse = e as Response;
                 if(!await errorHandler(errorResponse)) {
@@ -161,6 +162,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
             }
             if(!cancel) afterDeleteUser();
         })();
+        return () => { cancel = true; };
     }
 
     return <Modal size="tiny" open={open} onClose={cancel} onOpen={() => { setError(''); setLoading(false); }} closeOnEscape={!loading} closeOnDimmerClick={!loading}>
@@ -219,7 +221,7 @@ function UserCard(props: UserEditProps) {
         setError('');
         (async () => {
             try {
-                await api.usersUserIdPut({
+                await api.apiUsersUserIdPut({
                     userId: id!,
                     userEditDto: {
                         fullName: newFullName,
@@ -311,7 +313,7 @@ function NewUserCard(props: NewUserCardProps) {
         (async () => {
             let response: UserResponseDto;
             try {
-                response = await api.usersPost({
+                response = await api.apiUsersPost({
                     userAddRequestDto: {
                         fullName: newUserFullName,
                         isAdministrator: newUserIsAdmin
@@ -374,7 +376,7 @@ function ManageUsers() {
     const errorHandler = useErrorHandler();
     const [listingError, setListingError] = useState(false);
     const [users, loadingUsers, reloadUsers] = useEndpointData(
-        useCallback(() => api.usersGet(), []),
+        useCallback(() => api.apiUsersGet(), []),
         useCallback(async e => {
             const response = e as Response;
             if(await errorHandler(response)) return;

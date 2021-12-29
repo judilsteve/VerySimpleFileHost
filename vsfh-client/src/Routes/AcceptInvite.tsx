@@ -33,7 +33,7 @@ function AcceptInvite() {
         setLoading(true);
         setError('');
         try {
-            await api.loginAcceptInvitePost({ acceptInviteDto: {
+            await api.apiLoginAcceptInvitePost({ acceptInviteDto: {
                 inviteKey,
                 userName,
                 newPassword: password,
@@ -62,7 +62,7 @@ function AcceptInvite() {
     };
 
     const [authConfig, ] = useEndpointData(
-        useCallback(() => api.loginAuthConfigGet(), []),
+        useCallback(() => api.apiLoginAuthConfigGet(), []),
         useCallback(async e => {
             console.error('Unexpected response from auth config endpoint:');
             console.error(e);

@@ -22,15 +22,15 @@ import {
     LoginAttemptDto,
 } from '../models';
 
-export interface LoginAcceptInvitePostRequest {
+export interface ApiLoginAcceptInvitePostRequest {
     acceptInviteDto?: AcceptInviteDto;
 }
 
-export interface LoginChangePasswordPutRequest {
+export interface ApiLoginChangePasswordPutRequest {
     changePasswordAttemptDto?: ChangePasswordAttemptDto;
 }
 
-export interface LoginPostRequest {
+export interface ApiLoginPostRequest {
     loginAttemptDto?: LoginAttemptDto;
 }
 
@@ -41,7 +41,7 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginAcceptInvitePostRaw(requestParameters: LoginAcceptInvitePostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async apiLoginAcceptInvitePostRaw(requestParameters: ApiLoginAcceptInvitePostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -49,7 +49,7 @@ export class LoginApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/Login/AcceptInvite`,
+            path: `/api/Login/AcceptInvite`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -61,19 +61,19 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginAcceptInvitePost(requestParameters: LoginAcceptInvitePostRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.loginAcceptInvitePostRaw(requestParameters, initOverrides);
+    async apiLoginAcceptInvitePost(requestParameters: ApiLoginAcceptInvitePostRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiLoginAcceptInvitePostRaw(requestParameters, initOverrides);
     }
 
     /**
      */
-    async loginAdminStatusGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<boolean>> {
+    async apiLoginAdminStatusGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<boolean>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/Login/AdminStatus`,
+            path: `/api/Login/AdminStatus`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -84,20 +84,20 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginAdminStatusGet(initOverrides?: RequestInit): Promise<boolean> {
-        const response = await this.loginAdminStatusGetRaw(initOverrides);
+    async apiLoginAdminStatusGet(initOverrides?: RequestInit): Promise<boolean> {
+        const response = await this.apiLoginAdminStatusGetRaw(initOverrides);
         return await response.value();
     }
 
     /**
      */
-    async loginAuthConfigGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<AuthConfigDto>> {
+    async apiLoginAuthConfigGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<AuthConfigDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/Login/AuthConfig`,
+            path: `/api/Login/AuthConfig`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -108,14 +108,14 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginAuthConfigGet(initOverrides?: RequestInit): Promise<AuthConfigDto> {
-        const response = await this.loginAuthConfigGetRaw(initOverrides);
+    async apiLoginAuthConfigGet(initOverrides?: RequestInit): Promise<AuthConfigDto> {
+        const response = await this.apiLoginAuthConfigGetRaw(initOverrides);
         return await response.value();
     }
 
     /**
      */
-    async loginChangePasswordPutRaw(requestParameters: LoginChangePasswordPutRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async apiLoginChangePasswordPutRaw(requestParameters: ApiLoginChangePasswordPutRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -123,7 +123,7 @@ export class LoginApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/Login/ChangePassword`,
+            path: `/api/Login/ChangePassword`,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
@@ -135,19 +135,19 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginChangePasswordPut(requestParameters: LoginChangePasswordPutRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.loginChangePasswordPutRaw(requestParameters, initOverrides);
+    async apiLoginChangePasswordPut(requestParameters: ApiLoginChangePasswordPutRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiLoginChangePasswordPutRaw(requestParameters, initOverrides);
     }
 
     /**
      */
-    async loginLogoutPostRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async apiLoginLogoutPostRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/Login/Logout`,
+            path: `/api/Login/Logout`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -158,13 +158,13 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginLogoutPost(initOverrides?: RequestInit): Promise<void> {
-        await this.loginLogoutPostRaw(initOverrides);
+    async apiLoginLogoutPost(initOverrides?: RequestInit): Promise<void> {
+        await this.apiLoginLogoutPostRaw(initOverrides);
     }
 
     /**
      */
-    async loginPostRaw(requestParameters: LoginPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async apiLoginPostRaw(requestParameters: ApiLoginPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -172,7 +172,7 @@ export class LoginApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/Login`,
+            path: `/api/Login`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -184,8 +184,8 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async loginPost(requestParameters: LoginPostRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.loginPostRaw(requestParameters, initOverrides);
+    async apiLoginPost(requestParameters: ApiLoginPostRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiLoginPostRaw(requestParameters, initOverrides);
     }
 
 }

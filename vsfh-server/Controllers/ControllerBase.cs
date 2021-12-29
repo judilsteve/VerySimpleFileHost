@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace VerySimpleFileHost.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public abstract class ControllerBase : Controller
 {
 }

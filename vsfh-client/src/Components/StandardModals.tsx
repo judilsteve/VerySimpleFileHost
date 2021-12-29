@@ -18,7 +18,7 @@ function SessionExpiredModal() {
         setSessionExpiredPrompt(false);
     }
 
-    return <Modal size="tiny" open={sessionExpiredPrompt}>
+    return <Modal size="tiny" open={sessionExpiredPrompt} onClose={() => setSessionExpiredPrompt(false)}>
         <Modal.Header>Session Expired</Modal.Header>
         <Modal.Content>
             <p>Log in again to continue</p>
@@ -41,7 +41,7 @@ function PasswordExpiredModal() {
         setPasswordExpiredPrompt(null);
     };
 
-    return <Modal size="tiny" open={!!passwordExpiredPrompt}>
+    return <Modal size="tiny" open={!!passwordExpiredPrompt} onClose={() => setPasswordExpiredPrompt(null)}>
         <Modal.Header>Password Expired</Modal.Header>
         <Modal.Content>
             <p>Change your password to continue</p>

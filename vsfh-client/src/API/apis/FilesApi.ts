@@ -20,17 +20,17 @@ import {
     DirectoryDto,
 } from '../models';
 
-export interface FilesDownloadGetRequest {
+export interface ApiFilesDownloadGetRequest {
     path?: string;
     archiveFormat?: ArchiveFormat;
 }
 
-export interface FilesDownloadManyPostRequest {
+export interface ApiFilesDownloadManyPostRequest {
     archiveFormat: ArchiveFormat;
     requestBody?: Array<string>;
 }
 
-export interface FilesListingGetRequest {
+export interface ApiFilesListingGetRequest {
     path?: string;
     depth?: number;
 }
@@ -42,7 +42,7 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async filesDownloadGetRaw(requestParameters: FilesDownloadGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async apiFilesDownloadGetRaw(requestParameters: ApiFilesDownloadGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.path !== undefined) {
@@ -56,7 +56,7 @@ export class FilesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/Files/Download`,
+            path: `/api/Files/Download`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -67,15 +67,15 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async filesDownloadGet(requestParameters: FilesDownloadGetRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.filesDownloadGetRaw(requestParameters, initOverrides);
+    async apiFilesDownloadGet(requestParameters: ApiFilesDownloadGetRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiFilesDownloadGetRaw(requestParameters, initOverrides);
     }
 
     /**
      */
-    async filesDownloadManyPostRaw(requestParameters: FilesDownloadManyPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+    async apiFilesDownloadManyPostRaw(requestParameters: ApiFilesDownloadManyPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.archiveFormat === null || requestParameters.archiveFormat === undefined) {
-            throw new runtime.RequiredError('archiveFormat','Required parameter requestParameters.archiveFormat was null or undefined when calling filesDownloadManyPost.');
+            throw new runtime.RequiredError('archiveFormat','Required parameter requestParameters.archiveFormat was null or undefined when calling apiFilesDownloadManyPost.');
         }
 
         const queryParameters: any = {};
@@ -89,7 +89,7 @@ export class FilesApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/Files/DownloadMany`,
+            path: `/api/Files/DownloadMany`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -101,13 +101,13 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async filesDownloadManyPost(requestParameters: FilesDownloadManyPostRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.filesDownloadManyPostRaw(requestParameters, initOverrides);
+    async apiFilesDownloadManyPost(requestParameters: ApiFilesDownloadManyPostRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiFilesDownloadManyPostRaw(requestParameters, initOverrides);
     }
 
     /**
      */
-    async filesListingGetRaw(requestParameters: FilesListingGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DirectoryDto>> {
+    async apiFilesListingGetRaw(requestParameters: ApiFilesListingGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DirectoryDto>> {
         const queryParameters: any = {};
 
         if (requestParameters.path !== undefined) {
@@ -121,7 +121,7 @@ export class FilesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/Files/Listing`,
+            path: `/api/Files/Listing`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -132,20 +132,20 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async filesListingGet(requestParameters: FilesListingGetRequest, initOverrides?: RequestInit): Promise<DirectoryDto> {
-        const response = await this.filesListingGetRaw(requestParameters, initOverrides);
+    async apiFilesListingGet(requestParameters: ApiFilesListingGetRequest, initOverrides?: RequestInit): Promise<DirectoryDto> {
+        const response = await this.apiFilesListingGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
      */
-    async filesPathSeparatorGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<string>> {
+    async apiFilesPathSeparatorGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<string>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/Files/PathSeparator`,
+            path: `/api/Files/PathSeparator`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -156,8 +156,8 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async filesPathSeparatorGet(initOverrides?: RequestInit): Promise<string> {
-        const response = await this.filesPathSeparatorGetRaw(initOverrides);
+    async apiFilesPathSeparatorGet(initOverrides?: RequestInit): Promise<string> {
+        const response = await this.apiFilesPathSeparatorGetRaw(initOverrides);
         return await response.value();
     }
 

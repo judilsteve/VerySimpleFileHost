@@ -13,9 +13,7 @@ using VerySimpleFileHost.Middleware;
 
 namespace VerySimpleFileHost.Controllers;
 
-[ApiController]
-[Route("[controller]")]
-public class LoginController : Controller
+public class LoginController : ControllerBase
 {
     private readonly VsfhContext context;
     private readonly AuthenticationConfiguration config;

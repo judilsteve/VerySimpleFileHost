@@ -36,7 +36,7 @@ function Login() {
         setLoading(true);
         setError('');
         try {
-            await api.loginPost({ loginAttemptDto: {
+            await api.apiLoginPost({ loginAttemptDto: {
                 userName,
                 password,
                 rememberMe
@@ -71,7 +71,7 @@ function Login() {
     };
 
     const [authConfig, ] = useEndpointData(
-        useCallback(() => api.loginAuthConfigGet(), []),
+        useCallback(() => api.apiLoginAuthConfigGet(), []),
         useCallback(async e => {
             console.error('Unexpected response from auth config endpoint:');
             console.error(e);

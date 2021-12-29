@@ -34,14 +34,14 @@ const routeLinks: RouteLink[] = [
         adminOnly: true
     },
     {
-        route: routes.changePassword,
+        route: routes.changePassword, // TODO_JU State is required when navigating here (maybe remove that requirement and just have it fetch it from an endpoint)
         icon: 'key',
         name: 'Change Password',
         adminOnly: false
     }
 ];
 
-const getAdminStatus = () => loginApi.loginAdminStatusGet();
+const getAdminStatus = () => loginApi.apiLoginAdminStatusGet();
 const handleError = async (e: any) => {
     const response = e as Response;
     console.error('Unexpected response from admin status endpoint:');
@@ -67,7 +67,7 @@ function NavHeader(props: NavHeaderProps) {
             setLoading(true);
             setError('');
             try {
-                await loginApi.loginLogoutPost();
+                await loginApi.apiLoginLogoutPost();
             } catch(e) {
                 const response = e as Response;
                 console.error('Unexpected response from logout endpoint:');
