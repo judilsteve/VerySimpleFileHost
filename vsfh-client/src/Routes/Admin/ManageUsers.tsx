@@ -399,9 +399,10 @@ function ManageUsers() {
 
         let predicates: ((u: UserListingDto) => boolean)[] = [];
         if(!!textFilter) {
+            const lowercaseTextFilter = textFilter.toLocaleLowerCase();
             predicates.push(u =>
-                u.fullName!.toLocaleLowerCase().includes(textFilter)
-                || (u.loginName?.toLocaleLowerCase().includes(textFilter) ?? false));
+                u.fullName!.toLocaleLowerCase().includes(lowercaseTextFilter)
+                || (u.loginName?.toLocaleLowerCase().includes(lowercaseTextFilter) ?? false));
         }
         if(activeStatusFilter !== null) {
             predicates.push(u => u.activated === activeStatusFilter);

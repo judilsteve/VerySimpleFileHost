@@ -99,7 +99,9 @@ public class FilesController : ControllerBase
     [HttpGet(nameof(Download))]
     public ActionResult Download(string? path, ArchiveFormat? archiveFormat)
     {
-        // TODO_JU Set name with Content-Disposition https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+        // TODO_JU Set name with Content-Disposition
+        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+        // Note that filenames should be no longer than 255 chars
 
         path ??= "";
 
@@ -214,8 +216,9 @@ public class FilesController : ControllerBase
     [HttpPost(nameof(DownloadMany))]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat)
     {
-        // TODO_JU Set name with Content-Disposition https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
-
+        // TODO_JU Set name with Content-Disposition
+        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+        // Note that filenames should be no longer than 255 chars
         var absolutePaths = new List<string>(paths.Length);
         foreach(var path in paths)
         {
