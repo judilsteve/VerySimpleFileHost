@@ -30,8 +30,4 @@ WORKDIR /home/vsfh
 COPY --from=server-builder /opt/vsfh-server/build /home/vsfh/vsfh
 COPY --from=client-builder /opt/vsfh-client/build /home/vsfh/vsfh/vsfh-client
 
-# TODO_JU Copy config files
-
-RUN ls -R /home/vsfh
-
 ENTRYPOINT /home/vsfh/vsfh/VerySimpleFileHost

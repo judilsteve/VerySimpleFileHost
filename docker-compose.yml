@@ -1,0 +1,16 @@
+services:
+  vsfh:
+    build: .
+    read_only: true # TODO_JU Make sure dotnet doesn't need to write anything at runtime
+    ports:
+    - "${VSFH_HTTPS_PORT}:7270"
+    - "${VSFH_HTTP_PORT}:5299"
+    volumes:
+    - type: bind
+      source: ${VSFH_SHARE_DIRECTORY}
+      target: /home/vsfh/shared
+      read_only: true # TODO_JU Make sure this works
+    - type: bind
+      source: ./appsettings.json
+      target: /home/vsfh/vsfh/appsettings.json
+      read_only: true # TODO_JU Make sure this works
