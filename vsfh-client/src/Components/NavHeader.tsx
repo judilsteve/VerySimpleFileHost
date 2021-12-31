@@ -1,10 +1,11 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
 import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../App";
 import useEndpointData from "../Hooks/useEndpointData";
+import { useIsMounted } from "../Hooks/useIsMounted";
 import IconLink from "./IconLink";
 import StandardModals from "./StandardModals";
 import ThemeRule from "./ThemeRule";
@@ -60,26 +61,24 @@ function NavHeader(props: NavHeaderProps) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const logOut = useCallback(() => {
+
+    const isMounted = useIsMounted();
+    const logOut = async () => {
         if(loading) return;
-        let cancel = false;
-        (async () => {
-            setLoading(true);
-            setError('');
-            try {
-                await loginApi.apiLoginLogoutPost();
-            } catch(e) {
-                const response = e as Response;
-                console.error('Unexpected response from logout endpoint:');
-                console.error(e);
-                console.error(await response.text());
-                if(!cancel) setError('An unexpected error occurred');
-                return;
-            }
-            if(!cancel) navigate(routes.login);
-        })();
-        return () => { cancel = true; };
-    }, [navigate, loading]);
+        setLoading(true);
+        setError('');
+        try {
+            await loginApi.apiLoginLogoutPost();
+        } catch(e) {
+            const response = e as Response;
+            console.error('Unexpected response from logout endpoint:');
+            console.error(e);
+            console.error(await response.text());
+            if(isMounted.current) setError('An unexpected error occurred');
+            return;
+        }
+        if(isMounted.current) navigate(routes.login);
+    };
 
     const { pathname } = useLocation();
     const links = useMemo(() => routeLinks

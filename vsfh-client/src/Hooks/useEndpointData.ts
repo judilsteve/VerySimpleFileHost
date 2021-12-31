@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+// TODO_JU Remove this, I don't like it and it misuses useCallback
 function useEndpointData<T>(
     getEndpointData: () => Promise<T>,
     handleError?: (error: any) => Promise<void> | void)

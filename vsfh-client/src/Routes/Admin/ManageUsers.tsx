@@ -3,10 +3,11 @@ import { Button, Card, Checkbox, Container, Form, Grid, Icon, Input, Message, Mo
 import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
 import CenteredSpinner from "../../Components/CenteredSpinner";
-import useErrorHandler from "../../Hooks/useErrorHandler";
 import useEndpointData from "../../Hooks/useEndpointData";
 import { usePageTitle } from "../../Hooks/usePageTitle";
 import NavHeader from "../../Components/NavHeader";
+import tryHandleError from "../../Utils/tryHandleError";
+import { useIsMounted } from "../../Hooks/useIsMounted";
 
 const api = new UsersApi(apiConfig);
 
@@ -63,49 +64,44 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
-    const errorHandler = useErrorHandler();
-    const resetPassword = () => {
+    const isMounted = useIsMounted();
+    const resetPassword = async () => {
         if(loading) return;
-        let cancel = false;
         setLoading(true);
         setError('');
-        (async () => {
-            let response;
-            try {
-                response = await api.apiUsersUserIdPut({
-                    userId: userDto?.id!,
-                    userEditDto: {
-                        fullName: null,
-                        isAdministrator: null,
-                        resetPassword: true
-                    }
-                });
-            } catch(e) {
-                const errorResponse = e as Response;
-                if(!await errorHandler(errorResponse)) {
-                    let newError;
-                    if (errorResponse.status === 404) newError = 'User does not exist';
-                    else {
-                        console.error('Unexpected response from reset password endpoint:');
-                        console.error(e);
-                        console.error(await errorResponse.text());
-                        newError = 'An unexpected error occurred';
-                    }
-                    if(!cancel) setError(newError);
+        let response;
+        try {
+            response = await api.apiUsersUserIdPut({
+                userId: userDto?.id!,
+                userEditDto: {
+                    fullName: null,
+                    isAdministrator: null,
+                    resetPassword: true
                 }
-                return;
-            } finally {
-                if(!cancel) setLoading(false);
-            }
-            if(!cancel) afterResetPassword({
-                inviteKey: response.inviteKey!,
-                userName: userDto!.loginName!,
-                fullName: userDto!.fullName!
             });
-        })();
-        return () => { cancel = true; };
-    }
+        } catch(e) {
+            const errorResponse = e as Response;
+            if(!await tryHandleError(errorResponse)) {
+                let newError;
+                if (errorResponse.status === 404) newError = 'User does not exist';
+                else {
+                    console.error('Unexpected response from reset password endpoint:');
+                    console.error(e);
+                    console.error(await errorResponse.text());
+                    newError = 'An unexpected error occurred';
+                }
+                if(isMounted.current) setError(newError);
+            }
+            return;
+        } finally {
+            if(isMounted.current) setLoading(false);
+        }
+        if(isMounted.current) afterResetPassword({
+            inviteKey: response.inviteKey!,
+            userName: userDto!.loginName!,
+            fullName: userDto!.fullName!
+        });
+    };
 
     return <Modal size="tiny" open={!!userDto} onOpen={() => { setError(''); setLoading(false); }} closeOnDimmerClick={!loading} closeOnEscape={!loading}>
         <Modal.Header>Reset password for {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
@@ -133,37 +129,32 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     useEffect(() => { if(open) setError(''); }, [open]);
-
-    const errorHandler = useErrorHandler();
-    const deleteUser = () => {
+    const isMounted = useIsMounted();
+    const deleteUser = async () => {
         if(loading) return;
-        let cancel = false;
         setLoading(true);
         setError('');
-        (async () => {
-            try {
-                await api.apiUsersUserIdDelete({ userId: userDto?.id! });
-            } catch(e) {
-                const errorResponse = e as Response;
-                if(!await errorHandler(errorResponse)) {
-                    let newError;
-                    if (errorResponse.status === 404) newError = 'User does not exist';
-                    else {
-                        console.error('Unexpected response from delete user endpoint:');
-                        console.error(e);
-                        console.error(await errorResponse.text());
-                        newError = 'An unexpected error occurred';
-                    }
-                    if(!cancel) setError(newError);
+        try {
+            await api.apiUsersUserIdDelete({ userId: userDto?.id! });
+        } catch(e) {
+            const errorResponse = e as Response;
+            if(!await tryHandleError(errorResponse)) {
+                let newError;
+                if (errorResponse.status === 404) newError = 'User does not exist';
+                else {
+                    console.error('Unexpected response from delete user endpoint:');
+                    console.error(e);
+                    console.error(await errorResponse.text());
+                    newError = 'An unexpected error occurred';
                 }
-                return;
-            } finally {
-                if(!cancel) setLoading(false);
+                if(isMounted.current) setError(newError);
             }
-            if(!cancel) afterDeleteUser();
-        })();
-        return () => { cancel = true; };
-    }
+            return;
+        } finally {
+            if(isMounted.current) setLoading(false);
+        }
+        if(isMounted.current) afterDeleteUser();
+    };
 
     return <Modal size="tiny" open={open} onClose={cancel} onOpen={() => { setError(''); setLoading(false); }} closeOnEscape={!loading} closeOnDimmerClick={!loading}>
         <Modal.Header>Delete user {userDto?.loginName ?? '<unnamed>'} ({userDto?.fullName})?</Modal.Header>
@@ -213,43 +204,39 @@ function UserCard(props: UserEditProps) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const errorHandler = useErrorHandler();
-    const save = useCallback(() => {
+    const isMounted = useIsMounted();
+    const save = async () => {
         if(loading) return;
-        let cancel = false;
         setLoading(true);
         setError('');
-        (async () => {
-            try {
-                await api.apiUsersUserIdPut({
-                    userId: id!,
-                    userEditDto: {
-                        fullName: newFullName,
-                        isAdministrator: newIsAdministrator,
-                        resetPassword: false
-                    }
-                });
-            } catch(e) {
-                const errorResponse = e as Response;
-                if(!await errorHandler(errorResponse)) {
-                    let newError;
-                    if (errorResponse.status === 404) newError = 'User does not exist';
-                    else {
-                        console.error('Unexpected response from edit user endpoint:');
-                        console.error(e);
-                        console.error(await errorResponse.text());
-                        newError = 'An unexpected error occurred';
-                    }
-                    if(!cancel) setError(newError);
+        try {
+            await api.apiUsersUserIdPut({
+                userId: id!,
+                userEditDto: {
+                    fullName: newFullName,
+                    isAdministrator: newIsAdministrator,
+                    resetPassword: false
                 }
-                return;
-            } finally {
-                if(!cancel) setLoading(false);
+            });
+        } catch(e) {
+            const errorResponse = e as Response;
+            if(!await tryHandleError(errorResponse)) {
+                let newError;
+                if (errorResponse.status === 404) newError = 'User does not exist';
+                else {
+                    console.error('Unexpected response from edit user endpoint:');
+                    console.error(e);
+                    console.error(await errorResponse.text());
+                    newError = 'An unexpected error occurred';
+                }
+                if(isMounted.current) setError(newError);
             }
-            if(!cancel) reloadList();
-        })();
-        return () => { cancel = true; };
-    }, [newFullName, loading, newIsAdministrator, id, reloadList, errorHandler]);
+            return;
+        } finally {
+            if(isMounted.current) setLoading(false);
+        }
+        if(isMounted.current) reloadList();
+    };
 
     return <Card>
         <Card.Content>
@@ -304,41 +291,37 @@ function NewUserCard(props: NewUserCardProps) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const errorHandler = useErrorHandler();
-    const add = useCallback(() => {
+    const isMounted = useIsMounted();
+    const add = async () => {
         if(loading) return;
-        let cancel = false;
         setLoading(true);
         setError('');
-        (async () => {
-            let response: UserResponseDto;
-            try {
-                response = await api.apiUsersPost({
-                    userAddRequestDto: {
-                        fullName: newUserFullName,
-                        isAdministrator: newUserIsAdmin
-                    }
-                });
-            } catch(e) {
-                const errorResponse = e as Response;
-                if(!await errorHandler(errorResponse)) {
-                    console.error('Unexpected response from add user endpoint:');
-                    console.error(e);
-                    console.error(await errorResponse.text());
-                    if(!cancel) setError('An unexpected error occurred');
+        let response: UserResponseDto;
+        try {
+            response = await api.apiUsersPost({
+                userAddRequestDto: {
+                    fullName: newUserFullName,
+                    isAdministrator: newUserIsAdmin
                 }
-                return;
-            } finally {
-                if(!cancel) setLoading(false);
-            }
-            if(!cancel) afterAddUser({
-                userName: null,
-                fullName: newUserFullName,
-                inviteKey: response.inviteKey!
             });
-        })();
-        return () => { cancel = true; };
-    }, [loading, newUserFullName, newUserIsAdmin, afterAddUser, errorHandler]);
+        } catch(e) {
+            const errorResponse = e as Response;
+            if(!await tryHandleError(errorResponse)) {
+                console.error('Unexpected response from add user endpoint:');
+                console.error(e);
+                console.error(await errorResponse.text());
+                if(isMounted.current) setError('An unexpected error occurred');
+            }
+            return;
+        } finally {
+            if(isMounted.current) setLoading(false);
+        }
+        if(isMounted.current) afterAddUser({
+            userName: null,
+            fullName: newUserFullName,
+            inviteKey: response.inviteKey!
+        });
+    };
 
     return <Card>
         <Card.Content>
@@ -373,20 +356,19 @@ interface InviteKeyUserInfo {
 function ManageUsers() {
     usePageTitle('Manage Users');
 
-    const errorHandler = useErrorHandler();
     const [listingError, setListingError] = useState(false);
     const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.apiUsersGet(), []),
         useCallback(async e => {
             const response = e as Response;
-            if(await errorHandler(response)) return;
+            if(await tryHandleError(response)) return;
             else {
                 console.error('Unexpected response from user listing endpoint:');
                 console.error(e);
                 console.error(await response.text());
                 setListingError(true);
             }
-        }, [errorHandler]));
+        }, []));
 
     const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
 

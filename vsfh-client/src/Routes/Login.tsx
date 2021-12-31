@@ -13,6 +13,7 @@ import { loginApi as api } from "../apiInstances";
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
+import { useIsMounted } from "../Hooks/useIsMounted";
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -30,7 +31,7 @@ function Login() {
 
     const navigate = useNavigate();
     const then = useSearchParams()[0].get(LoginRouteParameters.then);
-
+    const isMounted = useIsMounted();
     const login = async () => {
         if(loading) return;
         setLoading(true);
@@ -47,10 +48,11 @@ function Login() {
                 console.error('Unexpected response from login endpoint:');
                 console.error(response);
                 console.error(await response.text());
-                setError('An unexpected error occurred');
+                if(isMounted.current) setError('An unexpected error occurred');
             } else {
                 const responseObject: AuthenticationFailureDto = await response.json();
                 const reasonCode = responseObject.reasonCode;
+                if(!isMounted.current) return;
                 if(reasonCode === AuthenticationFailureReasonCode.PasswordExpired) {
                     const changePasswordProps: ChangePasswordProps = {
                         message: responseObject.reason!,
@@ -64,10 +66,12 @@ function Login() {
             }
             return;
         } finally {
-            setLoading(false);
-            setPassword('');
+            if(isMounted.current) {
+                setLoading(false);
+                setPassword('');
+            }
         }
-        navigate(then ?? routes.browseFiles);
+        if(isMounted.current) navigate(then ?? routes.browseFiles);
     };
 
     const [authConfig, ] = useEndpointData(

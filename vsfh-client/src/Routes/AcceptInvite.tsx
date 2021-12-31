@@ -13,6 +13,7 @@ import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
+import { useIsMounted } from "../Hooks/useIsMounted";
 
 function AcceptInvite() {
     usePageTitle('Accept Invite');
@@ -28,6 +29,7 @@ function AcceptInvite() {
 
     const inviteKey = useParams()[inviteKeyParamName];
     const navigate = useNavigate();
+    const isMounted = useIsMounted();
     const activateAccount = async () => {
         if(loading) return;
         setLoading(true);
@@ -43,22 +45,24 @@ function AcceptInvite() {
             const response = e as Response;
             if(response.status === 401) {
                 const responseObject: AuthenticationFailureDto = await response.json();
-                setError(responseObject.reason ?? 'Unknown authentication error');
+                if(isMounted.current) setError(responseObject.reason ?? 'Unknown authentication error');
             } else if(response.status === 400) {
-                setError(`A user with the name '${userName}' already exists`)
+                if(isMounted.current) setError(`A user with the name '${userName}' already exists`)
             } else {
                 console.error('Unexpected response from login endpoint:');
                 console.error(response);
                 console.error(await response.text());
-                setError('An unexpected error occurred');
+                if(isMounted.current) setError('An unexpected error occurred');
             }
             return;
         } finally {
-            setLoading(false);
-            setPassword('');
-            setCheckPassword('');
+            if(isMounted.current) {
+                setLoading(false);
+                setPassword('');
+                setCheckPassword('');
+            }
         }
-        navigate(routes.browseFiles);
+        if(isMounted.current) navigate(routes.browseFiles);
     };
 
     const [authConfig, ] = useEndpointData(

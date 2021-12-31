@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import CenteredSpinner from "../Components/CenteredSpinner";
-import Unauthorised from "../Components/Unauthorised";
 import { useSharedState } from "../Hooks/useSharedState";
 import { unauthorisedBlockState } from "../State/sharedState";
 
@@ -12,13 +11,12 @@ function SuspensefulComponent(props: SuspensefulComponentProps) {
     const { importFunc } = props;
 
     const Component = lazy(importFunc);
+    const UnauthorisedComponent = lazy(() => import('../Components/Unauthorised'));
 
     const [unauthorisedBlock, ] = useSharedState(unauthorisedBlockState);
 
-    if(unauthorisedBlock) return <Unauthorised />;
-
     return <Suspense fallback={<CenteredSpinner />}>
-        <Component/>
+        { unauthorisedBlock ? <UnauthorisedComponent/> : <Component/> }
     </Suspense>
 }
 

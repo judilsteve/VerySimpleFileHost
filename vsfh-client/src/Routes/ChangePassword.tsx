@@ -13,6 +13,7 @@ import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
+import { useIsMounted } from "../Hooks/useIsMounted";
 
 export interface ChangePasswordProps {
     message?: string;
@@ -66,6 +67,7 @@ function ChangePassword(props: ChangePasswordProps) {
 
     const navigate = useNavigate();
     const then = useSearchParams()[0].get(ChangePasswordRouteParameters.then);
+    const isMounted = useIsMounted();
     const changePassword = async () => {
         if(loading) return;
         setLoading(true);
@@ -83,19 +85,21 @@ function ChangePassword(props: ChangePasswordProps) {
                 console.error('Unexpected response from login endpoint:');
                 console.error(response);
                 console.error(await response.text());
-                setError('An unexpected error occurred');
+                if(isMounted.current) setError('An unexpected error occurred');
             } else {
                 const responseObject: AuthenticationFailureDto = await response.json();
-                setError(responseObject.reason ?? 'Unknown authentication error');
+                if(isMounted.current) setError(responseObject.reason ?? 'Unknown authentication error');
             }
             return;
         } finally {
-            setLoading(false);
-            setCurrentPassword('');
-            setNewPassword('');
-            setCheckPassword('');
+            if(isMounted.current) {
+                setLoading(false);
+                setCurrentPassword('');
+                setNewPassword('');
+                setCheckPassword('');
+            }
         }
-        navigate(then ?? routes.browseFiles);
+        if(isMounted.current) navigate(then ?? routes.browseFiles);
     };
 
     return <SkinnyForm width={350}>
