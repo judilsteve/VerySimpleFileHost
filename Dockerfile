@@ -1,28 +1,37 @@
-FROM docker.io/node:17-slim AS client-builder
+# BUILD FRONTEND
+# Note: Tried using node 17 but `npm ci` would hang
+FROM docker.io/node:16-slim AS client-builder
 
-WORKDIR /opt
+WORKDIR /opt/vsfh-client
 COPY vsfh-client ./
-RUN npm ci
+
+RUN npm ci --dev --verbose --no-audit
 RUN npm run build
 
+# BUILD BACKEND
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS server-builder
 
-WORKDIR /opt
+WORKDIR /opt/vsfh-server
 COPY vsfh-server ./
-RUN dotnet restore
-RUN dotnet publish -c Release -o out
 
+RUN dotnet restore
+RUN dotnet publish -c Release -o build
+
+# BUILD RUNTIME ENVIRONMENT
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
 
-ENV DEBIAN_FRONTEND=noninteractive
-
 RUN useradd -m -s /sbin/nologin vsfh
+USER vsfh
 
 EXPOSE 7270/tcp
 EXPOSE 5299/tcp
 
-WORKDIR ~
-COPY --from=server-builder /opt/out /home/vsfh
-COPY --from=client-builder /opt/build /home/vsfh
+WORKDIR /home/vsfh
+COPY --from=server-builder /opt/vsfh-server/build /home/vsfh/vsfh
+COPY --from=client-builder /opt/vsfh-client/build /home/vsfh/vsfh/vsfh-client
 
-ENTRYPOINT ["dotnet" "/home/vsfh/aspnetapp.dll"]
+# TODO_JU Copy config files
+
+RUN ls -R /home/vsfh
+
+ENTRYPOINT /home/vsfh/vsfh/VerySimpleFileHost
