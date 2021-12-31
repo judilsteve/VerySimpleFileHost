@@ -38,7 +38,7 @@ function humaniseBytes(bytes: number) {
 interface DirectoryProps {
     path?: string;
     displayName: string;
-    initialExpanded: boolean;
+    expandInitially: boolean;
     pathSeparator: string;
     archiveFormat: ArchiveFormat;
     textFilter: string;
@@ -73,7 +73,7 @@ function filterTree(tree: DirectoryDto, filterLowerCase: string) {
 }
 
 function Directory(props: DirectoryProps) {
-    const { displayName, path, initialExpanded, pathSeparator, archiveFormat, textFilter } = props;
+    const { displayName, path, expandInitially: initialExpanded, pathSeparator, archiveFormat, textFilter } = props;
 
     const [expanded, setExpanded] = useState(initialExpanded);
     const [tree, setTree] = useState<DirectoryDto | null>(null);
@@ -127,7 +127,7 @@ function Directory(props: DirectoryProps) {
         <CopyButton getTextToCopy={getHash} button={<Icon link name="linkify" fitted />} />
         {
             !expanded ? null : !tree ? <Loader indeterminate active inline size="tiny" /> : <List.List>
-                {filteredSubDirectories.map(d => <Directory key={d.displayName} {...props} path={`${path ? `${path}${pathSeparator}` : ''}${d.displayName}`} displayName={d.displayName!} initialExpanded={false} />)}
+                {filteredSubDirectories.map(d => <Directory key={d.displayName} {...props} path={`${path ? `${path}${pathSeparator}` : ''}${d.displayName}`} displayName={d.displayName!} expandInitially={false} />)}
                 {filteredFiles.map(f => <List.Item>
                     <File key={f.displayName} {...f} basePath={path} pathSeparator={pathSeparator} />
                 </List.Item>)}
@@ -164,8 +164,10 @@ function File(props: FileProps) {
 
 const getPathSeparator = () => api.apiFilesPathSeparatorGet();
 
+declare type DirectoryMap = { [path: string]: DirectoryDto };
+
 function expandDirectory(
-    expandedDirectories: { [path: string]: DirectoryDto },
+    expandedDirectories: DirectoryMap,
     newExpandedDirectory: DirectoryDto,
     path: string) {
     return {
@@ -175,9 +177,9 @@ function expandDirectory(
 }
 
 function collapseDirectory(
-    expandedDirectories: { [path: string]: DirectoryDto },
+    expandedDirectories: DirectoryMap,
     collapsePath: string) {
-    const newDirectories: { [path: string]: DirectoryDto } = {};
+    const newDirectories: DirectoryMap = {};
     for(const [path, directory] of Object.entries(expandedDirectories)) {
         if(path !== collapsePath)
             newDirectories[path] = directory;
@@ -205,7 +207,9 @@ function Browse() {
 
     const [textFilter, setTextFilter] = useState('');
 
-    const [expandedDirectories, setExpandedDirectories] = useState<{ [path: string]: DirectoryDto }>({});
+    const [expandedDirectories, setExpandedDirectories] = useState<DirectoryMap>({});
+    const expand = useCallback((d: DirectoryDto, p: string) => expandDirectory(expandedDirectories, d, p), [expandedDirectories]);
+    const collapse = useCallback((p: string) => collapseDirectory(expandedDirectories, p), [expandedDirectories]);
 
     // TODO_JU Sticky card for multi-select (show selected count, clear button, and download button)
     return <Container>
@@ -223,7 +227,7 @@ function Browse() {
             </Grid.Column>
         </Grid>
         { !pathSeparator ? <CenteredSpinner /> : <List>
-            <Directory textFilter={textFilter} displayName="<root>" initialExpanded={true} pathSeparator={pathSeparator} archiveFormat={archiveFormat} />
+            <Directory textFilter={textFilter} displayName="<root>" expandInitially={true} pathSeparator={pathSeparator} archiveFormat={archiveFormat} expand={expand} collapse={collapse} />
         </List>}
     </Container>;
 }
