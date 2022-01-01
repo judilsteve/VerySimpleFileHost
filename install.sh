@@ -36,4 +36,6 @@ cd $INSTALL_DIR
 python3 -m venv $INSTALL_DIR/.venv
 $INSTALL_DIR/.venv/bin/pip3 install 'podman-compose~=1.0.3'
 
+# TODO_JU Interactive prompt to set up first admin user
+
 # TODO_JU Configure and install service file

@@ -2,7 +2,7 @@
 services:
   vsfh-server:
     build: .
-    read_only: true # TODO_JU Make sure dotnet doesn't need to write anything at runtime
+    read_only: true # TODO_JU Make sure this works and that dotnet doesn't need to write anything at runtime
     network: vsfh-net
     ports:
     - "${VSFH_HTTPS_PORT}:7270"
@@ -16,6 +16,10 @@ services:
       source: ./appsettings.json
       target: /home/vsfh/vsfh/appsettings.json
       read_only: true # TODO_JU Make sure this works
+    - type: bind
+      source: ./Database.sqlite
+      target: /home/vsfh/vsfh/Database.sqlite
+      read_only: false
     env_file:
       - vsfh.env
 

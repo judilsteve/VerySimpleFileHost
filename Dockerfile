@@ -1,5 +1,3 @@
-# TODO_JU The container has local network access at build time. Can I disable this?
-
 # BUILD SSERVER
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS server-builder
 

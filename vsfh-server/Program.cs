@@ -109,6 +109,8 @@ app.UseEndpoints(e =>
 
 await app.StartAsync();
 
+// TODO_JU Get rid of this interactive prompt since this is designed to run as a containerised service
+// Will have to think of something else for this intead
 using(var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<VsfhContext>();
