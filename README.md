@@ -12,7 +12,7 @@ VerySimpleFileHost (VSFH) is a RESTful HTTP File Server with a web interface. VS
 
   - **API driven.** VSFH is a RESTful JSON API with OpenAPI and Swagger UI integration (available in debug builds only). Don't like the included web interface? Build your own! Need to interact with a VSFH for automation/machine-to-machine purposes? No worries! Use the [OpenAPI toolkit](https://github.com/judilsteve/marvel-test/blob/master/openapi-generator-cli) to get up and running quickly with an auto-generated API client in your chosen language.
 
-  - **Secure.** VSFH has configuration options that allow administrators to enforce the use (and frequent change of) strong passwords. It encrypts all traffic via HTTPS (with optional certificates from Let's Encrypt) and runs inside a Docker container (TODO_JU) to provide you with a virtual demilitarised-zone (DMZ).
+  - **Secure.** VSFH has configuration options that allow administrators to enforce the use (and frequent change of) strong passwords. It encrypts all traffic via HTTPS (with optional certificates from Let's Encrypt). In the default installation configuration, VSFH runs as a hardened, non-root systemd service inside a hardened rootless container. Thus, VSFH is jailed behind multiple redundant layers of attack protection and confined to an extremely restrictive bastion container with a networking configuration that emulates a demilitarised-zone (DMZ) in software.
 
 # Features
 TODO_JU Screenshots
@@ -39,24 +39,72 @@ TODO_JU AuthenticationConfiguration
 ## Let's Encrypt
 TODO_JU LettuceEncryptConfiguration
 
-# Build and run
+# Installation
 
-## Prerequisites
-TODO_JU
+## Installing as a containerised service (highly recommended)
+As VSFH is designed to be opened to the world via the internet, it is highly recommended to use the automated containerised installation, which will help protect your host system and local network in the event that VSFH or one of its dependencies is compromised.
 
-## Build
-TODO_JU
+### Prerequisites
+ - A Linux distribution with a systemd init system
+ - Python >=3.3 and matching pip
+ - Podman >=3.4
+ - Git
 
-## Run once
-TODO_JU
+Running the container with Docker (instead of Podman) should also be possible. See [this repository](https://github.com/MiGoller/dc-systemd-template) for reasonable service file templates that you can use.
 
-### First run setup
-TODO_JU
+### Instructions
+TODO_JU Audit these and make sure they work
 
-## Run automatically on startup
+1. Clone this repository to an appropriate directory
+```bash
+cd /tmp
+git clone https://github.com/judilsteve/VerySimpleFileHost.git`
+```
 
-### Linux (with systemd)
-TODO_JU
+TODO_JU Configuration
+
+2. Run `install.sh` (after first marking it as executable)
+```bash
+chmod +x ./VerySimpleFileHost/install.sh
+./VerySimpleFileHost/install.sh
+```
+
+## Installing on bare metal
+Only sparse and minimal instruction will be provided here. This is deliberate; to discourage you from installing VSFH on bare metal. Especially if you plan to face VSFH to the internet, you should make sure that you are installing on a bastion host in a DMZ. If you don't know what either of those terms mean, turn away now.
+
+### Prerequisites
+- Node v16 and matching npm
+- dotnet SDK 6.0
+
+### Instructions
+
+1. Clone this repository to an appropriate directory
+
+2. Build the server
+```bash
+cd vsfh-server
+dotnet restore
+dotnet publish -c Release -o build
+```
+
+3. Build the client
+```bash
+cd ../vsfh-client
+npm install --dev
+npm run build
+```
+
+4. Copy client build output to server's static files directory
+```bash
+cd ..
+mkdir vsfh-server/build/wwwroot
+cp vsfh-client/build/* vsfh-server/build/wwwroot
+```
+
+5. Run
+```bash
+./vsfh-server/build/VerySimpleFileHost
+```
 
 # Disclaimer
 TODO_JU

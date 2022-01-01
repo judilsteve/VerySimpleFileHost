@@ -1,3 +1,4 @@
+# TODO_JU Dynamically build this file in install.sh (using variable install directory)
 # TODO_JU `systemd-analyze security vsfh.service`
 # https://www.redhat.com/sysadmin/systemd-secure-services
 [Unit]
@@ -6,20 +7,17 @@ Description=Very Simple File Host
 [Service]
 Restart=always
 
-# TODO_JU Script to copy files to WorkingDirectory and create the user 
-WorkingDirectory=/usr/bin/VerySimpleFileHost
+WorkingDirectory=/usr/bin/vsfh
 User=vsfh
 
 # Remove old stuff, update image
-# TODO_JU Replace `/usr/bin/` with something dynamic based on `sudo which podman-compose`
-# or maybe use a venv to install the package in the root of the project dir
-ExecStartPre=-/usr/local/bin/podman-compose down
-ExecStartPre=-/usr/local/bin/podman-compose rm -f
-ExecStartPre=/usr/local/bin/podman-compose pull
+ExecStartPre=-/usr/bin/vsfh/.venv/bin/python3 -m podman-compose down
+ExecStartPre=-/usr/bin/vsfh/.venv/bin/python3 -m podman-compose rm -f
+ExecStartPre=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose pull
 
-ExecStart=/usr/bin/podman-compose up
+ExecStart=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose up
 
-ExecStop=/usr/bin/podman-compose down
+ExecStop=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose down
 
 [Install]
 WantedBy=multi-user.target
