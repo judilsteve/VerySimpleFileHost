@@ -1,6 +1,8 @@
+# TODO_JU The container has local network access at build time. Can I disable this?
+
 # BUILD FRONTEND
 # Note: Tried using node 17 but `npm ci` would hang
-FROM docker.io/node:16-slim AS client-builder
+FROM docker.io/node:16 AS client-builder
 
 WORKDIR /opt/vsfh-client
 COPY vsfh-client ./
@@ -18,7 +20,7 @@ RUN dotnet restore
 RUN dotnet publish -c Release -o build
 
 # BUILD RUNTIME ENVIRONMENT
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-buster
 
 RUN useradd -m -s /sbin/nologin vsfh
 USER vsfh
@@ -28,6 +30,6 @@ EXPOSE 5299/tcp
 
 WORKDIR /home/vsfh
 COPY --from=server-builder /opt/vsfh-server/build /home/vsfh/vsfh
-COPY --from=client-builder /opt/vsfh-client/build /home/vsfh/vsfh/vsfh-client
+COPY --from=client-builder /opt/vsfh-client/build /home/vsfh/vsfh/wwwroot
 
 ENTRYPOINT /home/vsfh/vsfh/VerySimpleFileHost
