@@ -157,10 +157,7 @@ const getPathSeparator = () => api.apiFilesPathSeparatorGet();
 function Browse() {
     usePageTitle('Browse');
 
-    // TODO_JU
-    // Text filter
-    // Toggle for archive download format
-    // Hash parsing
+    // TODO_JU Hash parsing
 
     const [pathSeparator, , ] = useEndpointData(
         getPathSeparator,
