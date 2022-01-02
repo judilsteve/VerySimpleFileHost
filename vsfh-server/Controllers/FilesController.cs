@@ -38,7 +38,7 @@ public class FilesController : ControllerBase
     private static string NotFoundMessage(string path) =>
         $"File/directory with path \"{path}\" could not be found";
 
-    [HttpGet(nameof(Listing))]
+    [HttpGet]
     public ActionResult<DirectoryDto> Listing(string? path, [Range(1, int.MaxValue)]int? depth)
     {
         path ??= "";
@@ -127,7 +127,7 @@ public class FilesController : ControllerBase
         };
     }
 
-    [HttpGet(nameof(Download))]
+    [HttpGet("{**path?}")]
     public ActionResult Download(string? path, ArchiveFormat? archiveFormat, bool asAttachment = false)
     {
         path ??= "";
@@ -238,7 +238,7 @@ public class FilesController : ControllerBase
         tarOutputStream.Close();
     }
 
-    [HttpPost(nameof(DownloadMany))]
+    [HttpPost("{**path?}")]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool asAttachment = false)
     {
         var absolutePaths = new List<string>(paths.Length);
@@ -267,7 +267,4 @@ public class FilesController : ControllerBase
                 HttpContext.RequestAborted),
             GetArchiveMimeType(archiveFormat.Value));
     }
-
-    [HttpGet(nameof(PathSeparator))]
-    public string PathSeparator() => Path.PathSeparator.ToString();
 }

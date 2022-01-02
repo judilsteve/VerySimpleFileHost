@@ -73,7 +73,7 @@ public class LoginController : ControllerBase
         [Required] public bool? RememberMe { get; init; }
     }
 
-    [HttpPost($"{nameof(AcceptInvite)}")]
+    [HttpPost]
     [AllowAnonymous]
     public async Task<ActionResult> AcceptInvite(AcceptInviteDto acceptDto)
     {
@@ -173,7 +173,7 @@ public class LoginController : ControllerBase
         return Ok();
     }
 
-    [HttpPost(nameof(Logout))]
+    [HttpPost]
     public async Task<ActionResult> Logout()
     {
         var user = await context.Users
@@ -193,7 +193,7 @@ public class LoginController : ControllerBase
         [Required] public bool? RememberMe { get; init; }
     }
 
-    [HttpPut(nameof(ChangePassword))]
+    [HttpPut]
     [AllowAnonymous]
     public async Task<ActionResult> ChangePassword(ChangePasswordAttemptDto changePasswordAttempt)
     {
@@ -238,15 +238,15 @@ public class LoginController : ControllerBase
         public bool AllowRememberMe { get; init; }
     }
 
+    [HttpGet]
     [AllowAnonymous]
-    [HttpGet(nameof(AuthConfig))]
     public AuthConfigDto AuthConfig() => new AuthConfigDto
     {
         MinimumPasswordScore = config.MinimumPasswordScore,
         AllowRememberMe = config.AllowRememberMe
     };
 
-    [HttpGet(nameof(AdminStatus))]
+    [HttpGet]
     public Task<bool> AdminStatus() => context.Users
         .Where(u => u.Id == Guid.Parse(HttpContext.User.Identity!.Name!))
         .Select(u => u.IsAdministrator)
