@@ -42,6 +42,8 @@ interface DirectoryProps {
     pathSeparator: string;
     archiveFormat: ArchiveFormat;
     visiblePaths: Set<string>;
+    addLoadedPaths: (d: DirectoryDto, prefix: string) => void;
+    removeLoadedPaths: (prefix: string) => void;
 }
 
 function Directory(props: DirectoryProps) {
@@ -51,14 +53,19 @@ function Directory(props: DirectoryProps) {
         expandInitially,
         pathSeparator,
         archiveFormat,
-        visiblePaths
+        visiblePaths,
+        addLoadedPaths,
+        removeLoadedPaths
     } = props;
 
     const [expanded, setExpanded] = useState(expandInitially);
     const [tree, setTree] = useState<DirectoryDto | null>(null);
     useEffect(() => {
         setTree(null);
-        if(!expanded) return;
+        if(!expanded) {
+            removeLoadedPaths(path ?? '');
+            return;
+        }
         let cancel = false;
         (async () => {
             let newTree;
@@ -72,10 +79,13 @@ function Directory(props: DirectoryProps) {
             } finally {
                 if(!cancel) setTree(null);
             }
-            if(!cancel) setTree(newTree);
+            if(!cancel) {
+                setTree(newTree);
+                addLoadedPaths(newTree, path ?? '');
+            }
         })();
         return () => { cancel = true; };
-    }, [expanded, path]);
+    }, [expanded, path, addLoadedPaths, removeLoadedPaths]);
 
     const getHash = () => {
         const loc = window.location;
@@ -193,7 +203,7 @@ function Browse() {
         }
     }, [textFilter, loadedPaths, pathSeparator]);
 
-    // TODO_JU Sticky card for multi-select (show selected count, clear button, and download button)
+    // TODO_JU Sticky card for multi-select (show selected list/count, clear button, and download button)
     return <Container>
         <NavHeader pageTitle="Browse" />
         <Grid stackable>
@@ -214,7 +224,9 @@ function Browse() {
                 displayName="<root>"
                 expandInitially={true}
                 pathSeparator={pathSeparator}
-                archiveFormat={archiveFormat} />
+                archiveFormat={archiveFormat}
+                addLoadedPaths={addLoadedPaths}
+                removeLoadedPaths={removeLoadedPaths} />
         </List>}
     </Container>;
 }

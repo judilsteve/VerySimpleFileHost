@@ -23,10 +23,12 @@ import {
 export interface ApiFilesDownloadGetRequest {
     path?: string;
     archiveFormat?: ArchiveFormat;
+    asAttachment?: boolean;
 }
 
 export interface ApiFilesDownloadManyPostRequest {
     archiveFormat: ArchiveFormat;
+    asAttachment?: boolean;
     requestBody?: Array<string>;
 }
 
@@ -51,6 +53,10 @@ export class FilesApi extends runtime.BaseAPI {
 
         if (requestParameters.archiveFormat !== undefined) {
             queryParameters['archiveFormat'] = requestParameters.archiveFormat;
+        }
+
+        if (requestParameters.asAttachment !== undefined) {
+            queryParameters['asAttachment'] = requestParameters.asAttachment;
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -82,6 +88,10 @@ export class FilesApi extends runtime.BaseAPI {
 
         if (requestParameters.archiveFormat !== undefined) {
             queryParameters['archiveFormat'] = requestParameters.archiveFormat;
+        }
+
+        if (requestParameters.asAttachment !== undefined) {
+            queryParameters['asAttachment'] = requestParameters.asAttachment;
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

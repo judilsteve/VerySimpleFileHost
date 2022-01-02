@@ -96,13 +96,40 @@ public class FilesController : ControllerBase
         Zip
     }
 
-    [HttpGet(nameof(Download))]
-    public ActionResult Download(string? path, ArchiveFormat? archiveFormat)
+    private void AddAttachmentHeader(string absolutePath, string extension)
     {
-        // TODO_JU Set name with Content-Disposition
-        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
-        // Note that filenames should be no longer than 255 chars
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(absolutePath);
+        var maxFileNameLength = 255;
+        var availableChars = maxFileNameLength - extension.Length;
+        string trimmedFileName;
+        if(availableChars < 0)
+        {
+            trimmedFileName = Path.GetFileName(absolutePath).Substring(0, maxFileNameLength);
+        }
+        else
+        {
+            trimmedFileName = $"{fileNameWithoutExtension.Substring(0, availableChars)}{extension}";
+        }
+        HttpContext.Response.Headers.Add(
+            "Content-Disposition",
+            $"attachment; filename*=UTF-8''{Uri.EscapeDataString(trimmedFileName)}");
+    }
 
+    private string GetArchiveMimeType(ArchiveFormat archiveFormat)
+    {
+        return archiveFormat switch
+        {
+            ArchiveFormat.Tar => config.GzipCompressionLevel.HasValue
+                ? "application/gzip"
+                : "application/x-tar",
+            ArchiveFormat.Zip => "application/zip",
+            _ => throw new ArgumentException("Unrecognised archive format", nameof(archiveFormat))
+        };
+    }
+
+    [HttpGet(nameof(Download))]
+    public ActionResult Download(string? path, ArchiveFormat? archiveFormat, bool asAttachment = false)
+    {
         path ??= "";
 
         var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
@@ -120,16 +147,14 @@ public class FilesController : ControllerBase
                     outputStream,
                     archiveFormat.Value,
                     HttpContext.RequestAborted),
-                "application/zip");
+                GetArchiveMimeType(archiveFormat.Value));
         }
 
-        var mimeType = "application/octet-stream";
-        var lastDotIndex = path.LastIndexOf('.');
-        if(lastDotIndex > 0)
-        {
-            mimeType = config.MimeTypesByExtension
-                .GetValueOrDefault(path.Substring(lastDotIndex + 1), "application/octet-stream");
-        }
+        var extension = Path.GetExtension(absolutePath);
+        var mimeType = config.MimeTypesByExtension
+            .GetValueOrDefault(extension.Substring(1), "application/octet-stream");
+
+        if(asAttachment) AddAttachmentHeader(absolutePath, extension);
 
         return new PhysicalFileResult(absolutePath, mimeType)
         {
@@ -214,11 +239,8 @@ public class FilesController : ControllerBase
     }
 
     [HttpPost(nameof(DownloadMany))]
-    public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat)
+    public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool asAttachment = false)
     {
-        // TODO_JU Set name with Content-Disposition
-        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
-        // Note that filenames should be no longer than 255 chars
         var absolutePaths = new List<string>(paths.Length);
         foreach(var path in paths)
         {
@@ -228,13 +250,22 @@ public class FilesController : ControllerBase
             absolutePaths.Add(absolutePath);
         }
 
+        var archiveExtension = archiveFormat!.Value switch
+        {
+            ArchiveFormat.Tar => config.GzipCompressionLevel.HasValue ? ".tar.gz" : ".tar",
+            ArchiveFormat.Zip => ".zip",
+            _ => throw new ArgumentException("Unrecognised archive format", nameof(archiveFormat))
+        };
+
+        if(asAttachment) AddAttachmentHeader(string.Join(",", absolutePaths), archiveExtension);
+
         return new FileCallbackResult(
             (outputStream, _) => WriteArchiveToStream(
                 absolutePaths,
                 outputStream,
                 archiveFormat!.Value,
                 HttpContext.RequestAborted),
-            "application/zip");
+            GetArchiveMimeType(archiveFormat.Value));
     }
 
     [HttpGet(nameof(PathSeparator))]
