@@ -95,7 +95,7 @@ function Directory(props: DirectoryProps) {
     let downloadLink = `/api/Files/Download?archiveFormat=${archiveFormat}`;
     if(path) downloadLink += `&path=${encodeURIComponent(path)}`;
 
-    return <div style={!path || visiblePaths.has(path) ? undefined : { display: "none" }}>
+    return <div id={path} style={!path || visiblePaths.has(path) ? undefined : { display: "none" }}>
         {/*TODO_JU Multi-select checkbox*/}
         <div onClick={() => setExpanded(e => !e)}>
             <Icon fitted name={expanded ? 'folder open' : 'folder'} />
@@ -131,16 +131,17 @@ interface FileProps extends FileDto {
 }
 
 function File(props: FileProps) {
-    const { basePath, pathSeparator, displayName, sizeBytes } = props;
+    const { basePath, pathSeparator, displayName, sizeBytes, visiblePaths } = props;
+    const path = `${basePath ? `${basePath}${pathSeparator}` : ''}${displayName}`;
 
-    const encodedAbsolutePath = encodeURIComponent(`${basePath ? `${basePath}${pathSeparator}` : ''}${displayName}`);
+    const encodedAbsolutePath = encodeURIComponent(path);
 
     const getHash = () => {
         const loc = window.location;
         return `${loc.origin}${loc.pathname}${loc.search}#${encodedAbsolutePath}`;
     };
 
-    return <>
+    return <div id={path} style={!path || visiblePaths.has(path) ? undefined : { display: "none" }}>
         {/*TODO_JU Multi-select checkbox*/}
         {/*TODO_JU Replace the single download button with one for download and one for open (in new tab) */}
         <a style={{ all: 'unset' }} target="_blank" rel="noreferrer"
@@ -149,15 +150,13 @@ function File(props: FileProps) {
             {displayName} ({humaniseBytes(sizeBytes!)})
         </a>
         <CopyButton getTextToCopy={getHash} button={<Icon link name="linkify" fitted />} />
-    </>;
+    </div>;
 }
 
 const getPathSeparator = () => api.apiFilesPathSeparatorGet();
 
 function Browse() {
     usePageTitle('Browse');
-
-    // TODO_JU Hash parsing
 
     const [pathSeparator, , ] = useEndpointData(
         getPathSeparator,
