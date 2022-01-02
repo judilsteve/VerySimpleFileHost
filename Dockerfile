@@ -18,7 +18,7 @@ RUN npm ci --dev --verbose --no-audit
 RUN npm run build
 
 # BUILD RUNTIME ENVIRONMENT
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-buster
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
 
 RUN useradd -m -s /sbin/nologin vsfh
 USER vsfh

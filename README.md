@@ -26,20 +26,6 @@ Users can download entire directories as a tarball (with optional gzip compressi
 ## HTTP Range and MIME Support
 Media such as audio and video can be streamed, with full support for seek operations (via HTTP range requests). Administrators can configure MIME type mappings so that files automatically open in the right application.
 
-# Configuration
-
-## Shared Directory
-TODO_JU FilesConfiguration
-
-## Authentication
-TODO_JU AuthenticationConfiguration
-
-## Host Binding
-TODO_JU Host binding configuration
-
-## Let's Encrypt
-TODO_JU LettuceEncryptConfiguration
-
 # Install and run
 TODO_JU Test these instructions to make sure they work
 
@@ -55,37 +41,33 @@ Since VSFH is designed to be opened to the world via the internet, it is highly 
 Running the container with Docker (instead of Podman) should also be possible. See [this repository](https://github.com/MiGoller/dc-systemd-template) for reasonable service file templates that you can use.
 
 ### Instructions
-1. Clone this repository to an appropriate directory
-```bash
-cd /tmp
-git clone https://github.com/judilsteve/VerySimpleFileHost.git`
-```
+Run the following in your terminal:
 
-2. Follow the instructions in the [Configuration](#configuration) section to configure VSFH.
-
-3. Run `install.sh` (after first marking it as executable) and follow the prompts
 ```bash
-chmod +x ./VerySimpleFileHost/install.sh
-./VerySimpleFileHost/install.sh
+curl https://raw.githubusercontent.com/judilsteve/VerySimpleFileHost/main/bootstrap.sh | sudo bash
 ```
 
 ### Exposing VSFH to the internet
 You will likely need to forward VSFH's HTTPS listen port to 443 and its HTTP listen port to 80. Instructions for this will be specific to your chosen firewall/router. Forwarding to other ports is possible, but you will lose the ability to use Let's Encrypt certificates, since Let's Encrypt's challenge schemes require VSFH to listen on ports 80 and 443.
 
 ### Updating the configuration
-Make your changes to the configuration files in your chosen installation directory, then restart the service:
+Make your changes to the [configuration files](#configuration), then restart the service:
+
 ```bash
 sudo systemctl restart vsfh
 ```
 
 ### "Help, I locked myself out of my administrator account!"
-TODO_JU Recovery instructions
-
-### Updating VSFH
-Run `git pull` in your chosen installation directory to update to the latest version.
-Then, restart the service:
+Run the following in your terminal:
 ```bash
-sudo systemctl restart vsfh
+/usr/bin/vsfh/scripts/new-admin-account.sh
+```
+
+### Updating
+Run the following in your terminal:
+
+```bash
+sudo /usr/bin/vsfh/update.sh
 ```
 
 ## Installing on bare metal
@@ -120,12 +102,17 @@ mkdir vsfh-server/build/wwwroot
 cp vsfh-client/build/* vsfh-server/build/wwwroot
 ```
 
-5. Put your [config files](#Configuration) in `vsfh-server/build`
+5. Create an `appsettings.json` file with your desired configuration in `vsfh-server/build`
 
 6. Run
 ```bash
 ./vsfh-server/build/VerySimpleFileHost
 ```
+
+# Configuration
+
+There are two main configuration files for VSFH. The first is `/usr/bin/vsfh/.env`. This file defines the shared directory, and the ports that VSFH listens on.
+All other configuration lives in `/usr/bin/vsfh/vsfh-server/appsettings.json`. Use `appsettings.Default.json` as a reference.
 
 # Disclaimer
 Although all care has been taken to make VSFH as secure as possible, it has not been independently audited for vulnerabilities. You run VSFH (and expose it to the internet) at your own risk.

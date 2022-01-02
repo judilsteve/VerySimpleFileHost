@@ -13,15 +13,15 @@ services:
       target: /home/vsfh/shared
       read_only: true # TODO_JU Make sure this works
     - type: bind
-      source: ./appsettings.json
+      source: ./vsfh-server/appsettings.json
       target: /home/vsfh/vsfh/appsettings.json
       read_only: true # TODO_JU Make sure this works
     - type: bind
-      source: ./Database.sqlite
+      source: ./vsfh-server/Database.sqlite
       target: /home/vsfh/vsfh/Database.sqlite
       read_only: false
     env_file:
-      - vsfh.env
+      - ./.env
 
 networks:
   vsfh-net:

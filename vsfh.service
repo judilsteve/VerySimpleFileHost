@@ -1,4 +1,3 @@
-# TODO_JU Dynamically build this file in install.sh (using variable install directory)
 # TODO_JU `systemd-analyze security vsfh.service`
 # https://www.redhat.com/sysadmin/systemd-secure-services
 [Unit]
@@ -8,12 +7,10 @@ Description=Very Simple File Host
 Restart=always
 
 WorkingDirectory=/usr/bin/vsfh
+EnvironmentFile=/usr/bin/vsfh/.env
 User=vsfh
 
-# Remove old stuff, update image
 ExecStartPre=-/usr/bin/vsfh/.venv/bin/python3 -m podman-compose down
-ExecStartPre=-/usr/bin/vsfh/.venv/bin/python3 -m podman-compose rm -f
-ExecStartPre=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose pull
 
 ExecStart=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose up
 
