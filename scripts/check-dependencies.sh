@@ -10,9 +10,22 @@ function check_command() {
 }
 
 check_command python3
-# TODO_JU Check that python version is >=3.3 (required for venv)
+
+# Required for venv support
+if [ `python3 -c"import sys; print(sys.version_info.minor)"` -lt 3 ]; then
+    echo "VSFH requires Python3 >=3.3"
+    exit 1
+fi
 
 check_command pip3
 check_command systemctl
 check_command podman
-# TODO_JU Check that podman version is >=3.4 (readme for podman-compose mentions this as a requirement)
+
+# Readme for podman-compose mentions this version as a minimum requirement
+PODMAN_VERSION=`podman version --format '{{.Client.Version}}'`
+PODMAN_VERSION_MAJOR="${PODMAN_VERSION%%\.*}"
+PODMAN_VERSION_MINOR="${PODMAN_VERSION#*.}"
+if [ $PODMAN_VERSION_MAJOR -lt 3 || $PODMAN_VERSION_MINOR -lt 4 ]; then
+    echo "VSFH requires Podman >=3.4"
+    exit 1
+fi

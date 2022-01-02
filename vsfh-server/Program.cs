@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
@@ -100,16 +101,17 @@ app.UseSwaggerUI();
 
 app.UseAuthentication();
 
-// TODO_JU Serve frontend
-
 app.UseRouting();
 app.UseAuthorization();
 app.UseEndpoints(e =>
     e.MapControllers().RequireAuthorization());
 
+if(!app.Environment.IsDevelopment())
+    app.UseSpaStaticFiles();
+
 await app.StartAsync();
 
-// TODO_JU Get rid of this interactive prompt since this is designed to run as a containerised service
+// TODO_JU Get rid of this auto prompt since this is designed to run as a containerised service
 // Will have to think of something else for this intead
 using(var scope = app.Services.CreateAsyncScope())
 {

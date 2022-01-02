@@ -6,7 +6,9 @@ if [ "$(whoami)" != "root" ]; then
     exit 1
 fi
 
-# TODO_JU Interactive prompt asking whether user wants to keep config files
+echo -n "Keep your config files [Y/n]?"
+read -r KEEP_CONFIG_FILES_RESPONSE
+KEEP_CONFIG_FILES=[[ $KEEP_CONFIG_FILES_RESPONSE =~ [yY](es)* ]]
 
 systemctl stop vsfh
 systemctl disable vsfh

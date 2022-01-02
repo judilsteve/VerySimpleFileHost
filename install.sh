@@ -25,11 +25,22 @@ cd $INSTALL_DIR
 python3 -m venv $INSTALL_DIR/.venv
 ./.venv/bin/pip3 install -r requirements.txt
 
-# TODO_JU Interactive prompt to set up env vars (listen ports and share directory) if not already present
+# TODO_JU Validation for these
+DEFAULT_HTTP_PORT=80
+echo -n "Which port should VSFH listen on for HTTP connections [$DEFAULT_HTTP_PORT]?"
+read -r HTTP_PORT
+HTTP_PORT=${HTTP_PORT:-$DEFAULT_HTTP_PORT}
 
-# Create default config file
-# TODO_JU Only do this if there isn't already a config file here
-cp ./vsfh-server/appsettings.Default.json ./vsfh-server/appsettings.json
+DEFAULT_HTTPS_PORT=443
+echo -n "Which port should VSFH listen on for HTTPS connections [$DEFAULT_HTTPS_PORT]?"
+read -r HTTPS_PORT
+HTTPS_PORT=${HTTPS_PORT:-$DEFAULT_HTTPS_PORT}
+
+echo -n "Which directory should VSFH share to its users?"
+read -r SHARE_DIRECTORY
+
+# Install default config file if no config file present
+cp -n ./vsfh-server/appsettings.Default.json ./vsfh-server/appsettings.json || true
 
 ./scripts/new-admin-account.sh
 
