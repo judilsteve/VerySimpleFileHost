@@ -1,6 +1,6 @@
-# TODO_JU Audit network access of container at runtime
 services:
   vsfh-server:
+    container_name: vsfh
     build: .
     read_only: true # TODO_JU Make sure this works and that dotnet doesn't need to write anything at runtime
     network: vsfh-net

@@ -6,4 +6,4 @@ if [ "$(whoami)" != "root" ]; then
     exit 1
 fi
 
-su -m vsfh -c podman exec -ti VerySimpleFileHost_vsfh-server_1 --create-admin-account
+su -m vsfh -c podman exec -ti vsfh --create-admin-account
