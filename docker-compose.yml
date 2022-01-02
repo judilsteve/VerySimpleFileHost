@@ -20,8 +20,6 @@ services:
       source: ./vsfh-server/Database.sqlite
       target: /home/vsfh/vsfh/Database.sqlite
       read_only: false
-    env_file:
-      - ./.env
 
 networks:
   vsfh-net:

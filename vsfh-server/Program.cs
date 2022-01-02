@@ -1,10 +1,8 @@
 using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.DependencyInjection;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
@@ -12,16 +10,49 @@ using VerySimpleFileHost.Middleware;
 using VerySimpleFileHost.Entities;
 using VerySimpleFileHost.Utils;
 
+var connectionString = "Filename=Database.sqlite";
+
+if(args.Contains("--create-admin-account"))
+{
+    var context = new VsfhContext(new DbContextOptionsBuilder<VsfhContext>().UseSqlite(connectionString).Options);
+    await context.Database.MigrateAsync();
+
+    if(!await context.Users.AnyAsync(u => u.IsAdministrator && u.PasswordHash != null))
+    {
+        await Console.Out.WriteLineAsync("What should the new administrator's name be?");
+        string? name;
+        do
+        {
+            name = await Console.In.ReadLineAsync();
+        }
+        while(string.IsNullOrWhiteSpace(name));
+
+        var firstAdmin = new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = name,
+            IsAdministrator = true
+        };
+        var inviteKey = PasswordUtils.AssignInviteKey(firstAdmin);
+
+        await context.Users.AddAsync(firstAdmin);
+        await context.SaveChangesAsync();
+
+        await Console.Out.WriteLineAsync($"Account for \"{name}\" created. Use one-time invite key below to log in:\n{inviteKey}");
+    }
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 var config = builder.Configuration;
-void RegisterConfigObject<T>() where T: class, IValidatableConfiguration, new()
+void RegisterConfigObject<T>() where T: class, new()
 {
     var configObject = new T();
     config.Bind(typeof(T).Name, configObject);
 
-    var validationErrors = configObject.Validate()
-        .ToArray();
+    var validationErrors = new List<ValidationResult>();
+    Validator.TryValidateObject(configObject, new ValidationContext(configObject), validationErrors);
 
     if(validationErrors.Any())
         throw new Exception($"{typeof(T).Name} was invalid:\r\n{string.Join("\r\n", validationErrors)}");
@@ -44,8 +75,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
     o.OperationFilter<ErrorResponseTypeFilter<AuthenticationFailureDto>>(StatusCodes.Status401Unauthorized));
 
-builder.Services.AddDbContext<VsfhContext>(options => options
-    .UseSqlite("Filename=Database.sqlite")
+builder.Services.AddDbContext<VsfhContext>(o => o
+    .UseSqlite(connectionString)
     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
 // System.IO.Compression.ZipArchive requires synchronous IO
@@ -109,44 +140,10 @@ app.UseEndpoints(e =>
 if(!app.Environment.IsDevelopment())
     app.UseSpaStaticFiles();
 
-await app.StartAsync();
-
-// TODO_JU Get rid of this auto prompt since this is designed to run as a containerised service
-// Will have to think of something else for this intead
-using(var scope = app.Services.CreateAsyncScope())
+using (var scope = app.Services.CreateAsyncScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<VsfhContext>();
     await context.Database.MigrateAsync();
-
-    if(!await context.Users.AnyAsync(u => u.IsAdministrator && u.PasswordHash != null))
-    {
-        await Console.Out.WriteLineAsync("No active admins were found. Creating one now. What should their name be?");
-        string? name;
-        do
-        {
-            name = await Console.In.ReadLineAsync();
-        }
-        while(string.IsNullOrWhiteSpace(name));
-
-        var firstAdmin = new User
-        {
-            Id = Guid.NewGuid(),
-            FullName = name,
-            IsAdministrator = true
-        };
-        var inviteKey = PasswordUtils.AssignInviteKey(firstAdmin);
-
-        await context.Users.AddAsync(firstAdmin);
-        await context.SaveChangesAsync();
-
-        var authConfig = scope.ServiceProvider.GetRequiredService<AuthenticationConfiguration>();
-        var expiryMessage = authConfig.InviteLinkExpiryHours.HasValue
-                ? $" This code will expire in {authConfig.InviteLinkExpiryHours} hours, and a password *must* be set on first login"
-                : "";
-        var server = scope.ServiceProvider.GetRequiredService<IServer>();
-        var host = new Uri(server.Features.Get<IServerAddressesFeature>()!.Addresses.First());
-        await Console.Out.WriteLineAsync($"Admin \"{name}\" created. Use one-time invite link {new Uri(host, $"AcceptInvite/{inviteKey}")} to log in.{expiryMessage}");
-    }
 }
 
-await app.WaitForShutdownAsync();
+await app.RunAsync();
