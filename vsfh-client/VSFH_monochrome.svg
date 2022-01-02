@@ -15,7 +15,7 @@
    width="0.34838709in"
    height="0.34838709in"
    viewBox="0 0 31.35484 31.35484"
-   sodipodi:docname="VSFH.svg">
+   sodipodi:docname="VSFH_monochrome.svg">
   <metadata
      id="metadata4142">
     <rdf:RDF>
@@ -44,7 +44,7 @@
      id="namedview4138"
      showgrid="false"
      inkscape:zoom="29.901713"
-     inkscape:cx="19.160714"
+     inkscape:cx="7.9740639"
      inkscape:cy="13.689772"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
@@ -60,17 +60,7 @@
      id="layer2"
      inkscape:label="lower"
      style="display:inline"
-     transform="translate(-0.52258099,-0.52258154)">
-    <rect
-       style="display:inline;fill:#111111;fill-opacity:1;stroke:none;stroke-width:0.1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect4138"
-       width="21.522787"
-       height="21.455902"
-       x="5.5390162"
-       y="5.5054121"
-       rx="0"
-       ry="0" />
-  </g>
+     transform="translate(-0.52258099,-0.52258154)" />
   <g
      inkscape:groupmode="layer"
      id="layer1"
