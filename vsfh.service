@@ -7,7 +7,7 @@ Description=Very Simple File Host
 Restart=always
 
 WorkingDirectory=/usr/bin/vsfh
-EnvironmentFile=/usr/bin/vsfh/.env
+EnvironmentFile=/etc/vsfh/.env
 User=vsfh
 
 ExecStartPre=-/usr/bin/vsfh/.venv/bin/python3 -m podman-compose down

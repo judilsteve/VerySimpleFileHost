@@ -38,7 +38,7 @@ Since VSFH is designed to be opened to the world via the internet, it is highly 
  - Python >=3.3 and matching pip
  - Podman >=3.4
 
-Running the container with Docker (instead of Podman) should also be possible. See [this repository](https://github.com/MiGoller/dc-systemd-template) for reasonable service file templates that you can use.
+Running the container with Docker (instead of Podman) should also be possible, but you will need to modify the install scripts and service files yourself. See [this repository](https://github.com/MiGoller/dc-systemd-template) for reasonable service file templates that you can use.
 
 ### Instructions
 Run the following in your terminal:
@@ -111,8 +111,8 @@ cp vsfh-client/build/* vsfh-server/build/wwwroot
 
 # Configuration
 
-There are two main configuration files for VSFH. The first is `/usr/bin/vsfh/.env`. This file defines the shared directory, and the ports that VSFH listens on.
-All other configuration lives in `/usr/bin/vsfh/vsfh-server/appsettings.json`. Use `appsettings.Default.json` as a reference.
+There are two main configuration files for VSFH. The first is `/etc/vsfh/.env`. This file defines the shared directory, and the ports that VSFH listens on.
+All other configuration lives in `/etc/vsfh/appsettings.json`. Use `appsettings.Default.json` as a reference for building your own `appsettings.json`.
 
 # Disclaimer
 Although all care has been taken to make VSFH as secure as possible, it has not been independently audited for vulnerabilities. You run VSFH (and expose it to the internet) at your own risk.
