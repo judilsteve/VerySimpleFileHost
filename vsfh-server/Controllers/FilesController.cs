@@ -38,7 +38,9 @@ public class FilesController : ControllerBase
     private static string NotFoundMessage(string path) =>
         $"File/directory with path \"{path}\" could not be found";
 
-    [HttpGet]
+    // TODO_JU Need to use workaround for proper swagger gen:
+    // https://github.com/domaindrivendev/Swashbuckle.AspNetCore/issues/1100
+    [HttpGet("{**path}")]
     public ActionResult<DirectoryDto> Listing(string? path, [Range(1, int.MaxValue)]int? depth)
     {
         path ??= "";
@@ -60,7 +62,7 @@ public class FilesController : ControllerBase
 
     private IEnumerable<FileDto> GetFiles(DirectoryInfo directoryInfo)
     {
-        foreach(var fileInfo in directoryInfo.EnumerateFiles())
+        foreach(var fileInfo in directoryInfo.EnumerateFiles()) // TODO_JU How comes this throws UnauthorizedAccessException?
         {
             if(!PathUtils.IsVisible(fileInfo, config)) continue;
             yield return new FileDto
@@ -74,7 +76,7 @@ public class FilesController : ControllerBase
     private IEnumerable<DirectoryDto> GetSubdirectories(DirectoryInfo directoryInfo, int? depth)
     {
         var goDeeper = !depth.HasValue || depth > 0;
-        foreach(var subdirectoryInfo in directoryInfo.EnumerateDirectories())
+        foreach(var subdirectoryInfo in directoryInfo.EnumerateDirectories()) // TODO_JU How comes this throws UnauthorisedAccessException
         {
             if(!PathUtils.IsVisible(subdirectoryInfo, config)) continue;
             yield return new DirectoryDto
@@ -127,7 +129,7 @@ public class FilesController : ControllerBase
         };
     }
 
-    [HttpGet("{**path?}")]
+    [HttpGet("{**path}")]
     public ActionResult Download(string? path, ArchiveFormat? archiveFormat, bool asAttachment = false)
     {
         path ??= "";
@@ -182,7 +184,7 @@ public class FilesController : ControllerBase
         foreach(var absolutePath in absolutePaths)
         {
             var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
+            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories)) // TODO_JU How come this throws UnauthorizedAccessException
             {
                 var zipEntry = zip.CreateEntry(
                     Path.GetRelativePath(absolutePath, fileInfo.FullName),
@@ -224,7 +226,7 @@ public class FilesController : ControllerBase
         foreach(var absolutePath in absolutePaths)
         {
             var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
+            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories)) // TODO_JU How come this throws UnauthorizedAccessException
             {
                 var tarEntry = TarEntry.CreateTarEntry(Path.GetRelativePath(absolutePath, fileInfo.FullName));
                 tarEntry.Size = fileInfo.Length;
@@ -238,7 +240,7 @@ public class FilesController : ControllerBase
         tarOutputStream.Close();
     }
 
-    [HttpPost("{**path?}")]
+    [HttpPost("{**path}")]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool asAttachment = false)
     {
         var absolutePaths = new List<string>(paths.Length);
