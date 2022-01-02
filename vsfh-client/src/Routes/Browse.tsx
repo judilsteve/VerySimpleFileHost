@@ -41,41 +41,20 @@ interface DirectoryProps {
     expandInitially: boolean;
     pathSeparator: string;
     archiveFormat: ArchiveFormat;
-    textFilter: string;
-}
-
-// TODO_JU Global tree that each subdirectory writes to (maybe with a reducer) which can be filtered by this
-// TODO_JU This might be simpler and more performant as a flat map of { '/absolute/path': DirectoryDto }
-// With the latter, there's no nested assignment/rebuilding required when doing a setState, and each Directory
-// component can manage its own visibility by scanning any path that startsWith its own
-// No to that last part: It's more efficient to still maintain a global set of visible paths:
-// - Do a single pass down the flat map of { '/absolute/path': LoadedDirectoryDto }
-// - For each DirectoryDto
-//   - If the dir is already in the global list of visible paths, bail early (this dir is the parent of another that has already been found to match)
-//   - Check the name of the directory itself, names of subdirs, and names of files
-//   - If any match, add this dir and all its parent dirs (in ascending order) to the global list of visible paths
-//     - If any parent dir is already found in the global list of visible paths, bail early (if the parent is there, then the grandparent and so on must already be there too)
-function filterTree(tree: DirectoryDto, filterLowerCase: string) {
-    const filteredTree: DirectoryDto = { 
-        displayName: tree.displayName,
-        subdirectories: [],
-        files: tree.files!.filter(f => 
-            f.displayName!.toLocaleLowerCase().includes(filterLowerCase))
-    };
-    for(const subDirectory of tree.subdirectories ?? []) {
-        const filteredSubDirectory = filterTree(subDirectory, filterLowerCase);
-        if(filteredSubDirectory.displayName!.toLocaleLowerCase().includes(filterLowerCase)
-            || filteredSubDirectory.files!.length
-            || filteredSubDirectory.subdirectories!.length)
-            filteredTree.subdirectories!.push(filteredSubDirectory);
-    }
-    return filteredTree;
+    visiblePaths: Set<string>;
 }
 
 function Directory(props: DirectoryProps) {
-    const { displayName, path, expandInitially: initialExpanded, pathSeparator, archiveFormat, textFilter } = props;
+    const {
+        displayName,
+        path,
+        expandInitially,
+        pathSeparator,
+        archiveFormat,
+        visiblePaths
+    } = props;
 
-    const [expanded, setExpanded] = useState(initialExpanded);
+    const [expanded, setExpanded] = useState(expandInitially);
     const [tree, setTree] = useState<DirectoryDto | null>(null);
     useEffect(() => {
         setTree(null);
@@ -106,18 +85,7 @@ function Directory(props: DirectoryProps) {
     let downloadLink = `/api/Files/Download?archiveFormat=${archiveFormat}`;
     if(path) downloadLink += `&path=${encodeURIComponent(path)}`;
 
-    // TODO_JU This won't work, what if a child matches but the parent does not?
-    const [filteredSubDirectories, filteredFiles] = useMemo(() => {
-        const unfiltered = [tree?.subdirectories!, tree?.files!];
-        if(!textFilter) return unfiltered;
-        const lowercaseTextFilter = textFilter.toLocaleLowerCase();
-        return [
-            tree?.subdirectories!?.filter(d => d.displayName!.toLocaleLowerCase().includes(lowercaseTextFilter)),
-            tree?.files!?.filter(f => f.displayName!.toLocaleLowerCase().includes(lowercaseTextFilter))
-        ];
-    }, [tree, textFilter]);
-
-    return <>
+    return <div style={!path || visiblePaths.has(path) ? undefined : { display: "none" }}>
         {/*TODO_JU Multi-select checkbox*/}
         <div onClick={() => setExpanded(e => !e)}>
             <Icon fitted name={expanded ? 'folder open' : 'folder'} />
@@ -127,17 +95,28 @@ function Directory(props: DirectoryProps) {
         <CopyButton getTextToCopy={getHash} button={<Icon link name="linkify" fitted />} />
         {
             !expanded ? null : !tree ? <Loader indeterminate active inline size="tiny" /> : <List.List>
-                {filteredSubDirectories.map(d => <Directory key={d.displayName} {...props} path={`${path ? `${path}${pathSeparator}` : ''}${d.displayName}`} displayName={d.displayName!} expandInitially={false} />)}
-                {filteredFiles.map(f => <List.Item>
-                    <File key={f.displayName} {...f} basePath={path} pathSeparator={pathSeparator} />
+                {tree.subdirectories!.map(d => <Directory
+                    {...props}
+                    key={d.displayName}
+                    path={`${path ? `${path}${pathSeparator}` : ''}${d.displayName}`}
+                    displayName={d.displayName!}
+                    expandInitially={false} />)}
+                {tree.files!.map(f => <List.Item>
+                    <File
+                        key={f.displayName}
+                        {...f}
+                        basePath={path}
+                        pathSeparator={pathSeparator}
+                        visiblePaths={visiblePaths} />
                 </List.Item>)}
             </List.List>
         }
-    </>;
+    </div>;
 }
 
 interface FileProps extends FileDto {
     basePath?: string;
+    visiblePaths: Set<string>;
     pathSeparator: string;
 }
 
@@ -153,6 +132,7 @@ function File(props: FileProps) {
 
     return <>
         {/*TODO_JU Multi-select checkbox*/}
+        {/*TODO_JU Replace the single download button with one for download and one for open (in new tab) */}
         <a style={{ all: 'unset' }} target="_blank" rel="noreferrer"
             href={`/api/Files/Download?path=${encodedAbsolutePath}`}>
             <Icon name="file" />
@@ -163,29 +143,6 @@ function File(props: FileProps) {
 }
 
 const getPathSeparator = () => api.apiFilesPathSeparatorGet();
-
-declare type DirectoryMap = { [path: string]: DirectoryDto };
-
-function expandDirectory(
-    expandedDirectories: DirectoryMap,
-    newExpandedDirectory: DirectoryDto,
-    path: string) {
-    return {
-        ...expandedDirectories,
-        [path]: newExpandedDirectory
-    };
-}
-
-function collapseDirectory(
-    expandedDirectories: DirectoryMap,
-    collapsePath: string) {
-    const newDirectories: DirectoryMap = {};
-    for(const [path, directory] of Object.entries(expandedDirectories)) {
-        if(path !== collapsePath)
-            newDirectories[path] = directory;
-    }
-    return newDirectories;
-}
 
 function Browse() {
     usePageTitle('Browse');
@@ -207,9 +164,34 @@ function Browse() {
 
     const [textFilter, setTextFilter] = useState('');
 
-    const [expandedDirectories, setExpandedDirectories] = useState<DirectoryMap>({});
-    const expand = useCallback((d: DirectoryDto, p: string) => expandDirectory(expandedDirectories, d, p), [expandedDirectories]);
-    const collapse = useCallback((p: string) => collapseDirectory(expandedDirectories, p), [expandedDirectories]);
+    const [loadedPaths, setLoadedPaths] = useState<string[]>([]);
+    const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => [
+        ...loadedPaths,
+        ...d.files!.map(f => `${prefix}${pathSeparator}${f.displayName}`),
+        ...d.subdirectories!.map(d => `${prefix}${pathSeparator}${d.displayName}`)
+    ]), [pathSeparator]);
+    const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths => 
+        loadedPaths.filter(p => !p.startsWith(`${prefix}${pathSeparator}`))),
+    [pathSeparator]);
+
+    const visiblePaths = useMemo(() => {
+        if(!textFilter) return new Set(loadedPaths);
+        const filteredPaths = new Set<string>();
+        for(let path in loadedPaths) {
+            if(!path.includes(textFilter)) {
+                // This path has already been granted visibility by a match in one of its child paths
+                // There is nothing to do here
+                continue;
+            }
+            // If a path matches the filter and should be visible,
+            // then all its parent paths must be made visible too
+            while(path) {
+                if(filteredPaths.has(path)) break;
+                filteredPaths.add(path);
+                path = path.substring(0, path.lastIndexOf(pathSeparator!))
+            }
+        }
+    }, [textFilter, loadedPaths, pathSeparator]);
 
     // TODO_JU Sticky card for multi-select (show selected count, clear button, and download button)
     return <Container>
@@ -227,7 +209,12 @@ function Browse() {
             </Grid.Column>
         </Grid>
         { !pathSeparator ? <CenteredSpinner /> : <List>
-            <Directory textFilter={textFilter} displayName="<root>" expandInitially={true} pathSeparator={pathSeparator} archiveFormat={archiveFormat} expand={expand} collapse={collapse} />
+            <Directory
+                visiblePaths={visiblePaths!}
+                displayName="<root>"
+                expandInitially={true}
+                pathSeparator={pathSeparator}
+                archiveFormat={archiveFormat} />
         </List>}
     </Container>;
 }
