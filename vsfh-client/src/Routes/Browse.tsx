@@ -171,7 +171,7 @@ function Browse() {
     const [textFilter, setTextFilter] = useState('');
 
     // TODO_JU Parse hash and expand tree as required
-    // Then need to do `window.location.hash = window.location.hash`
+    // Then need to do `window.location.hash = window.location.hash` to activate :target styling
 
     const [loadedPaths, setLoadedPaths] = useState<string[]>([]);
     const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => [
@@ -184,7 +184,7 @@ function Browse() {
 
     // TODO_JU Text box is unresponsive when filtering large trees
     // Profiling shows that filtering the path list is *not* the bottleneck; it's the re-rendering
-    // Maybe need to look at 
+    // Maybe need to look at doing serverside filtering or just a debounce; depends how it runs in a prod build
     const visiblePaths = useMemo(() => {
         if(!textFilter) return new Set(loadedPaths);
         const filteredPaths = new Set<string>();

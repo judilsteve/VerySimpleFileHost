@@ -3,7 +3,6 @@
 *******************************/
 
 .anchor:target {
-    // TODO_JU Less ugly way of emphasising this
     color: @primaryColor;
     font-weight: bold;
 }
