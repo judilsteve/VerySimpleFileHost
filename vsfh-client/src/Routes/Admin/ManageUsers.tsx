@@ -71,7 +71,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
         setError('');
         let response;
         try {
-            response = await api.apiUsersUserIdPut({
+            response = await api.apiUsersEditUserUserIdPut({
                 userId: userDto?.id!,
                 userEditDto: {
                     fullName: null,
@@ -135,7 +135,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
         setLoading(true);
         setError('');
         try {
-            await api.apiUsersUserIdDelete({ userId: userDto?.id! });
+            await api.apiUsersDeleteUserUserIdDelete({ userId: userDto?.id! });
         } catch(e) {
             const errorResponse = e as Response;
             if(!await tryHandleError(errorResponse)) {
@@ -210,7 +210,7 @@ function UserCard(props: UserEditProps) {
         setLoading(true);
         setError('');
         try {
-            await api.apiUsersUserIdPut({
+            await api.apiUsersEditUserUserIdPut({
                 userId: id!,
                 userEditDto: {
                     fullName: newFullName,
@@ -298,7 +298,7 @@ function NewUserCard(props: NewUserCardProps) {
         setError('');
         let response: UserResponseDto;
         try {
-            response = await api.apiUsersPost({
+            response = await api.apiUsersAddUserPost({
                 userAddRequestDto: {
                     fullName: newUserFullName,
                     isAdministrator: newUserIsAdmin
@@ -358,7 +358,7 @@ function ManageUsers() {
 
     const [listingError, setListingError] = useState(false);
     const [users, loadingUsers, reloadUsers] = useEndpointData(
-        useCallback(() => api.apiUsersGet(), []),
+        useCallback(() => api.apiUsersListUsersGet(), []),
         useCallback(async e => {
             const response = e as Response;
             if(await tryHandleError(response)) return;

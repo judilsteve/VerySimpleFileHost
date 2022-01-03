@@ -37,7 +37,7 @@ function Login() {
         setLoading(true);
         setError('');
         try {
-            await api.apiLoginPost({ loginAttemptDto: {
+            await api.apiLoginLoginPost({ loginAttemptDto: {
                 userName,
                 password,
                 rememberMe

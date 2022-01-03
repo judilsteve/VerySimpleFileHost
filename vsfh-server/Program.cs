@@ -68,7 +68,7 @@ RegisterConfigObject<AuthenticationConfiguration>();
 builder.Services
     .AddControllers(o =>
     {
-        //o.Filters.Add(new AuthenticationFilter());
+        o.Filters.Add(new AuthenticationFilter());
         o.Filters.Add(new AdminOnlyFilter());
     })
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -144,7 +144,7 @@ app.UseAuthentication();
 app.UseRouting();
 app.UseAuthorization();
 app.UseEndpoints(e =>
-    e.MapControllers()/*.RequireAuthorization()*/);
+    e.MapControllers().RequireAuthorization());
 
 if(!app.Environment.IsDevelopment())
     app.UseSpaStaticFiles();
