@@ -4,11 +4,12 @@ namespace VerySimpleFileHost.Utils;
 
 public static class PathUtils
 {
-    private static EnumerationOptions GetEnumerationOptions(FilesConfiguration config)
+    private static EnumerationOptions GetEnumerationOptions(FilesConfiguration config, bool recurseSubdirectories)
     {
         var enumerationOptions = new EnumerationOptions
         {
-            IgnoreInaccessible = true
+            IgnoreInaccessible = true,
+            RecurseSubdirectories = recurseSubdirectories
         };
         if(!config.IncludeHiddenFilesAndDirectories)
             enumerationOptions.AttributesToSkip |= FileAttributes.Hidden;
@@ -17,14 +18,25 @@ public static class PathUtils
         return enumerationOptions;
     }
 
-    public static IEnumerable<FileInfo> EnumerateAccessibleFiles(this DirectoryInfo directoryInfo, FilesConfiguration config)
+    public static IEnumerable<FileInfo> EnumerateAccessibleFiles(
+        this DirectoryInfo directoryInfo,
+        FilesConfiguration config,
+        bool sort,
+        bool recurseSubdirectories)
     {
-        return directoryInfo.EnumerateFiles("*", GetEnumerationOptions(config));
+        var files = directoryInfo.EnumerateFiles("*", GetEnumerationOptions(config, recurseSubdirectories));
+        if(sort) files = files.OrderBy(fi => fi.FullName);
+        return files;
     }
 
-    public static IEnumerable<DirectoryInfo> EnumerateAccessibleDirectories(this DirectoryInfo directoryInfo, FilesConfiguration config)
+    public static IEnumerable<DirectoryInfo> EnumerateAccessibleDirectories(
+        this DirectoryInfo directoryInfo,
+        FilesConfiguration config,
+        bool sort)
     {
-        return directoryInfo.EnumerateDirectories("*", GetEnumerationOptions(config));
+        var directories = directoryInfo.EnumerateDirectories("*", GetEnumerationOptions(config, recurseSubdirectories: false));
+        if(sort) directories = directories.OrderBy(di => di.Name);
+        return directories;
     }
 
     public static bool ExistsAndIsAccessible(this string absolutePath, FilesConfiguration config, out bool isDirectory)

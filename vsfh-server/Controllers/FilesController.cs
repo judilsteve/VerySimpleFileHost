@@ -72,7 +72,7 @@ public class FilesController : ControllerBase
 
     private IEnumerable<FileDto> GetFiles(DirectoryInfo directoryInfo)
     {
-        foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config))
+        foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config, sort: true, recurseSubdirectories: false))
         {
             yield return new FileDto
             {
@@ -85,7 +85,7 @@ public class FilesController : ControllerBase
     private IEnumerable<DirectoryDto> GetSubdirectories(DirectoryInfo directoryInfo, int? depth)
     {
         var goDeeper = !depth.HasValue || depth > 0;
-        foreach(var subdirectoryInfo in directoryInfo.EnumerateAccessibleDirectories(config))
+        foreach(var subdirectoryInfo in directoryInfo.EnumerateAccessibleDirectories(config, sort: true))
         {
             yield return new DirectoryDto
             {
@@ -199,7 +199,7 @@ public class FilesController : ControllerBase
         foreach(var absolutePath in absolutePaths)
         {
             var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
+            foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config, sort: false, recurseSubdirectories: true))
             {
                 var zipEntry = zip.CreateEntry(
                     Path.GetRelativePath(absolutePath, fileInfo.FullName),
@@ -236,12 +236,12 @@ public class FilesController : ControllerBase
         }
     }
 
-    private static async Task WriteTarStream(IEnumerable<string> absolutePaths, TarOutputStream tarOutputStream, CancellationToken cancellationToken)
+    private async Task WriteTarStream(IEnumerable<string> absolutePaths, TarOutputStream tarOutputStream, CancellationToken cancellationToken)
     {
         foreach(var absolutePath in absolutePaths)
         {
             var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
+            foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config, sort: false, recurseSubdirectories: true))
             {
                 var tarEntry = TarEntry.CreateTarEntry(Path.GetRelativePath(absolutePath, fileInfo.FullName));
                 tarEntry.Size = fileInfo.Length;

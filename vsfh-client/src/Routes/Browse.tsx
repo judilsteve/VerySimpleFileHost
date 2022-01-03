@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ForwardedRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Button, Container, Grid, Icon, Input, List, Loader, Popup } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto, FilesApi } from "../API";
 import { apiConfig } from "../apiInstances";
@@ -37,7 +37,6 @@ function humaniseBytes(bytes: number) {
 interface DirectoryProps {
     path: string;
     displayName: string;
-    expandInitially: boolean;
     archiveFormat: ArchiveFormat;
     visiblePaths: Set<string>;
     addLoadedPaths: (d: DirectoryDto, prefix: string) => void;
@@ -48,26 +47,24 @@ function combinePaths(...paths: string[]) {
     return paths.reduce((p, next) => p ? `${p}/${next}` : next);
 }
 
-function Directory(props: DirectoryProps) {
+function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<any>) {
     const {
         displayName,
         path,
-        expandInitially,
         archiveFormat,
         visiblePaths,
         addLoadedPaths,
         removeLoadedPaths
     } = props;
 
-    console.debug(`Rendering directory ${path}`); // TODO_JU
-
-    // TODO_JU Something keeps setting tree to null
     const [expanded, setExpanded] = useState(false);
     const [loading, setLoading] = useState(false);
     const [tree, setTree] = useState<DirectoryDto | null>(null);
     const isMounted = useIsMounted();
-    const expand = async () => {
-        if(loading) return;
+    // TODO_JU Test spamming the button
+    // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
+    const expand = useCallback(async () => {
+        if(loading || expanded) return;
         setLoading(true); setTree(null); setExpanded(true);
         let newTree;
         try {
@@ -83,16 +80,17 @@ function Directory(props: DirectoryProps) {
         if(!isMounted.current) return;
         setTree(newTree);
         addLoadedPaths(newTree, path);
-    };
+    }, [loading, expanded, isMounted, addLoadedPaths, path]);
+
+    useImperativeHandle(ref, () => ({
+        expand
+    }));
 
     const collapse = () => {
-        if(loading) return;
+        if(loading || !expanded) return;
         setExpanded(false);
         removeLoadedPaths(path);
     };
-
-    // TODO_JU Fix this
-    useEffect(() => { if(expandInitially) expand(); }, [expandInitially]);
 
     const getHash = () => {
         const loc = window.location;
@@ -115,8 +113,7 @@ function Directory(props: DirectoryProps) {
                     {...props}
                     key={d.displayName}
                     path={combinePaths(path, d.displayName!)}
-                    displayName={d.displayName!}
-                    expandInitially={false} />)}
+                    displayName={d.displayName!} />)}
                 {tree?.files!.map(f => <List.Item>
                     <File
                         key={f.displayName}
@@ -128,6 +125,8 @@ function Directory(props: DirectoryProps) {
         }
     </div>;
 }
+
+const Directory = forwardRef(ForwardingDirectory);
 
 interface FileProps extends FileDto {
     basePath: string;
@@ -162,16 +161,18 @@ function Browse() {
 
     const [textFilter, setTextFilter] = useState('');
 
+    // TODO_JU Nothing beyond one level is displaying
     const [loadedPaths, setLoadedPaths] = useState<string[]>([]);
     const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => [
         ...loadedPaths,
-        ...d.files!.map(f => `${prefix}/${f.displayName}`),
-        ...d.subdirectories!.map(d => `${prefix}/${d.displayName}`)
+        ...d.files!.map(f => combinePaths(prefix, f.displayName!)),
+        ...d.subdirectories!.map(d => combinePaths(prefix, d.displayName!))
     ]), []);
     const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths => 
         loadedPaths.filter(p => !p.startsWith(`${prefix}/`))),
     []);
 
+    // TODO_JU This isn't working, and is also painfully slow
     const visiblePaths = useMemo(() => {
         if(!textFilter) return new Set(loadedPaths);
         const filteredPaths = new Set<string>();
@@ -189,7 +190,12 @@ function Browse() {
                 path = path.substring(0, path.lastIndexOf('/'))
             }
         }
+        return filteredPaths;
     }, [textFilter, loadedPaths]);
+
+    const expander = useRef<any>();
+
+    useEffect(() => expander.current.expand(), []);
 
     // TODO_JU Sticky card for multi-select (show selected list/count, clear button, and download button)
     return <Container>
@@ -208,10 +214,10 @@ function Browse() {
         </Grid>
         <List>
             <Directory
+                ref={expander}
                 visiblePaths={visiblePaths!}
                 displayName="<root>"
                 path=""
-                expandInitially={true}
                 archiveFormat={archiveFormat}
                 addLoadedPaths={addLoadedPaths}
                 removeLoadedPaths={removeLoadedPaths} />
