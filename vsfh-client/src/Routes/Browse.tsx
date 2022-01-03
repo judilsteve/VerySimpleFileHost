@@ -52,7 +52,7 @@ interface DirectoryRef {
 }
 
 // TODO_JU Files and directories need consistent hover highlighting/cursor behaviour
-
+// TODO_JU Could probably avoid all or some of this imperative bs by doing something in the vein of useEffect(expandTree, [useLocation().hash])
 function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<DirectoryRef | undefined>) {
     const {
         displayName,
