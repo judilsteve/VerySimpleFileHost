@@ -1,8 +1,8 @@
 import { ForwardedRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Button, Container, Grid, Icon, Input, List, Loader, Popup } from "semantic-ui-react";
-import { ArchiveFormat, DirectoryDto, FileDto, FilesApi } from "../API";
+import { Button, Container, Grid, Icon, Input, List, Loader } from "semantic-ui-react";
+import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
 import { apiConfig } from "../apiInstances";
-import CopyButton from "../Components/CopyButton";
+import FilesApi from "../ApiOverrides/FilesApi";
 import IconLink from "../Components/IconLink";
 import NavHeader from "../Components/NavHeader";
 import { useIsMounted } from "../Hooks/useIsMounted";
@@ -34,6 +34,10 @@ function humaniseBytes(bytes: number) {
     return `${displayValue.toFixed(step === 0 ? 0 : 2)}${fileSizeSuffixes[step]}`;
 }
 
+function combinePaths(...paths: string[]) {
+    return paths.reduce((p, next) => p ? `${p}/${next}` : next);
+}
+
 interface DirectoryProps {
     path: string;
     displayName: string;
@@ -43,11 +47,13 @@ interface DirectoryProps {
     removeLoadedPaths: (prefix: string) => void;
 }
 
-function combinePaths(...paths: string[]) {
-    return paths.reduce((p, next) => p ? `${p}/${next}` : next);
+interface DirectoryRef {
+    expandTo: (path: string) => Promise<void>;
 }
 
-function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<any>) {
+// TODO_JU Files and directories need consistent hover highlighting/cursor behaviour
+
+function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<DirectoryRef | undefined>) {
     const {
         displayName,
         path,
@@ -56,6 +62,8 @@ function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<any>) {
         addLoadedPaths,
         removeLoadedPaths
     } = props;
+
+    console.log(`Rendering directory ${path}`);
 
     const [expanded, setExpanded] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -83,7 +91,7 @@ function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<any>) {
     }, [loading, expanded, isMounted, addLoadedPaths, path]);
 
     useImperativeHandle(ref, () => ({
-        expand
+        expandTo: async () => console.debug('TODO_JU')
     }));
 
     const collapse = () => {
@@ -92,37 +100,37 @@ function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<any>) {
         removeLoadedPaths(path);
     };
 
-    const getHash = () => {
-        const loc = window.location;
-        return `${loc.origin}${loc.pathname}${loc.search}#${encodeURIComponent(path)}`;
-    };
+    const loc = window.location;
+    const hash = `${loc.pathname}${loc.search}#${path}`;
+    const downloadLink = `/api/Files/Download/${path}?archiveFormat=${archiveFormat}`;
 
-    let downloadLink = `/api/Files/Download/${path}?archiveFormat=${archiveFormat}`;
-
-    return <div id={path} style={(!path || visiblePaths.has(path)) ? undefined : { display: "none" }}>
-        {/*TODO_JU Multi-select checkbox*/}
-        <div onClick={expanded ? collapse : expand}>
-            <Icon fitted name={expanded ? 'folder open' : 'folder'} />
-            {displayName}
-        </div>
-        <Popup trigger={<IconLink name="archive" fitted href={downloadLink} />} content={`Download .${archiveFormat.toLocaleLowerCase()}`} />
-        <CopyButton getTextToCopy={getHash} button={<Icon link name="linkify" fitted />} />
-        {
-            !expanded ? <></> : (loading ? <Loader indeterminate active inline size="tiny" /> : <List.List>
-                {tree?.subdirectories!.map(d => <Directory
-                    {...props}
-                    key={d.displayName}
-                    path={combinePaths(path, d.displayName!)}
-                    displayName={d.displayName!} />)}
-                {tree?.files!.map(f => <List.Item>
-                    <File
-                        key={f.displayName}
-                        {...f}
-                        basePath={path}
-                        visiblePaths={visiblePaths} />
-                </List.Item>)}
-            </List.List>)
-        }
+    // TODO_JU Make it not ugly
+    return <div style={(!path || visiblePaths.has(path)) ? undefined : { display: "none" }}>
+        <List.Item>
+            {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
+            <div style={{ display: 'inline' }} onClick={expanded ? collapse : expand}>
+                <Icon fitted name={expanded ? 'folder open' : 'folder'} />
+                <span className="anchor" id={path}>{displayName}</span>
+            </div>
+            {/*TODO_JU maybe these fade in and out on hover?*/}
+            <IconLink name="download" fitted href={downloadLink} />
+            <IconLink href={hash} name="linkify" fitted />
+            {
+                !expanded ? <></> : <List.List>
+                    {loading ? <Loader indeterminate active inline size="tiny" /> : <>
+                        {tree?.subdirectories!.map(d => <Directory
+                            {...props}
+                            key={d.displayName}
+                            path={combinePaths(path, d.displayName!)}
+                            displayName={d.displayName!} />)}
+                        {tree?.files!.map(f => <File key={f.displayName}
+                            {...f}
+                            basePath={path}
+                            visiblePaths={visiblePaths} />)}
+                    </>}
+                </List.List>
+            }
+        </List.Item>
     </div>;
 }
 
@@ -137,20 +145,21 @@ function File(props: FileProps) {
     const { basePath, displayName, sizeBytes, visiblePaths } = props;
     const path = combinePaths(basePath, displayName!);
 
-    const getHash = () => {
-        const loc = window.location;
-        return `${loc.origin}${loc.pathname}${loc.search}#${path}`;
-    };
+    const loc = window.location;
+    const hash = `${loc.pathname}${loc.search}#${path}`;
 
-    return <div id={path} style={visiblePaths.has(path) ? undefined : { display: "none" }}>
-        {/*TODO_JU Multi-select checkbox*/}
-        {/*TODO_JU Replace the single download button with one for download and one for open (in new tab) */}
-        <a style={{ all: 'unset' }} target="_blank" rel="noreferrer"
-            href={`/api/Files/Download/${path}`}>
-            <Icon name="file" />
-            {displayName} ({humaniseBytes(sizeBytes!)})
-        </a>
-        <CopyButton getTextToCopy={getHash} button={<Icon link name="linkify" fitted />} />
+    // TODO_JU Make it not ugly
+    return <div style={visiblePaths.has(path) ? undefined : { display: "none" }}>
+        <List.Item>
+            {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
+            {/*TODO_JU Use onClick trickery to download as attachment on regular click, but do a plain open on ctrl/middle click or "open in new tab"*/}
+            <a target="_blank" rel="noreferrer"
+                href={`/api/Files/Download/${path}`}>
+                <Icon name="file" />
+                <span className="anchor" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
+            </a>
+            <IconLink href={hash} name="linkify" fitted />
+        </List.Item>
     </div>;
 }
 
@@ -161,23 +170,27 @@ function Browse() {
 
     const [textFilter, setTextFilter] = useState('');
 
-    // TODO_JU Nothing beyond one level is displaying
+    // TODO_JU Parse hash and expand tree as required
+    // Then need to do `window.location.hash = window.location.hash`
+
     const [loadedPaths, setLoadedPaths] = useState<string[]>([]);
     const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => [
         ...loadedPaths,
         ...d.files!.map(f => combinePaths(prefix, f.displayName!)),
         ...d.subdirectories!.map(d => combinePaths(prefix, d.displayName!))
     ]), []);
-    const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths => 
-        loadedPaths.filter(p => !p.startsWith(`${prefix}/`))),
-    []);
+    const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths =>
+        loadedPaths.filter(p => !p.startsWith(`${prefix}/`))), []);
 
-    // TODO_JU This isn't working, and is also painfully slow
+    // TODO_JU Text box is unresponsive when filtering large trees
+    // Profiling shows that filtering the path list is *not* the bottleneck; it's the re-rendering
+    // Maybe need to look at 
     const visiblePaths = useMemo(() => {
         if(!textFilter) return new Set(loadedPaths);
         const filteredPaths = new Set<string>();
-        for(let path in loadedPaths) {
-            if(!path.includes(textFilter)) continue;
+        const textFilterLowerCase = textFilter.toLocaleLowerCase();
+        for(let path of loadedPaths) {
+            if(!path.toLocaleLowerCase().includes(textFilterLowerCase)) continue;
             // If a path matches the filter and should be visible,
             // then all its parent paths must be made visible too
             while(path) {
@@ -193,9 +206,11 @@ function Browse() {
         return filteredPaths;
     }, [textFilter, loadedPaths]);
 
-    const expander = useRef<any>();
+    const expander = useRef<DirectoryRef>();
 
-    useEffect(() => expander.current.expand(), []);
+    useEffect(() => {
+        expander.current!.expandTo(window.location.hash);
+    }, []);
 
     // TODO_JU Sticky card for multi-select (show selected list/count, clear button, and download button)
     return <Container>
@@ -203,7 +218,7 @@ function Browse() {
         <Grid stackable>
             <Grid.Column width={13}>
                 <Input autoFocus fluid icon="filter" iconPosition="left" placeholder="Filter"
-                    value={textFilter} onChange={e => setTextFilter(e.target.value.toLocaleLowerCase())} />
+                    value={textFilter} onChange={e => setTextFilter(e.target.value)} />
             </Grid.Column>
             <Grid.Column width={3}>
                 <Button.Group fluid style={{ height: '100%' }}>

@@ -47,6 +47,8 @@ public class FilesController : ControllerBase
     [HttpGet("{**path}")]
     public ActionResult<DirectoryDto> Listing(string? path, [Range(1, int.MaxValue)]int? depth)
     {
+        // TODO_JU Using a cancellation token (even if it has to be checked manually) would be a good idea here
+        // since recursively listing a large directory tree on a spinning rust drive can take a very long time
         path ??= "";
 
         var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));

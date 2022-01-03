@@ -9,3 +9,6 @@
 @textColor: #cdcdcd;
 
 @inputHighlightBackground: rgba(141, 27, 33, 0.6);
+
+@linkColor: @textColor;
+@linkHoverColor: #858585;
