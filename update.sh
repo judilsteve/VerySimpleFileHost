@@ -22,8 +22,14 @@ if [ "$(whoami)" != "root" ]; then
     exit 1
 fi
 
+# Stop VSFH
+systemctl stop vsfh
+
 # Update podman-compose
 .venv/bin/pip3 install --upgrade -r requirements.txt
+
+# Rebuild image
+/usr/bin/vsfh/.venv/bin/python3 -m podman-compose build --pull
 
 # Install new service file
 cp vsfh.service /etc/systemd/system
@@ -31,7 +37,7 @@ cp vsfh.service /etc/systemd/system
 # Load new version of service file
 systemctl daemon-reload
 
-# Restart VSFH
-systemctl restart vsfh
+# Start VSFH
+systemctl start vsfh
 
 echo ${GREEN}Update successful${NC}

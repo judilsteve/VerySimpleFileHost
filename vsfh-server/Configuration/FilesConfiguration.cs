@@ -15,10 +15,10 @@ public class FilesConfiguration : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext _)
     {
-        if(!PathUtils.ExistsAndIsVisible(RootSharedDirectory, this, out var basePathIsDirectory))
-            yield return new ValidationResult($"{nameof(RootSharedDirectory)} could not be found on disk");
+        if(!PathUtils.ExistsAndIsAccessible(RootSharedDirectory, this, out var basePathIsDirectory))
+            yield return new ValidationResult($"{nameof(RootSharedDirectory)} \"{RootSharedDirectory}\" did not exist or was not accessible");
         if(!basePathIsDirectory)
-            yield return new ValidationResult($"{nameof(RootSharedDirectory)} was not a directory");
+            yield return new ValidationResult($"{nameof(RootSharedDirectory)} \"{RootSharedDirectory}\" was not a directory");
 
         if(!Enum.IsDefined<CompressionLevel>(ZipCompressionLevel))
             yield return new ValidationResult($"{nameof(ZipCompressionLevel)} must be one of: {string.Join(", ", Enum.GetValues<CompressionLevel>())}");

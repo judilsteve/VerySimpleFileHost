@@ -8,8 +8,6 @@ fi
 
 ./scripts/check-dependencies.sh
 
-./pull-base-images.sh
-
 INSTALL_DIR=/usr/bin/vsfh
 
 # Copy files to install directory
@@ -49,6 +47,9 @@ echo "VSFH_SHARE_DIRECTORY=$SHARE_DIRECTORY" >> $CONFIG_DIR/.env
 cp -n ./vsfh-server/appsettings.Default.json /etc/vsfh/appsettings.json || true
 
 mkdir -p /var/lib/vsfh
+
+# Build image
+/usr/bin/vsfh/.venv/bin/python3 -m podman-compose build --pull
 
 ./scripts/new-admin-account.sh
 

@@ -20,20 +20,20 @@ import {
     DirectoryDto,
 } from '../models';
 
-export interface ApiFilesDownloadGetRequest {
-    path?: string;
-    archiveFormat?: ArchiveFormat;
-    asAttachment?: boolean;
-}
-
 export interface ApiFilesDownloadManyPostRequest {
     archiveFormat: ArchiveFormat;
     asAttachment?: boolean;
     requestBody?: Array<string>;
 }
 
-export interface ApiFilesListingGetRequest {
-    path?: string;
+export interface ApiFilesDownloadPathGetRequest {
+    path: string;
+    archiveFormat?: ArchiveFormat;
+    asAttachment?: boolean;
+}
+
+export interface ApiFilesListingPathGetRequest {
+    path: string;
     depth?: number;
 }
 
@@ -41,41 +41,6 @@ export interface ApiFilesListingGetRequest {
  * 
  */
 export class FilesApi extends runtime.BaseAPI {
-
-    /**
-     */
-    async apiFilesDownloadGetRaw(requestParameters: ApiFilesDownloadGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        if (requestParameters.path !== undefined) {
-            queryParameters['path'] = requestParameters.path;
-        }
-
-        if (requestParameters.archiveFormat !== undefined) {
-            queryParameters['archiveFormat'] = requestParameters.archiveFormat;
-        }
-
-        if (requestParameters.asAttachment !== undefined) {
-            queryParameters['asAttachment'] = requestParameters.asAttachment;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/api/Files/Download`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiFilesDownloadGet(requestParameters: ApiFilesDownloadGetRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.apiFilesDownloadGetRaw(requestParameters, initOverrides);
-    }
 
     /**
      */
@@ -117,12 +82,47 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiFilesListingGetRaw(requestParameters: ApiFilesListingGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DirectoryDto>> {
+    async apiFilesDownloadPathGetRaw(requestParameters: ApiFilesDownloadPathGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.path === null || requestParameters.path === undefined) {
+            throw new runtime.RequiredError('path','Required parameter requestParameters.path was null or undefined when calling apiFilesDownloadPathGet.');
+        }
+
         const queryParameters: any = {};
 
-        if (requestParameters.path !== undefined) {
-            queryParameters['path'] = requestParameters.path;
+        if (requestParameters.archiveFormat !== undefined) {
+            queryParameters['archiveFormat'] = requestParameters.archiveFormat;
         }
+
+        if (requestParameters.asAttachment !== undefined) {
+            queryParameters['asAttachment'] = requestParameters.asAttachment;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/Files/Download/{path}`.replace(`{${"path"}}`, encodeURIComponent(String(requestParameters.path))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async apiFilesDownloadPathGet(requestParameters: ApiFilesDownloadPathGetRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiFilesDownloadPathGetRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async apiFilesListingPathGetRaw(requestParameters: ApiFilesListingPathGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DirectoryDto>> {
+        if (requestParameters.path === null || requestParameters.path === undefined) {
+            throw new runtime.RequiredError('path','Required parameter requestParameters.path was null or undefined when calling apiFilesListingPathGet.');
+        }
+
+        const queryParameters: any = {};
 
         if (requestParameters.depth !== undefined) {
             queryParameters['depth'] = requestParameters.depth;
@@ -131,7 +131,7 @@ export class FilesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/Files/Listing`,
+            path: `/api/Files/Listing/{path}`.replace(`{${"path"}}`, encodeURIComponent(String(requestParameters.path))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -142,32 +142,8 @@ export class FilesApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiFilesListingGet(requestParameters: ApiFilesListingGetRequest, initOverrides?: RequestInit): Promise<DirectoryDto> {
-        const response = await this.apiFilesListingGetRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiFilesPathSeparatorGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<string>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/api/Files/PathSeparator`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.TextApiResponse(response) as any;
-    }
-
-    /**
-     */
-    async apiFilesPathSeparatorGet(initOverrides?: RequestInit): Promise<string> {
-        const response = await this.apiFilesPathSeparatorGetRaw(initOverrides);
+    async apiFilesListingPathGet(requestParameters: ApiFilesListingPathGetRequest, initOverrides?: RequestInit): Promise<DirectoryDto> {
+        const response = await this.apiFilesListingPathGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

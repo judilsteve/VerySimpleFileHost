@@ -5,6 +5,8 @@
     <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>1591</NoWarn><!-- Suppress warnings about missing XMLDoc for public members -->
   </PropertyGroup>
 
   <ItemGroup>

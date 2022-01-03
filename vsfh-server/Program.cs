@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using System.Reflection;
+using VerySimpleFileHost.Controllers;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
 using VerySimpleFileHost.Middleware;
@@ -66,14 +68,21 @@ RegisterConfigObject<AuthenticationConfiguration>();
 builder.Services
     .AddControllers(o =>
     {
-        o.Filters.Add(new AuthenticationFilter());
+        //o.Filters.Add(new AuthenticationFilter());
         o.Filters.Add(new AdminOnlyFilter());
     })
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
-    o.OperationFilter<ErrorResponseTypeFilter<AuthenticationFailureDto>>(StatusCodes.Status401Unauthorized));
+{
+    o.OperationFilter<ErrorResponseTypeFilter<AuthenticationFailureDto>>(StatusCodes.Status401Unauthorized);
+    o.OperationFilter<FixCatchAllPathOperationFilter>();
+    o.IncludeXmlComments(Path.Combine(
+        AppContext.BaseDirectory,
+        $"{typeof(ControllerBase).GetTypeInfo().Assembly.GetName().Name}.xml"
+    ));
+});
 
 builder.Services.AddDbContext<VsfhContext>(o => o
     .UseSqlite(connectionString)
@@ -135,7 +144,7 @@ app.UseAuthentication();
 app.UseRouting();
 app.UseAuthorization();
 app.UseEndpoints(e =>
-    e.MapControllers().RequireAuthorization());
+    e.MapControllers()/*.RequireAuthorization()*/);
 
 if(!app.Environment.IsDevelopment())
     app.UseSpaStaticFiles();

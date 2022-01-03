@@ -1,3 +1,5 @@
+# TODO_JU All this container stuff belongs in a different repo, and the Dockerfile should just clone the vsfh repo
+
 services:
   vsfh-server:
     container_name: vsfh

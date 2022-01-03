@@ -4,21 +4,30 @@ namespace VerySimpleFileHost.Utils;
 
 public static class PathUtils
 {
-    public static bool IsVisible(FileSystemInfo fileSystemInfo, FilesConfiguration config) =>
-        IsVisible(fileSystemInfo.Attributes, config);
-
-    private static bool IsVisible(FileAttributes fileAttributes, FilesConfiguration config)
+    private static EnumerationOptions GetEnumerationOptions(FilesConfiguration config)
     {
-        if(fileAttributes.HasFlag(FileAttributes.Hidden)
-            && !config.IncludeHiddenFilesAndDirectories)
-            return false;
-        if(fileAttributes.HasFlag(FileAttributes.System)
-            && !config.IncludeSystemFilesAndDirectories)
-            return false;
-        return true;
+        var enumerationOptions = new EnumerationOptions
+        {
+            IgnoreInaccessible = true
+        };
+        if(!config.IncludeHiddenFilesAndDirectories)
+            enumerationOptions.AttributesToSkip |= FileAttributes.Hidden;
+        if(!config.IncludeSystemFilesAndDirectories)
+            enumerationOptions.AttributesToSkip |= FileAttributes.System;
+        return enumerationOptions;
     }
 
-    public static bool ExistsAndIsVisible(string absolutePath, FilesConfiguration config, out bool isDirectory)
+    public static IEnumerable<FileInfo> EnumerateAccessibleFiles(this DirectoryInfo directoryInfo, FilesConfiguration config)
+    {
+        return directoryInfo.EnumerateFiles("*", GetEnumerationOptions(config));
+    }
+
+    public static IEnumerable<DirectoryInfo> EnumerateAccessibleDirectories(this DirectoryInfo directoryInfo, FilesConfiguration config)
+    {
+        return directoryInfo.EnumerateDirectories("*", GetEnumerationOptions(config));
+    }
+
+    public static bool ExistsAndIsAccessible(this string absolutePath, FilesConfiguration config, out bool isDirectory)
     {
         if(!absolutePath.StartsWith(config.RootSharedDirectory))
         {
@@ -48,7 +57,14 @@ public static class PathUtils
             isDirectory = false;
             return false;
         }
+
         isDirectory = attributes.HasFlag(FileAttributes.Directory);
-        return IsVisible(attributes, config);
+
+        if(attributes.HasFlag(FileAttributes.Hidden) && !config.IncludeHiddenFilesAndDirectories)
+            return false;
+        if(attributes.HasFlag(FileAttributes.System) && !config.IncludeSystemFilesAndDirectories)
+            return false;
+
+        return true;
     }
 }

@@ -1,31 +1,30 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace VerySimpleFileHost.Middleware
+namespace VerySimpleFileHost.Middleware;
+
+public class ErrorResponseTypeFilter<T> : IOperationFilter
 {
-    public class ErrorResponseTypeFilter<T> : IOperationFilter
+    private readonly int statusCode;
+
+    public ErrorResponseTypeFilter(int statusCode)
     {
-        private readonly int statusCode;
+        this.statusCode = statusCode;
+    }
 
-        public ErrorResponseTypeFilter(int statusCode)
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        operation.Responses.Add(statusCode.ToString(), new()
         {
-            this.statusCode = statusCode;
-        }
-
-        public void Apply(OpenApiOperation operation, OperationFilterContext context)
-        {
-            operation.Responses.Add(statusCode.ToString(), new()
+            Content = new Dictionary<string, OpenApiMediaType>()
             {
-                Content = new Dictionary<string, OpenApiMediaType>()
                 {
+                    "application/json", new OpenApiMediaType()
                     {
-                        "application/json", new OpenApiMediaType()
-                        {
-                            Schema = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository)
-                        }
+                        Schema = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository)
                     }
                 }
-            });
-        }
+            }
+        });
     }
 }

@@ -30,7 +30,7 @@ export interface ApiLoginChangePasswordPutRequest {
     changePasswordAttemptDto?: ChangePasswordAttemptDto;
 }
 
-export interface ApiLoginPostRequest {
+export interface ApiLoginLoginPostRequest {
     loginAttemptDto?: LoginAttemptDto;
 }
 
@@ -141,6 +141,32 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
+    async apiLoginLoginPostRaw(requestParameters: ApiLoginLoginPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/Login/Login`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters.loginAttemptDto,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async apiLoginLoginPost(requestParameters: ApiLoginLoginPostRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiLoginLoginPostRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
     async apiLoginLogoutPostRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
@@ -160,32 +186,6 @@ export class LoginApi extends runtime.BaseAPI {
      */
     async apiLoginLogoutPost(initOverrides?: RequestInit): Promise<void> {
         await this.apiLoginLogoutPostRaw(initOverrides);
-    }
-
-    /**
-     */
-    async apiLoginPostRaw(requestParameters: ApiLoginPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        const response = await this.request({
-            path: `/api/Login`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: requestParameters.loginAttemptDto,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiLoginPost(requestParameters: ApiLoginPostRequest, initOverrides?: RequestInit): Promise<void> {
-        await this.apiLoginPostRaw(requestParameters, initOverrides);
     }
 
 }

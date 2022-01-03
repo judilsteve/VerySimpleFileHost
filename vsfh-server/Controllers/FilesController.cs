@@ -38,15 +38,19 @@ public class FilesController : ControllerBase
     private static string NotFoundMessage(string path) =>
         $"File/directory with path \"{path}\" could not be found";
 
-    // TODO_JU Need to use workaround for proper swagger gen:
-    // https://github.com/domaindrivendev/Swashbuckle.AspNetCore/issues/1100
+    /// <summary>
+    /// Retrieve file listing for path
+    /// </summary>
+    /// <param name="path">Unescaped path relative to root share directory (note that Swagger/OpenAPI doesn't support unescaped wildcards yet)</param>
+    /// <param name="depth"></param>
+    /// <returns></returns>
     [HttpGet("{**path}")]
     public ActionResult<DirectoryDto> Listing(string? path, [Range(1, int.MaxValue)]int? depth)
     {
         path ??= "";
 
         var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
-        if(!PathUtils.ExistsAndIsVisible(absolutePath, config, out var isDirectory))
+        if(!absolutePath.ExistsAndIsAccessible(config, out var isDirectory))
             return NotFound(NotFoundMessage(path));
 
         if(!isDirectory) return BadRequest("Only directories can be listed");
@@ -60,11 +64,16 @@ public class FilesController : ControllerBase
         };
     }
 
+    private static readonly EnumerationOptions skipInaccessible = new()
+    {
+        AttributesToSkip = FileAttributes.Hidden | FileAttributes.System,
+        IgnoreInaccessible = true
+    };
+
     private IEnumerable<FileDto> GetFiles(DirectoryInfo directoryInfo)
     {
-        foreach(var fileInfo in directoryInfo.EnumerateFiles()) // TODO_JU How comes this throws UnauthorizedAccessException?
+        foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config))
         {
-            if(!PathUtils.IsVisible(fileInfo, config)) continue;
             yield return new FileDto
             {
                 DisplayName = fileInfo.Name,
@@ -76,9 +85,8 @@ public class FilesController : ControllerBase
     private IEnumerable<DirectoryDto> GetSubdirectories(DirectoryInfo directoryInfo, int? depth)
     {
         var goDeeper = !depth.HasValue || depth > 0;
-        foreach(var subdirectoryInfo in directoryInfo.EnumerateDirectories()) // TODO_JU How comes this throws UnauthorisedAccessException
+        foreach(var subdirectoryInfo in directoryInfo.EnumerateAccessibleDirectories(config))
         {
-            if(!PathUtils.IsVisible(subdirectoryInfo, config)) continue;
             yield return new DirectoryDto
             {
                 DisplayName = subdirectoryInfo.Name,
@@ -129,13 +137,20 @@ public class FilesController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Download file/directory
+    /// </summary>
+    /// <param name="path">Unescaped path relative to root share directory (note that Swagger/OpenAPI doesn't support unescaped wildcards yet)</param>
+    /// <param name="archiveFormat"></param>
+    /// <param name="asAttachment"></param>
+    /// <returns></returns>
     [HttpGet("{**path}")]
     public ActionResult Download(string? path, ArchiveFormat? archiveFormat, bool asAttachment = false)
     {
         path ??= "";
 
         var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
-        if(!PathUtils.ExistsAndIsVisible(absolutePath, config, out var isDirectory))
+        if(!absolutePath.ExistsAndIsAccessible(config, out var isDirectory))
             return NotFound(NotFoundMessage(path));
 
         if(isDirectory)
@@ -184,7 +199,7 @@ public class FilesController : ControllerBase
         foreach(var absolutePath in absolutePaths)
         {
             var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories)) // TODO_JU How come this throws UnauthorizedAccessException
+            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
             {
                 var zipEntry = zip.CreateEntry(
                     Path.GetRelativePath(absolutePath, fileInfo.FullName),
@@ -226,7 +241,7 @@ public class FilesController : ControllerBase
         foreach(var absolutePath in absolutePaths)
         {
             var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories)) // TODO_JU How come this throws UnauthorizedAccessException
+            foreach(var fileInfo in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
             {
                 var tarEntry = TarEntry.CreateTarEntry(Path.GetRelativePath(absolutePath, fileInfo.FullName));
                 tarEntry.Size = fileInfo.Length;
@@ -240,14 +255,14 @@ public class FilesController : ControllerBase
         tarOutputStream.Close();
     }
 
-    [HttpPost("{**path}")]
+    [HttpPost]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool asAttachment = false)
     {
         var absolutePaths = new List<string>(paths.Length);
         foreach(var path in paths)
         {
             var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
-            if(!PathUtils.ExistsAndIsVisible(absolutePath, config, out var isDirectory))
+            if(!absolutePath.ExistsAndIsAccessible(config, out var isDirectory))
                 return NotFound(NotFoundMessage(path));
             absolutePaths.Add(absolutePath);
         }

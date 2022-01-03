@@ -2,11 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Container, Grid, Icon, Input, List, Loader, Popup } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto, FilesApi } from "../API";
 import { apiConfig } from "../apiInstances";
-import CenteredSpinner from "../Components/CenteredSpinner";
 import CopyButton from "../Components/CopyButton";
 import IconLink from "../Components/IconLink";
 import NavHeader from "../Components/NavHeader";
-import useEndpointData from "../Hooks/useEndpointData";
 import { usePageTitle } from "../Hooks/usePageTitle";
 import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
@@ -36,10 +34,9 @@ function humaniseBytes(bytes: number) {
 }
 
 interface DirectoryProps {
-    path?: string;
+    path: string;
     displayName: string;
     expandInitially: boolean;
-    pathSeparator: string;
     archiveFormat: ArchiveFormat;
     visiblePaths: Set<string>;
     addLoadedPaths: (d: DirectoryDto, prefix: string) => void;
@@ -51,7 +48,6 @@ function Directory(props: DirectoryProps) {
         displayName,
         path,
         expandInitially,
-        pathSeparator,
         archiveFormat,
         visiblePaths,
         addLoadedPaths,
@@ -60,17 +56,17 @@ function Directory(props: DirectoryProps) {
 
     const [expanded, setExpanded] = useState(expandInitially);
     const [tree, setTree] = useState<DirectoryDto | null>(null);
-    useEffect(() => {
+    useEffect(() => { // TODO_JU This shouldn't be an effect; we could end up with duplicate paths in loadedPaths
         setTree(null);
         if(!expanded) {
-            removeLoadedPaths(path ?? '');
+            removeLoadedPaths(path);
             return;
         }
         let cancel = false;
         (async () => {
             let newTree;
             try {
-                newTree = await api.apiFilesListingGet({ path: path, depth: 1});
+                newTree = await api.apiFilesListingPathGet({ path: path, depth: 1});
             } catch(e) {
                 if(!await tryHandleError(e as Response)) {
                     // TODO_JU Handle error
@@ -81,7 +77,7 @@ function Directory(props: DirectoryProps) {
             }
             if(!cancel) {
                 setTree(newTree);
-                addLoadedPaths(newTree, path ?? '');
+                addLoadedPaths(newTree, path);
             }
         })();
         return () => { cancel = true; };
@@ -89,13 +85,12 @@ function Directory(props: DirectoryProps) {
 
     const getHash = () => {
         const loc = window.location;
-        return `${loc.origin}${loc.pathname}${loc.search}#${encodeURIComponent(path!)}`;
+        return `${loc.origin}${loc.pathname}${loc.search}#${encodeURIComponent(path)}`;
     };
 
-    let downloadLink = `/api/Files/Download?archiveFormat=${archiveFormat}`;
-    if(path) downloadLink += `&path=${encodeURIComponent(path)}`;
+    let downloadLink = `/api/Files/Download${path}?archiveFormat=${archiveFormat}`;
 
-    return <div id={path} style={!path || visiblePaths.has(path) ? undefined : { display: "none" }}>
+    return <div id={path} style={visiblePaths.has(path) ? undefined : { display: "none" }}>
         {/*TODO_JU Multi-select checkbox*/}
         <div onClick={() => setExpanded(e => !e)}>
             <Icon fitted name={expanded ? 'folder open' : 'folder'} />
@@ -108,7 +103,7 @@ function Directory(props: DirectoryProps) {
                 {tree.subdirectories!.map(d => <Directory
                     {...props}
                     key={d.displayName}
-                    path={`${path ? `${path}${pathSeparator}` : ''}${d.displayName}`}
+                    path={`${path}/${d.displayName}`}
                     displayName={d.displayName!}
                     expandInitially={false} />)}
                 {tree.files!.map(f => <List.Item>
@@ -116,7 +111,6 @@ function Directory(props: DirectoryProps) {
                         key={f.displayName}
                         {...f}
                         basePath={path}
-                        pathSeparator={pathSeparator}
                         visiblePaths={visiblePaths} />
                 </List.Item>)}
             </List.List>
@@ -127,25 +121,22 @@ function Directory(props: DirectoryProps) {
 interface FileProps extends FileDto {
     basePath?: string;
     visiblePaths: Set<string>;
-    pathSeparator: string;
 }
 
 function File(props: FileProps) {
-    const { basePath, pathSeparator, displayName, sizeBytes, visiblePaths } = props;
-    const path = `${basePath ? `${basePath}${pathSeparator}` : ''}${displayName}`;
-
-    const encodedAbsolutePath = encodeURIComponent(path);
+    const { basePath, displayName, sizeBytes, visiblePaths } = props;
+    const path = `${basePath}/${displayName}`;
 
     const getHash = () => {
         const loc = window.location;
-        return `${loc.origin}${loc.pathname}${loc.search}#${encodedAbsolutePath}`;
+        return `${loc.origin}${loc.pathname}${loc.search}#${path}`;
     };
 
-    return <div id={path} style={!path || visiblePaths.has(path) ? undefined : { display: "none" }}>
+    return <div id={path} style={visiblePaths.has(path) ? undefined : { display: "none" }}>
         {/*TODO_JU Multi-select checkbox*/}
         {/*TODO_JU Replace the single download button with one for download and one for open (in new tab) */}
         <a style={{ all: 'unset' }} target="_blank" rel="noreferrer"
-            href={`/api/Files/Download?path=${encodedAbsolutePath}`}>
+            href={`/api/Files/Download${path}`}>
             <Icon name="file" />
             {displayName} ({humaniseBytes(sizeBytes!)})
         </a>
@@ -153,18 +144,8 @@ function File(props: FileProps) {
     </div>;
 }
 
-const getPathSeparator = () => api.apiFilesPathSeparatorGet();
-
 function Browse() {
     usePageTitle('Browse');
-
-    const [pathSeparator, , ] = useEndpointData(
-        getPathSeparator,
-        useCallback(async e => {
-            if(!await tryHandleError(e as Response)) {
-                // TODO_JU Handle error
-            }
-        }, []));
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
@@ -173,12 +154,12 @@ function Browse() {
     const [loadedPaths, setLoadedPaths] = useState<string[]>([]);
     const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => [
         ...loadedPaths,
-        ...d.files!.map(f => `${prefix}${pathSeparator}${f.displayName}`),
-        ...d.subdirectories!.map(d => `${prefix}${pathSeparator}${d.displayName}`)
-    ]), [pathSeparator]);
+        ...d.files!.map(f => `${prefix}/${f.displayName}`),
+        ...d.subdirectories!.map(d => `${prefix}/${d.displayName}`)
+    ]), []);
     const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths => 
-        loadedPaths.filter(p => !p.startsWith(`${prefix}${pathSeparator}`))),
-    [pathSeparator]);
+        loadedPaths.filter(p => !p.startsWith(`${prefix}/`))),
+    []);
 
     const visiblePaths = useMemo(() => {
         if(!textFilter) return new Set(loadedPaths);
@@ -194,10 +175,10 @@ function Browse() {
             while(path) {
                 if(filteredPaths.has(path)) break;
                 filteredPaths.add(path);
-                path = path.substring(0, path.lastIndexOf(pathSeparator!))
+                path = path.substring(0, path.lastIndexOf('/'))
             }
         }
-    }, [textFilter, loadedPaths, pathSeparator]);
+    }, [textFilter, loadedPaths]);
 
     // TODO_JU Sticky card for multi-select (show selected list/count, clear button, and download button)
     return <Container>
@@ -214,16 +195,16 @@ function Browse() {
                 </Button.Group>
             </Grid.Column>
         </Grid>
-        { !pathSeparator ? <CenteredSpinner /> : <List>
+        <List>
             <Directory
                 visiblePaths={visiblePaths!}
                 displayName="<root>"
+                path=""
                 expandInitially={true}
-                pathSeparator={pathSeparator}
                 archiveFormat={archiveFormat}
                 addLoadedPaths={addLoadedPaths}
                 removeLoadedPaths={removeLoadedPaths} />
-        </List>}
+        </List>
     </Container>;
 }
 

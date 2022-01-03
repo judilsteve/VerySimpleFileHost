@@ -10,11 +10,8 @@ WorkingDirectory=/usr/bin/vsfh
 EnvironmentFile=/etc/vsfh/.env
 User=vsfh
 
-ExecStartPre=-/usr/bin/vsfh/.venv/bin/python3 -m podman-compose down
-
-ExecStart=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose up
-
-ExecStop=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose down
+ExecStart=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose start
+ExecStop=/usr/bin/vsfh/.venv/bin/python3 -m podman-compose stop
 
 [Install]
 WantedBy=multi-user.target
