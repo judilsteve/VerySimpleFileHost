@@ -9,7 +9,7 @@ VerySimpleFileHost (VSFH) is an HTTP File Server with a web interface. VSFH is d
 
   - **Conceptually simple.** VSFH has a very conservative feature scope. It does not have per-user file permissions, or any user hierarchy. It provides read access to a single directory, in its entirety, for all users. Curation of shared content is left to the filesystem.
 
-  - **API driven.** VSFH is a RESTful JSON API with OpenAPI/SwaggerUI integration (available in debug builds). Don't like the included web interface? Build your own! Need automated/m2m access? Use the [OpenAPI toolkit](https://github.com/judilsteve/marvel-test/blob/master/openapi-generator-cli) to auto-generate a client API.
+  - **API driven.** VSFH is a RESTful JSON API with OpenAPI/SwaggerUI integration (available in debug builds). Don't like the included web interface? Build your own! Need automated/m2m access? Use the [OpenAPI toolkit](https://github.com/OpenAPITools/openapi-generator-cli) to auto-generate a client API.
 
   - **Secure.** VSFH allows administrators to enforce frequenty changed strong passwords. All traffic is encrypted via HTTPS (with optional certificates from Let's Encrypt). A [deployment template](https://github.com/judilsteve/vsfh-podman) is available to run VSFH in a hardened, rootless container jailed to a virtual network DMZ.
 
@@ -36,7 +36,7 @@ Bare metal deployment instructions are provided below, but this deployment patte
 - Node v16 and matching npm\*
 - dotnet SDK 6.0
 
-^\* At the time of writing, Node v17 appears to have issues with installing dependencies. Consider using [nvm](https://github.com/nvm-sh/nvm) if you need to maintain multiple Node installations.
+\* At the time of writing, Node v17 appears to have issues with installing dependencies. Consider using [nvm](https://github.com/nvm-sh/nvm) if you need to maintain multiple Node installations.
 
 ## Instructions
 
