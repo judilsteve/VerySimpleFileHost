@@ -1,5 +1,4 @@
 # VerySimpleFileHost
-
 VerySimpleFileHost (VSFH) is an HTTP File Server with a web interface. VSFH is designed to be:
 
  - **Quick to install and completely self-contained.** VSFH maintains its own user list in a self-managed SQLite database. It does *not* integrate with local user accounts, Linux-PAM, or filesystem permissions. VSFH consists of a single runtime process.
@@ -12,7 +11,7 @@ VerySimpleFileHost (VSFH) is an HTTP File Server with a web interface. VSFH is d
 
   - **API driven.** VSFH is a RESTful JSON API with OpenAPI/SwaggerUI integration (available in debug builds). Don't like the included web interface? Build your own! Need automated/m2m access? Use the [OpenAPI toolkit](https://github.com/judilsteve/marvel-test/blob/master/openapi-generator-cli) to auto-generate a client API.
 
-  - **Secure.** VSFH allows administrators to enforce frequenty changed strong passwords. All traffic is encrypted via HTTPS (with optional certificates from Let's Encrypt). In the default installation, VSFH runs in a hardened, rootless container jailed to a virtual network DMZ, and registered as a hardened, non-root systemd service.
+  - **Secure.** VSFH allows administrators to enforce frequenty changed strong passwords. All traffic is encrypted via HTTPS (with optional certificates from Let's Encrypt). A [deployment template](https://github.com/judilsteve/vsfh-podman) is available to run VSFH in a hardened, rootless container jailed to a virtual network DMZ.
 
 # Features
 TODO_JU Screenshots
@@ -26,58 +25,20 @@ Users can download entire directories as a tarball (with optional gzip compressi
 ## HTTP Range and MIME Support
 Media such as audio and video can be streamed, with full support for seek operations (via HTTP range requests). Administrators can configure MIME type mappings so that files automatically open in the right application.
 
-# Install and run
+# Install and Run
 TODO_JU Test these instructions to make sure they work
 
-## Installing as a containerised service (highly recommended)
-Since VSFH is designed to be opened to the world via the internet, it is highly recommended to use the automated containerised installation, which will help protect your host system and local network in the event that VSFH or one of its dependencies is compromised.
+If you intend to deploy on shared infrastructure (e.g. if the machine that will be running VSFH has other duties or has access to your local network) and especially if you intend to expose VSFH to the internet, [containerised deployment](https://github.com/judilsteve/vsfh-podman) is highly recommended.
 
-### Prerequisites
- - A Linux distribution with a systemd init system
- - Git
- - Python >=3.3 and matching pip
- - Podman >=3.4
+Bare metal deployment instructions are provided below, but this deployment pattern is only recommended for use inside a trusted network behind a firewall, or in a well-isolated hosting environment (e.g. a cloud VPS, or a bastion host in a DMZ).
 
-Running the container with Docker (instead of Podman) should also be possible, but you will need to modify the install scripts and service files yourself. See [this repository](https://github.com/MiGoller/dc-systemd-template) for reasonable service file templates that you can use.
-
-### Instructions
-Run the following in your terminal:
-
-```bash
-curl https://raw.githubusercontent.com/judilsteve/VerySimpleFileHost/main/bootstrap.sh | sudo bash
-```
-
-### Exposing VSFH to the internet
-You will likely need to forward VSFH's HTTPS listen port to 443 and its HTTP listen port to 80. Instructions for this will be specific to your chosen firewall/router. Forwarding to other ports is possible, but you will lose the ability to use Let's Encrypt certificates, since Let's Encrypt's challenge schemes require VSFH to listen on ports 80 and 443.
-
-### Updating the configuration
-Make your changes to the [configuration files](#configuration), then restart the service:
-
-```bash
-sudo systemctl restart vsfh
-```
-
-### "Help, I locked myself out of my administrator account!"
-Run the following in your terminal:
-```bash
-/usr/bin/vsfh/scripts/new-admin-account.sh
-```
-
-### Updating
-Run the following in your terminal:
-
-```bash
-sudo /usr/bin/vsfh/update.sh
-```
-
-## Installing on bare metal
-Only sparse and minimal instruction is provided here. This is to discourage you from installing VSFH on bare metal. Especially if you plan to expose VSFH to the internet, you should make sure that you are installing on a bastion host in a DMZ. If you don't know what either of those terms mean, please turn away now.
-
-### Prerequisites
-- Node v16 and matching npm
+## Prerequisites
+- Node v16 and matching npm\*
 - dotnet SDK 6.0
 
-### Instructions
+^\* At the time of writing, Node v17 appears to have issues with installing dependencies. Consider using [nvm](https://github.com/nvm-sh/nvm) if you need to maintain multiple Node installations.
+
+## Instructions
 
 1. Clone this repository to an appropriate directory
 
@@ -102,17 +63,25 @@ mkdir vsfh-server/build/wwwroot
 cp vsfh-client/build/* vsfh-server/build/wwwroot
 ```
 
-5. Create an `appsettings.json` file with your desired configuration in `vsfh-server/build`
+5. Create an `appsettings.json` file with your desired [configuration](#Configuration) in `vsfh-server/build`
 
 6. Run
 ```bash
 ./vsfh-server/build/VerySimpleFileHost
 ```
 
-# Configuration
+## "Help, I locked myself out of my administrator account!"
+Run the following in your terminal:
+```bash
+./vsfh-server/build/VerySimpleFileHost --create-admin-account
+```
+and follow the prompts.
 
-There are two main configuration files for VSFH. The first is `/etc/vsfh/.env`. This file defines the shared directory, and the ports that VSFH listens on.
-All other configuration lives in `/etc/vsfh/appsettings.json`. Use `appsettings.Default.json` as a reference for building your own `appsettings.json`.
+## Exposing VSFH to the Internet
+You will likely need to forward VSFH's HTTPS listen port to 443 and its HTTP listen port to 80. Instructions for this will be specific to your chosen firewall/router. Forwarding to other ports is possible, but you will lose the ability to use Let's Encrypt certificates, since Let's Encrypt's challenge schemes require VSFH to listen on ports 80 and 443.
+
+# Configuration
+All configuration lives in `./vsfh-server/build/VerySimpleFileHost/appsettings.json`. Use [`appsettings.Default.json`](https://github.com/judilsteve/VerySimpleFileHost/blob/main/vsfh-server/appsettings.Default.json) as a reference for building your configuration.
 
 # Disclaimer
 Although all care has been taken to make VSFH as secure as possible, it has not been independently audited for vulnerabilities. You run VSFH (and expose it to the internet) at your own risk.

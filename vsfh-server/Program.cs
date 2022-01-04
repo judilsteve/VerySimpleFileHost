@@ -40,7 +40,7 @@ if(args.Contains("--create-admin-account"))
         await context.Users.AddAsync(firstAdmin);
         await context.SaveChangesAsync();
 
-        await Console.Out.WriteLineAsync($"Account for \"{name}\" created. Use one-time invite key below to log in:\n{inviteKey}");
+        await Console.Out.WriteLineAsync($"Account for \"{name}\" created. Use one-time invite link below to log in:\nhttps://localhost:<YOUR_HTTPS_PORT_HERE>/AcceptInvite/{inviteKey}");
     }
     return;
 }
