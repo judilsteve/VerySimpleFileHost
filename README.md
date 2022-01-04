@@ -80,6 +80,8 @@ and follow the prompts.
 ## Exposing VSFH to the Internet
 You will likely need to forward VSFH's HTTPS listen port to 443 and its HTTP listen port to 80. Instructions for this will be specific to your chosen firewall/router. Forwarding to other ports is possible, but you will lose the ability to use Let's Encrypt certificates, since Let's Encrypt's challenge schemes require VSFH to listen on ports 80 and 443.
 
+VSFH runs on the Kestrel HTTP server, which (since .NET Core 2.0) can be used as an edge server. Reverse proxying VSFH through Apache/nginx/IIS/etc is not required.
+
 # Configuration
 All configuration lives in `./vsfh-server/build/VerySimpleFileHost/appsettings.json`. Use [`appsettings.Default.json`](https://github.com/judilsteve/VerySimpleFileHost/blob/main/vsfh-server/appsettings.Default.json) as a reference for building your configuration.
 
