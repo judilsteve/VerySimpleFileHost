@@ -47,8 +47,6 @@ public class FilesController : ControllerBase
     [HttpGet("{**path}")]
     public ActionResult<DirectoryDto> Listing(string? path, [Range(1, int.MaxValue)]int? depth)
     {
-        // TODO_JU Using a cancellation token (even if it has to be checked manually) would be a good idea here
-        // since recursively listing a large directory tree on a spinning rust drive can take a very long time
         path ??= "";
 
         var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
@@ -81,6 +79,9 @@ public class FilesController : ControllerBase
                 DisplayName = fileInfo.Name,
                 SizeBytes = fileInfo.Length
             };
+            // Checking the cancellation token here is a good idea here since recursively listing
+            // a large directory tree on a spinning rust drive can take a very long time
+            HttpContext.RequestAborted.ThrowIfCancellationRequested();
         }
     }
 
@@ -99,6 +100,9 @@ public class FilesController : ControllerBase
                     ? GetSubdirectories(subdirectoryInfo, depth.HasValue ? depth.Value - 1 : null)
                     : null
             };
+            // Checking the cancellation token here is a good idea here since recursively listing
+            // a large directory tree on a spinning rust drive can take a very long time
+            HttpContext.RequestAborted.ThrowIfCancellationRequested();
         }
     }
 
@@ -147,7 +151,7 @@ public class FilesController : ControllerBase
     /// <param name="asAttachment"></param>
     /// <returns></returns>
     [HttpGet("{**path}")]
-    public ActionResult Download(string? path, ArchiveFormat? archiveFormat, bool asAttachment = false)
+    public ActionResult Download(string? path, ArchiveFormat? archiveFormat, bool? asAttachment)
     {
         path ??= "";
 
@@ -164,8 +168,7 @@ public class FilesController : ControllerBase
                 (outputStream, _) => WriteArchiveToStream(
                     new[]{ absolutePath },
                     outputStream,
-                    archiveFormat.Value,
-                    HttpContext.RequestAborted),
+                    archiveFormat.Value),
                 GetArchiveMimeType(archiveFormat.Value));
         }
 
@@ -173,7 +176,7 @@ public class FilesController : ControllerBase
         var mimeType = config.MimeTypesByExtension
             .GetValueOrDefault(extension.Substring(1), "application/octet-stream");
 
-        if(asAttachment) AddAttachmentHeader(absolutePath, extension);
+        if(asAttachment ?? false) AddAttachmentHeader(absolutePath, extension);
 
         return new PhysicalFileResult(absolutePath, mimeType)
         {
@@ -184,18 +187,17 @@ public class FilesController : ControllerBase
     private Task WriteArchiveToStream(
         IEnumerable<string> absolutePaths,
         Stream outputStream,
-        ArchiveFormat archiveFormat,
-        CancellationToken cancellationToken)
+        ArchiveFormat archiveFormat)
     {
         return archiveFormat switch
         {
-            ArchiveFormat.Tar => WriteTarToStream(absolutePaths, outputStream, cancellationToken),
-            ArchiveFormat.Zip => WriteZipToStream(absolutePaths, outputStream, cancellationToken),
+            ArchiveFormat.Tar => WriteTarToStream(absolutePaths, outputStream),
+            ArchiveFormat.Zip => WriteZipToStream(absolutePaths, outputStream),
             _ => throw new ArgumentException($"Unhandled archive format", nameof(archiveFormat))
         };
     }
 
-    private async Task WriteZipToStream(IEnumerable<string> absolutePaths, Stream outputStream, CancellationToken cancellationToken)
+    private async Task WriteZipToStream(IEnumerable<string> absolutePaths, Stream outputStream)
     {
         using var zip = new ZipArchive(outputStream, ZipArchiveMode.Create, leaveOpen: true);
         foreach(var absolutePath in absolutePaths)
@@ -208,13 +210,13 @@ public class FilesController : ControllerBase
                     config.ZipCompressionLevel);
                 using var zipEntryStream = zipEntry.Open();
                 using var fileStream = fileInfo.OpenRead();
-                await fileStream.CopyToAsync(zipEntryStream, cancellationToken);
-                cancellationToken.ThrowIfCancellationRequested();
+                await fileStream.CopyToAsync(zipEntryStream, HttpContext.RequestAborted);
+                HttpContext.RequestAborted.ThrowIfCancellationRequested();
             }
         }
     }
 
-    private async Task WriteTarToStream(IEnumerable<string> absolutePaths, Stream outputStream, CancellationToken cancellationToken)
+    private async Task WriteTarToStream(IEnumerable<string> absolutePaths, Stream outputStream)
     {
         if(config.GzipCompressionLevel.HasValue)
         {
@@ -226,7 +228,7 @@ public class FilesController : ControllerBase
             {
                 IsStreamOwner = false
             };
-            await WriteTarStream(absolutePaths, tarOutputStream, cancellationToken);
+            await WriteTarStream(absolutePaths, tarOutputStream);
         }
         else
         {
@@ -234,11 +236,11 @@ public class FilesController : ControllerBase
             {
                 IsStreamOwner = false
             };
-            await WriteTarStream(absolutePaths, tarOutputStream, cancellationToken);
+            await WriteTarStream(absolutePaths, tarOutputStream);
         }
     }
 
-    private async Task WriteTarStream(IEnumerable<string> absolutePaths, TarOutputStream tarOutputStream, CancellationToken cancellationToken)
+    private async Task WriteTarStream(IEnumerable<string> absolutePaths, TarOutputStream tarOutputStream)
     {
         foreach(var absolutePath in absolutePaths)
         {
@@ -249,8 +251,8 @@ public class FilesController : ControllerBase
                 tarEntry.Size = fileInfo.Length;
                 tarOutputStream.PutNextEntry(tarEntry);
                 using var fileStream = fileInfo.OpenRead();
-                await fileStream.CopyToAsync(tarOutputStream, cancellationToken);
-                cancellationToken.ThrowIfCancellationRequested();
+                await fileStream.CopyToAsync(tarOutputStream, HttpContext.RequestAborted);
+                HttpContext.RequestAborted.ThrowIfCancellationRequested();
                 tarOutputStream.CloseEntry();
             }
         }
@@ -258,7 +260,7 @@ public class FilesController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool asAttachment = false)
+    public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
     {
         var absolutePaths = new List<string>(paths.Length);
         foreach(var path in paths)
@@ -276,14 +278,13 @@ public class FilesController : ControllerBase
             _ => throw new ArgumentException("Unrecognised archive format", nameof(archiveFormat))
         };
 
-        if(asAttachment) AddAttachmentHeader(string.Join(",", absolutePaths), archiveExtension);
+        if(asAttachment ?? false) AddAttachmentHeader(string.Join(",", absolutePaths), archiveExtension);
 
         return new FileCallbackResult(
             (outputStream, _) => WriteArchiveToStream(
                 absolutePaths,
                 outputStream,
-                archiveFormat!.Value,
-                HttpContext.RequestAborted),
+                archiveFormat!.Value),
             GetArchiveMimeType(archiveFormat.Value));
     }
 }

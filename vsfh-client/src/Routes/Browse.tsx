@@ -1,4 +1,5 @@
-import { ForwardedRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent } from "react";
+import { useLocation } from "react-router";
 import { Button, Container, Grid, Icon, Input, List, Loader } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
 import { apiConfig } from "../apiInstances";
@@ -47,13 +48,8 @@ interface DirectoryProps {
     removeLoadedPaths: (prefix: string) => void;
 }
 
-interface DirectoryRef {
-    expandTo: (path: string) => Promise<void>;
-}
-
 // TODO_JU Files and directories need consistent hover highlighting/cursor behaviour
-// TODO_JU Could probably avoid all or some of this imperative bs by doing something in the vein of useEffect(expandTree, [useLocation().hash])
-function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<DirectoryRef | undefined>) {
+function Directory(props: DirectoryProps) {
     const {
         displayName,
         path,
@@ -90,9 +86,16 @@ function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<DirectoryR
         addLoadedPaths(newTree, path);
     }, [loading, expanded, isMounted, addLoadedPaths, path]);
 
-    useImperativeHandle(ref, () => ({
-        expandTo: async () => console.debug('TODO_JU')
-    }));
+    const { hash } = useLocation();
+    useEffect(() => {
+        if(hash.startsWith(path)) {
+            (async () => {
+                await expand();
+                // Re-set the path to trigger CSS highlighting
+                if(hash === path) window.location.hash = path;
+            })();
+        }
+    }, [expand, hash, path]);
 
     const collapse = () => {
         if(loading || !expanded) return;
@@ -101,8 +104,8 @@ function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<DirectoryR
     };
 
     const loc = window.location;
-    const hash = `${loc.pathname}${loc.search}#${path}`;
-    const downloadLink = `/api/Files/Download/${path}?archiveFormat=${archiveFormat}`;
+    const hashLink = `${loc.pathname}${loc.search}#${path}`;
+    const downloadLink = `/api/Files/Download/${path}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
     // TODO_JU Make it not ugly
     return <div style={(!path || visiblePaths.has(path)) ? undefined : { display: "none" }}>
@@ -114,7 +117,7 @@ function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<DirectoryR
             </div>
             {/*TODO_JU maybe these fade in and out on hover?*/}
             <IconLink name="download" fitted href={downloadLink} />
-            <IconLink href={hash} name="linkify" fitted />
+            <IconLink href={hashLink} name="linkify" fitted />
             {
                 !expanded ? <></> : <List.List>
                     {loading ? <Loader indeterminate active inline size="tiny" /> : <>
@@ -134,11 +137,32 @@ function ForwardingDirectory(props: DirectoryProps, ref: ForwardedRef<DirectoryR
     </div>;
 }
 
-const Directory = forwardRef(ForwardingDirectory);
-
 interface FileProps extends FileDto {
     basePath: string;
     visiblePaths: Set<string>;
+}
+
+interface SneakyLinkProps {
+    regularClickHref: string;
+    altClickHref: string;
+    children?: ReactNode;
+}
+
+function SneakyLink(props: SneakyLinkProps) {
+    const { regularClickHref, altClickHref, children } = props;
+
+    const onClick = useCallback((e: MouseEvent) => {
+        if(e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+            // User is attempting to open the link in a new tab
+            // Send them to altClickHref and ask the browser to not open regularClickHref
+            e.preventDefault();
+            window.location.href = altClickHref;
+        }
+    }, [altClickHref]);
+
+    return <a {...props} href={regularClickHref} onClick={onClick}>
+        { children }
+    </a>
 }
 
 function File(props: FileProps) {
@@ -148,16 +172,16 @@ function File(props: FileProps) {
     const loc = window.location;
     const hash = `${loc.pathname}${loc.search}#${path}`;
 
+    const href = `/api/Files/Download/${path}`;
+
     // TODO_JU Make it not ugly
     return <div style={visiblePaths.has(path) ? undefined : { display: "none" }}>
         <List.Item>
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
-            {/*TODO_JU Use onClick trickery to download as attachment on regular click, but do a plain open on ctrl/middle click or "open in new tab"*/}
-            <a target="_blank" rel="noreferrer"
-                href={`/api/Files/Download/${path}`}>
+            <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
                 <Icon name="file" />
                 <span className="anchor" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
-            </a>
+            </SneakyLink>
             <IconLink href={hash} name="linkify" fitted />
         </List.Item>
     </div>;
@@ -185,6 +209,13 @@ function Browse() {
     // TODO_JU Text box is unresponsive when filtering large trees
     // Profiling shows that filtering the path list is *not* the bottleneck; it's the re-rendering
     // Maybe need to look at doing serverside filtering or just a debounce; depends how it runs in a prod build
+    //
+    // Could also be that we are keeping the entire tree in place and just setting display: 'none', meaning react
+    // has to diff the whole vDOM tree. It's possible that giving the vDOM diff an early out would net a performance
+    // gain that more than offsets the additional rDOM repaints. It also means that react will be making less total
+    // DOM mutations (e.g. one call to remove an entire subtree vs n calls to recursively set display: 'none' on every node)
+    //
+    // Basically, this is a bit of a fustercluck and it needs some careful profiling/experimentation
     const visiblePaths = useMemo(() => {
         if(!textFilter) return new Set(loadedPaths);
         const filteredPaths = new Set<string>();
@@ -206,13 +237,7 @@ function Browse() {
         return filteredPaths;
     }, [textFilter, loadedPaths]);
 
-    const expander = useRef<DirectoryRef>();
-
-    useEffect(() => {
-        expander.current!.expandTo(window.location.hash);
-    }, []);
-
-    // TODO_JU Sticky card for multi-select (show selected list/count, clear button, and download button)
+    // TODO_JU Slideout sidebar for multi-select (show selected list/count, clear button, and download button)
     return <Container>
         <NavHeader pageTitle="Browse" />
         <Grid stackable>
@@ -229,7 +254,6 @@ function Browse() {
         </Grid>
         <List>
             <Directory
-                ref={expander}
                 visiblePaths={visiblePaths!}
                 displayName="<root>"
                 path=""

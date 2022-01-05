@@ -48,6 +48,8 @@ if(args.Contains("--create-admin-account"))
 var builder = WebApplication.CreateBuilder(args);
 
 var config = builder.Configuration;
+config.AddJsonFile("appsettings.Default.json");
+
 void RegisterConfigObject<T>() where T: class, new()
 {
     var configObject = new T();
