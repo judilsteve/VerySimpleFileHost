@@ -272,7 +272,7 @@ function Browse() {
     // TODO_JU Slideout sidebar for multi-select (show selected list/count, clear button, and download button)
     return <Container>
         <NavHeader pageTitle="Browse" />
-        <Grid stackable>
+        <Grid stackable>{/* TODO_JU Would be nice to make this sticky so you can filter without scrolling back to the top */}
             <Grid.Column width={13}>
                 {/*
                     By not providing value={textFilter} in the input component below,
