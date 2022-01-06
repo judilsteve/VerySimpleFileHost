@@ -115,6 +115,8 @@ public class FilesController : ControllerBase
     private void AddAttachmentHeader(string absolutePath, string extension)
     {
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(absolutePath);
+        // "<" and ">" characters are illegal for file/directory names in Windows filesystems
+        if(string.IsNullOrEmpty(fileNameWithoutExtension)) fileNameWithoutExtension = "_root_";
         var maxFileNameLength = 255;
         var availableChars = maxFileNameLength - extension.Length;
         string trimmedFileName;
@@ -168,6 +170,8 @@ public class FilesController : ControllerBase
         {
             if(!archiveFormat.HasValue)
                 return BadRequest($"\"{nameof(archiveFormat)}\" is required when downloading a directory");
+
+            if(asAttachment ?? false) AddAttachmentHeader(absolutePath, GetArchiveExtension(archiveFormat.Value));
 
             return new FileCallbackResult(
                 (outputStream, _) => WriteArchiveToStream(
@@ -264,6 +268,16 @@ public class FilesController : ControllerBase
         tarOutputStream.Close();
     }
 
+    private string GetArchiveExtension(ArchiveFormat archiveFormat)
+    {
+        return archiveFormat switch
+        {
+            ArchiveFormat.Tar => config.GzipCompressionLevel.HasValue ? ".tar.gz" : ".tar",
+            ArchiveFormat.Zip => ".zip",
+            _ => throw new ArgumentException("Unrecognised archive format", nameof(archiveFormat))
+        };
+    }
+
     [HttpPost]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
     {
@@ -276,14 +290,7 @@ public class FilesController : ControllerBase
             absolutePaths.Add(absolutePath);
         }
 
-        var archiveExtension = archiveFormat!.Value switch
-        {
-            ArchiveFormat.Tar => config.GzipCompressionLevel.HasValue ? ".tar.gz" : ".tar",
-            ArchiveFormat.Zip => ".zip",
-            _ => throw new ArgumentException("Unrecognised archive format", nameof(archiveFormat))
-        };
-
-        if(asAttachment ?? false) AddAttachmentHeader(string.Join(",", absolutePaths), archiveExtension);
+        if(asAttachment ?? false) AddAttachmentHeader(string.Join(",", absolutePaths), GetArchiveExtension(archiveFormat!.Value));
 
         return new FileCallbackResult(
             (outputStream, _) => WriteArchiveToStream(

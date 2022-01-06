@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
 import { useLocation } from "react-router";
 import { Button, Container, Grid, Icon, Input, List, Loader } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
@@ -37,6 +37,10 @@ function humaniseBytes(bytes: number) {
 
 function combinePaths(...paths: string[]) {
     return paths.reduce((p, next) => p ? `${p}/${next}` : next);
+}
+
+function sanitisePath(path: string) {
+    return path.replaceAll('?', '%3f').replaceAll('#', '%23');
 }
 
 interface DirectoryProps {
@@ -86,12 +90,12 @@ function Directory(props: DirectoryProps) {
 
     const { hash } = useLocation();
     useEffect(() => {
-        if(hash.startsWith(path)) {
-            (async () => {
-                await expand();
-                // Re-set the path to trigger CSS highlighting
-                if(hash === path) window.location.hash = path;
-            })();
+        const parsedHash = decodeURIComponent(hash).substring(1);
+        if(!path || parsedHash.startsWith(`${path}/`)) {
+            expand();
+        } else if (parsedHash === path) {
+            // Re-set the hash path to trigger CSS highlighting
+            window.location.hash = path; // TODO_JU Maybe a dimmer while this is happening
         }
     }, [expand, hash, path]);
 
@@ -102,7 +106,7 @@ function Directory(props: DirectoryProps) {
 
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
-    const downloadLink = `/api/Files/Download/${path}?archiveFormat=${archiveFormat}&asAttachment=true`;
+    const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
     if(path && !visiblePaths.has(path)) return <></>;
 
@@ -111,7 +115,7 @@ function Directory(props: DirectoryProps) {
         <List.Item>
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
             <div style={{ display: 'inline' }} onClick={expanded ? collapse : expand}>
-                <Icon fitted name={expanded ? 'folder open' : 'folder'} />
+                <Icon fitted name={expanded || loading ? 'folder open' : 'folder'} />
                 <span className="anchor" id={path}>{displayName}</span>
             </div>
             {/*TODO_JU maybe these fade in and out on hover?*/}
@@ -150,16 +154,25 @@ interface SneakyLinkProps {
 function SneakyLink(props: SneakyLinkProps) {
     const { regularClickHref, altClickHref, children, ...rest } = props;
 
-    const onClick = useCallback((e: MouseEvent) => {
-        if(e.button === 1 || (e.button === 0 && e.ctrlKey)) {
-            // User is attempting to open the link in a new tab
-            // Send them to altClickHref and ask the browser to not open regularClickHref
-            e.preventDefault();
-            window.location.href = altClickHref;
-        }
-    }, [altClickHref]);
+    const ref = useRef<HTMLAnchorElement>(null);
 
-    return <a {...rest} href={regularClickHref} onClick={onClick}>
+    const overrideHref = useCallback((e) => {
+        // User is attempting to open the link in a new tab
+        // Quickly set the href to altClickHref so they go to the right place
+        ref.current!.href = altClickHref;
+        // Set it back immediately after the browser has done its job
+        window.setTimeout(() => ref.current!.href = regularClickHref, 0);
+    }, [altClickHref, regularClickHref])
+
+    const onClick = useCallback((e: MouseEvent) => {
+        if(e.ctrlKey) overrideHref(e);
+    }, [overrideHref]);
+
+    const onMouseUp = useCallback((e: MouseEvent) => {
+        if(e.button === 1) overrideHref(e);
+    }, [overrideHref])
+
+    return <a {...rest} ref={ref} href={regularClickHref} onClick={onClick} onMouseUp={onMouseUp}>
         { children }
     </a>
 }
@@ -169,9 +182,17 @@ function File(props: FileProps) {
     const path = combinePaths(basePath, displayName!);
 
     const loc = window.location;
-    const hash = `${loc.pathname}${loc.search}#${path}`;
+    const hashLink = `${loc.pathname}${loc.search}#${path}`;
 
-    const href = `/api/Files/Download/${path}`;
+    const href = `/api/Files/Download/${sanitisePath(path)}`;
+
+    const { hash } = useLocation();
+    useEffect(() => {
+        if (decodeURIComponent(hash).substring(1) === path) {
+            // Re-set the hash path to trigger CSS highlighting
+            window.location.hash = path;
+        }
+    }, [hash, path]);
 
     if(!visiblePaths.has(path)) return <></>;
 
@@ -183,7 +204,7 @@ function File(props: FileProps) {
                 <Icon name="file" />
                 <span className="anchor" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
             </SneakyLink>
-            <IconLink href={hash} name="linkify" fitted />
+            <IconLink href={hashLink} name="linkify" fitted />
         </List.Item>
     </div>;
 }
@@ -203,15 +224,13 @@ function* getAllPaths(expandedDirectories: Directories) {
     }
 }
 
+// TODO_JU Deal with container overflow (ellipsis?)
 function Browse() {
     usePageTitle('Browse');
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
     const [textFilter, setTextFilter] = useState('');
-
-    // TODO_JU Parse hash and expand tree as required
-    // Then need to do `window.location.hash = window.location.hash` to activate :target styling
 
     const [expandedDirectories, setExpandedDirectories] = useState<Directories>({});
     const addExpandedDirectory = useCallback((d: DirectoryDto, prefix: string) => setExpandedDirectories(expandedDirectories => ({
@@ -228,27 +247,17 @@ function Browse() {
         return newExpandedDirectories;
     }), []);
 
-    // TODO_JU Text box is unresponsive when filtering large trees
-    // Profiling shows that filtering the path list is *not* the bottleneck; it's the re-rendering
-    // Maybe need to look at doing serverside filtering or just a debounce; depends how it runs in a prod build
-    //
-    // Could also be that we are keeping the entire tree in place and just setting display: 'none', meaning react
-    // has to diff the whole vDOM tree. It's possible that giving the vDOM diff an early out would net a performance
-    // gain that more than offsets the additional rDOM repaints. It also means that react will be making less total
-    // DOM mutations (e.g. one call to remove an entire subtree vs n calls to recursively set display: 'none' on every node)
-    //
-    // Basically, this is a bit of a fustercluck and it needs some careful profiling/experimentation
     const visiblePaths = useMemo(() => {
         const loadedPaths = getAllPaths(expandedDirectories);
         if(!textFilter) return new Set(loadedPaths);
         const filteredPaths = new Set<string>();
         const textFilterLowerCase = textFilter.toLocaleLowerCase();
-        for(let path in loadedPaths) {
+        for(let path of loadedPaths) {
             if(!path.toLocaleLowerCase().includes(textFilterLowerCase)) continue;
             // If a path matches the filter and should be visible,
             // then all its parent paths must be made visible too
             while(path) {
-                if(!filteredPaths.has(path)) {
+                if(filteredPaths.has(path)) {
                     // This path has already been granted visibility by a match in one of its child paths
                     // There is nothing to do here
                     break;
@@ -265,8 +274,17 @@ function Browse() {
         <NavHeader pageTitle="Browse" />
         <Grid stackable>
             <Grid.Column width={13}>
+                {/*
+                    By not providing value={textFilter} in the input component below,
+                    we let the browser use the native value. This means that if the user's
+                    typing causes a lengthy update (i.e. if they're filtering a big tree)
+                    then they don't have to wait for react's render cycle to complete before
+                    they see the new characters appear in the text box. the onChange handler
+                    is wrapped in a setTimeout just to stop react from complaining about
+                    "setting components from controlled to uncontrolled" in the console.
+                 */}
                 <Input autoFocus fluid icon="filter" iconPosition="left" placeholder="Filter"
-                    value={textFilter} onChange={e => setTextFilter(e.target.value)} />
+                    onChange={e => window.setTimeout(() => setTextFilter(e.target.value), 0)} />
             </Grid.Column>
             <Grid.Column width={3}>
                 <Button.Group fluid style={{ height: '100%' }}>
