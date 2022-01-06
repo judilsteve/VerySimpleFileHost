@@ -43,7 +43,7 @@ interface DirectoryProps {
     path: string;
     displayName: string;
     archiveFormat: ArchiveFormat;
-    visiblePaths: Set<string>;
+    visiblePaths: LoadedPaths;
     addLoadedPaths: (d: DirectoryDto, prefix: string) => void;
     removeLoadedPaths: (prefix: string) => void;
 }
@@ -59,17 +59,14 @@ function Directory(props: DirectoryProps) {
         removeLoadedPaths
     } = props;
 
-    console.log(`Rendering directory ${path}`);
-
-    const [expanded, setExpanded] = useState(false);
+    const [expanded, setExpanded] = useState(false); // TODO_JU Also need to store this somewhere else since it gets wiped when the component is hidden by the filter
     const [loading, setLoading] = useState(false);
-    const [tree, setTree] = useState<DirectoryDto | null>(null);
     const isMounted = useIsMounted();
     // TODO_JU Test spamming the button
     // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
     const expand = useCallback(async () => {
         if(loading || expanded) return;
-        setLoading(true); setTree(null); setExpanded(true);
+        setLoading(true); setExpanded(true);
         let newTree;
         try {
             newTree = await api.apiFilesListingPathGet({ path, depth: 1});
@@ -81,9 +78,7 @@ function Directory(props: DirectoryProps) {
         } finally {
             if(isMounted.current) setLoading(false);
         }
-        if(!isMounted.current) return;
-        setTree(newTree);
-        addLoadedPaths(newTree, path);
+        if(isMounted.current) addLoadedPaths(newTree, path);
     }, [loading, expanded, isMounted, addLoadedPaths, path]);
 
     const { hash } = useLocation();
@@ -107,8 +102,10 @@ function Directory(props: DirectoryProps) {
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
     const downloadLink = `/api/Files/Download/${path}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
+    const tree = visiblePaths[path];
+
     // TODO_JU Make it not ugly
-    return <div style={(!path || visiblePaths.has(path)) ? undefined : { display: "none" }}>
+    return <div>
         <List.Item>
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
             <div style={{ display: 'inline' }} onClick={expanded ? collapse : expand}>
@@ -139,7 +136,7 @@ function Directory(props: DirectoryProps) {
 
 interface FileProps extends FileDto {
     basePath: string;
-    visiblePaths: Set<string>;
+    visiblePaths: LoadedPaths;
 }
 
 interface SneakyLinkProps {
@@ -174,8 +171,10 @@ function File(props: FileProps) {
 
     const href = `/api/Files/Download/${path}`;
 
+    if(!visiblePaths[path]) return <></>;
+
     // TODO_JU Make it not ugly
-    return <div style={visiblePaths.has(path) ? undefined : { display: "none" }}>
+    return <div>
         <List.Item>
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
             <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
@@ -187,6 +186,8 @@ function File(props: FileProps) {
     </div>;
 }
 
+type LoadedPaths = { [key: string]: DirectoryDto };
+
 function Browse() {
     usePageTitle('Browse');
 
@@ -197,14 +198,20 @@ function Browse() {
     // TODO_JU Parse hash and expand tree as required
     // Then need to do `window.location.hash = window.location.hash` to activate :target styling
 
-    const [loadedPaths, setLoadedPaths] = useState<string[]>([]);
-    const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => [
+    const [loadedPaths, setLoadedPaths] = useState<LoadedPaths>({});
+    const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => ({
         ...loadedPaths,
-        ...d.files!.map(f => combinePaths(prefix, f.displayName!)),
-        ...d.subdirectories!.map(d => combinePaths(prefix, d.displayName!))
-    ]), []);
-    const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths =>
-        loadedPaths.filter(p => !p.startsWith(`${prefix}/`))), []);
+        [prefix]: d
+    })), []);
+    const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths => {
+        const newLoadedPaths: LoadedPaths = {};
+        const testString = `${prefix}/`;
+        for(const path in loadedPaths) {
+            if(path.startsWith(testString)) continue;
+            newLoadedPaths[path] = loadedPaths[path];
+        }
+        return newLoadedPaths;
+    }), []);
 
     // TODO_JU Text box is unresponsive when filtering large trees
     // Profiling shows that filtering the path list is *not* the bottleneck; it's the re-rendering
@@ -217,20 +224,20 @@ function Browse() {
     //
     // Basically, this is a bit of a fustercluck and it needs some careful profiling/experimentation
     const visiblePaths = useMemo(() => {
-        if(!textFilter) return new Set(loadedPaths);
-        const filteredPaths = new Set<string>();
+        if(!textFilter) return loadedPaths;
+        const filteredPaths: LoadedPaths = {};
         const textFilterLowerCase = textFilter.toLocaleLowerCase();
-        for(let path of loadedPaths) {
+        for(let path in loadedPaths) {
             if(!path.toLocaleLowerCase().includes(textFilterLowerCase)) continue;
             // If a path matches the filter and should be visible,
             // then all its parent paths must be made visible too
             while(path) {
-                if(filteredPaths.has(path)) {
+                if(!!filteredPaths[path]) {
                     // This path has already been granted visibility by a match in one of its child paths
                     // There is nothing to do here
                     break;
                 }
-                filteredPaths.add(path);
+                filteredPaths[path] = loadedPaths[path];
                 path = path.substring(0, path.lastIndexOf('/'))
             }
         }

@@ -47,13 +47,16 @@ if(args.Contains("--create-admin-account"))
 
 var builder = WebApplication.CreateBuilder(args);
 
-var config = builder.Configuration;
-config.AddJsonFile("appsettings.Default.json");
+var configManager = new ConfigurationManager();
+configManager.AddJsonFile("appsettings.Default.json");
+configManager.AddJsonFile("appsettings.json");
+configManager.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+configManager.AddCommandLine(args);
 
 void RegisterConfigObject<T>() where T: class, new()
 {
     var configObject = new T();
-    config.Bind(typeof(T).Name, configObject);
+    configManager.Bind(typeof(T).Name, configObject);
 
     var validationErrors = new List<ValidationResult>();
     Validator.TryValidateObject(configObject, new ValidationContext(configObject), validationErrors);
@@ -94,7 +97,7 @@ builder.Services.AddDbContext<VsfhContext>(o => o
 builder.Services.Configure<KestrelServerOptions>(o => o.AllowSynchronousIO = true);
 
 var authenticationConfiguration = new AuthenticationConfiguration();
-config.Bind(nameof(AuthenticationConfiguration), authenticationConfiguration);
+configManager.Bind(nameof(AuthenticationConfiguration), authenticationConfiguration);
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     // By default, the cookie auth scheme assumes you are running an MVC application
     // with a few special routes. Thus it uses redirect responses to these routes
@@ -118,7 +121,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 var lettuceEncryptConfig = new LettuceEncryptConfiguration();
-config.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
+configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
 if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
 {
     builder.Services.AddLettuceEncrypt()
