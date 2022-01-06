@@ -43,9 +43,10 @@ interface DirectoryProps {
     path: string;
     displayName: string;
     archiveFormat: ArchiveFormat;
-    visiblePaths: LoadedPaths;
-    addLoadedPaths: (d: DirectoryDto, prefix: string) => void;
-    removeLoadedPaths: (prefix: string) => void;
+    expandedDirectories: Directories;
+    visiblePaths: Set<string>;
+    onExpand: (d: DirectoryDto, prefix: string) => void;
+    onCollapse: (prefix: string) => void;
 }
 
 // TODO_JU Files and directories need consistent hover highlighting/cursor behaviour
@@ -54,19 +55,21 @@ function Directory(props: DirectoryProps) {
         displayName,
         path,
         archiveFormat,
+        expandedDirectories,
         visiblePaths,
-        addLoadedPaths,
-        removeLoadedPaths
+        onExpand,
+        onCollapse
     } = props;
 
-    const [expanded, setExpanded] = useState(false); // TODO_JU Also need to store this somewhere else since it gets wiped when the component is hidden by the filter
+    const tree = expandedDirectories[path];
+    const expanded = !!tree;
     const [loading, setLoading] = useState(false);
     const isMounted = useIsMounted();
     // TODO_JU Test spamming the button
     // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
     const expand = useCallback(async () => {
         if(loading || expanded) return;
-        setLoading(true); setExpanded(true);
+        setLoading(true);
         let newTree;
         try {
             newTree = await api.apiFilesListingPathGet({ path, depth: 1});
@@ -78,8 +81,8 @@ function Directory(props: DirectoryProps) {
         } finally {
             if(isMounted.current) setLoading(false);
         }
-        if(isMounted.current) addLoadedPaths(newTree, path);
-    }, [loading, expanded, isMounted, addLoadedPaths, path]);
+        if(isMounted.current) onExpand(newTree, path);
+    }, [loading, expanded, isMounted, onExpand, path]);
 
     const { hash } = useLocation();
     useEffect(() => {
@@ -94,15 +97,14 @@ function Directory(props: DirectoryProps) {
 
     const collapse = () => {
         if(loading || !expanded) return;
-        setExpanded(false);
-        removeLoadedPaths(path);
+        onCollapse(path);
     };
 
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
     const downloadLink = `/api/Files/Download/${path}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
-    const tree = visiblePaths[path];
+    if(path && !visiblePaths.has(path)) return <></>;
 
     // TODO_JU Make it not ugly
     return <div>
@@ -136,7 +138,7 @@ function Directory(props: DirectoryProps) {
 
 interface FileProps extends FileDto {
     basePath: string;
-    visiblePaths: LoadedPaths;
+    visiblePaths: Set<string>;
 }
 
 interface SneakyLinkProps {
@@ -171,7 +173,7 @@ function File(props: FileProps) {
 
     const href = `/api/Files/Download/${path}`;
 
-    if(!visiblePaths[path]) return <></>;
+    if(!visiblePaths.has(path)) return <></>;
 
     // TODO_JU Make it not ugly
     return <div>
@@ -186,7 +188,20 @@ function File(props: FileProps) {
     </div>;
 }
 
-type LoadedPaths = { [key: string]: DirectoryDto };
+type Directories = { [key: string]: DirectoryDto };
+
+function* getAllPaths(expandedDirectories: Directories) {
+    for(const path in expandedDirectories) {
+        yield path;
+        const dir = expandedDirectories[path];
+        for(const subdir of dir.subdirectories ?? []) {
+            yield combinePaths(path, subdir.displayName!);
+        }
+        for(const file of dir.files ?? []) {
+            yield combinePaths(path, file.displayName!);
+        }
+    }
+}
 
 function Browse() {
     usePageTitle('Browse');
@@ -198,19 +213,19 @@ function Browse() {
     // TODO_JU Parse hash and expand tree as required
     // Then need to do `window.location.hash = window.location.hash` to activate :target styling
 
-    const [loadedPaths, setLoadedPaths] = useState<LoadedPaths>({});
-    const addLoadedPaths = useCallback((d: DirectoryDto, prefix: string) => setLoadedPaths(loadedPaths => ({
-        ...loadedPaths,
+    const [expandedDirectories, setExpandedDirectories] = useState<Directories>({});
+    const addExpandedDirectory = useCallback((d: DirectoryDto, prefix: string) => setExpandedDirectories(expandedDirectories => ({
+        ...expandedDirectories,
         [prefix]: d
     })), []);
-    const removeLoadedPaths = useCallback((prefix: string) => setLoadedPaths(loadedPaths => {
-        const newLoadedPaths: LoadedPaths = {};
+    const removeExpandedDirectory = useCallback((prefix: string) => setExpandedDirectories(expandedDirectories => {
+        const newExpandedDirectories: Directories = {};
         const testString = `${prefix}/`;
-        for(const path in loadedPaths) {
+        for(const path in expandedDirectories) {
             if(path.startsWith(testString)) continue;
-            newLoadedPaths[path] = loadedPaths[path];
+            newExpandedDirectories[path] = expandedDirectories[path];
         }
-        return newLoadedPaths;
+        return newExpandedDirectories;
     }), []);
 
     // TODO_JU Text box is unresponsive when filtering large trees
@@ -223,26 +238,27 @@ function Browse() {
     // DOM mutations (e.g. one call to remove an entire subtree vs n calls to recursively set display: 'none' on every node)
     //
     // Basically, this is a bit of a fustercluck and it needs some careful profiling/experimentation
-    const visiblePaths = useMemo(() => { // TODO_JU This is broken because loadedPaths no longer includes leaf nodes
-        if(!textFilter) return loadedPaths;
-        const filteredPaths: LoadedPaths = {};
+    const visiblePaths = useMemo(() => {
+        const loadedPaths = getAllPaths(expandedDirectories);
+        if(!textFilter) return new Set(loadedPaths);
+        const filteredPaths = new Set<string>();
         const textFilterLowerCase = textFilter.toLocaleLowerCase();
         for(let path in loadedPaths) {
             if(!path.toLocaleLowerCase().includes(textFilterLowerCase)) continue;
             // If a path matches the filter and should be visible,
             // then all its parent paths must be made visible too
             while(path) {
-                if(!!filteredPaths[path]) {
+                if(!filteredPaths.has(path)) {
                     // This path has already been granted visibility by a match in one of its child paths
                     // There is nothing to do here
                     break;
                 }
-                filteredPaths[path] = loadedPaths[path];
+                filteredPaths.add(path);
                 path = path.substring(0, path.lastIndexOf('/'))
             }
         }
         return filteredPaths;
-    }, [textFilter, loadedPaths]);
+    }, [textFilter, expandedDirectories]);
 
     // TODO_JU Slideout sidebar for multi-select (show selected list/count, clear button, and download button)
     return <Container>
@@ -261,12 +277,13 @@ function Browse() {
         </Grid>
         <List>
             <Directory
+                expandedDirectories={expandedDirectories}
                 visiblePaths={visiblePaths!}
                 displayName="<root>"
                 path=""
                 archiveFormat={archiveFormat}
-                addLoadedPaths={addLoadedPaths}
-                removeLoadedPaths={removeLoadedPaths} />
+                onExpand={addExpandedDirectory}
+                onCollapse={removeExpandedDirectory} />
         </List>
     </Container>;
 }

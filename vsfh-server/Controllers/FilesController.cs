@@ -124,6 +124,7 @@ public class FilesController : ControllerBase
         }
         else
         {
+            // TODO_JU This is throwing an ArgumentOutOfRangeException
             trimmedFileName = $"{fileNameWithoutExtension.Substring(0, availableChars)}{extension}";
         }
         HttpContext.Response.Headers.Add(
