@@ -118,7 +118,7 @@ function Directory(props: DirectoryProps) {
             <IconLink name="download" fitted href={downloadLink} />
             <IconLink href={hashLink} name="linkify" fitted />
             {
-                !expanded ? <></> : <List.List>
+                (!expanded && !loading) ? <></> : <List.List>
                     {loading ? <Loader indeterminate active inline size="tiny" /> : <>
                         {tree?.subdirectories!.map(d => <Directory
                             {...props}
@@ -148,7 +148,7 @@ interface SneakyLinkProps {
 }
 
 function SneakyLink(props: SneakyLinkProps) {
-    const { regularClickHref, altClickHref, children } = props;
+    const { regularClickHref, altClickHref, children, ...rest } = props;
 
     const onClick = useCallback((e: MouseEvent) => {
         if(e.button === 1 || (e.button === 0 && e.ctrlKey)) {
@@ -159,7 +159,7 @@ function SneakyLink(props: SneakyLinkProps) {
         }
     }, [altClickHref]);
 
-    return <a {...props} href={regularClickHref} onClick={onClick}>
+    return <a {...rest} href={regularClickHref} onClick={onClick}>
         { children }
     </a>
 }
@@ -222,7 +222,7 @@ function Browse() {
         const newExpandedDirectories: Directories = {};
         const testString = `${prefix}/`;
         for(const path in expandedDirectories) {
-            if(path.startsWith(testString)) continue;
+            if(path.startsWith(testString) || path === prefix) continue;
             newExpandedDirectories[path] = expandedDirectories[path];
         }
         return newExpandedDirectories;

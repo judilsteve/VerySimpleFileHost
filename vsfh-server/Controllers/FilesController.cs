@@ -122,10 +122,14 @@ public class FilesController : ControllerBase
         {
             trimmedFileName = Path.GetFileName(absolutePath).Substring(0, maxFileNameLength);
         }
-        else
+        else if(availableChars < fileNameWithoutExtension.Length)
         {
             // TODO_JU This is throwing an ArgumentOutOfRangeException
             trimmedFileName = $"{fileNameWithoutExtension.Substring(0, availableChars)}{extension}";
+        }
+        else
+        {
+            trimmedFileName = $"{fileNameWithoutExtension}{extension}";
         }
         HttpContext.Response.Headers.Add(
             "Content-Disposition",
