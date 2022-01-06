@@ -223,7 +223,7 @@ function Browse() {
     // DOM mutations (e.g. one call to remove an entire subtree vs n calls to recursively set display: 'none' on every node)
     //
     // Basically, this is a bit of a fustercluck and it needs some careful profiling/experimentation
-    const visiblePaths = useMemo(() => {
+    const visiblePaths = useMemo(() => { // TODO_JU This is broken because loadedPaths no longer includes leaf nodes
         if(!textFilter) return loadedPaths;
         const filteredPaths: LoadedPaths = {};
         const textFilterLowerCase = textFilter.toLocaleLowerCase();
