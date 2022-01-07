@@ -1,0 +1,18 @@
+.tree-node {
+    display: block;
+    width: 100%;
+}
+
+// TODO_JU This much "!important" cannot be good
+.show-on-node-hover {
+    transition: opacity 100ms ease;
+    opacity: 0 !important;
+}
+
+.tree-node:hover > a > .show-on-node-hover {
+    opacity: 0.8 !important;
+}
+
+.tree-node:hover > a > .show-on-node-hover:hover {
+    opacity: 1 !important;
+}

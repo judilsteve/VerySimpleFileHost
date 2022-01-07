@@ -1,3 +1,5 @@
+import './Browse.less';
+
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
 import { useLocation } from "react-router";
 import { Button, Container, Grid, Icon, Input, List, Loader } from "semantic-ui-react";
@@ -16,6 +18,9 @@ const api = new FilesApi(apiConfig);
 
 const fileSizeStepFactor = 1024;
 const fileSizeSuffixes = ["B", "KiB", "MiB", "GiB", "TiB"];
+
+const treeNode = "tree-node";
+const showOnNodeHover="show-on-node-hover";
 
 function log(value: number, base: number): number {
     return Math.log(value) / Math.log(base);
@@ -71,6 +76,7 @@ function Directory(props: DirectoryProps) {
     const isMounted = useIsMounted();
     // TODO_JU Test spamming the button
     // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
+    // TODO_JU If this throws then it immediately starts again
     const expand = useCallback(async () => {
         if(loading || expanded) return;
         setLoading(true);
@@ -114,13 +120,12 @@ function Directory(props: DirectoryProps) {
     return <div>
         <List.Item>
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
-            <div style={{ display: 'inline' }} onClick={expanded ? collapse : expand}>
+            <div className={treeNode} onClick={expanded ? collapse : expand}>
                 <Icon fitted name={expanded || loading ? 'folder open' : 'folder'} />
                 <span className="anchor" id={path}>{displayName}</span>
+                <IconLink className={showOnNodeHover} name="download" fitted href={downloadLink} />
+                <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
             </div>
-            {/*TODO_JU maybe these fade in and out on hover?*/}
-            <IconLink name="download" fitted href={downloadLink} />
-            <IconLink href={hashLink} name="linkify" fitted />
             {
                 (!expanded && !loading) ? <></> : <List.List>
                     {loading ? <Loader indeterminate active inline size="tiny" /> : <>
@@ -198,13 +203,13 @@ function File(props: FileProps) {
 
     // TODO_JU Make it not ugly
     return <div>
-        <List.Item>
+        <List.Item className={treeNode}>
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
             <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
                 <Icon name="file" />
                 <span className="anchor" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
             </SneakyLink>
-            <IconLink href={hashLink} name="linkify" fitted />
+            <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
         </List.Item>
     </div>;
 }

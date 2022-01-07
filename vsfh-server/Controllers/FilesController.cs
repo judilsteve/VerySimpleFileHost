@@ -126,7 +126,6 @@ public class FilesController : ControllerBase
         }
         else if(availableChars < fileNameWithoutExtension.Length)
         {
-            // TODO_JU This is throwing an ArgumentOutOfRangeException
             trimmedFileName = $"{fileNameWithoutExtension.Substring(0, availableChars)}{extension}";
         }
         else
