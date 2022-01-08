@@ -6,6 +6,9 @@ export const rememberMeState = new SharedPersistedState('rememberMe', false);
 
 export const sessionExpiredPromptState = new SharedState(false);
 
+// TODO_JU Make this persisted state (just the message)
+// Store username separately in another local storage key and set on successful login/invite accept
+// Then use the two state keys above for the password change screen
 export interface PasswordExpiredPromptParams {
     userName: string;
     message: string;
