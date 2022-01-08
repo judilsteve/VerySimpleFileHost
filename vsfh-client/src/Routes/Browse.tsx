@@ -130,11 +130,37 @@ function Directory(props: DirectoryProps) {
         return () => deselectDirectory(path);
     }, [deselectDirectory, path]);
 
-    if(path && !visiblePaths.has(path)) return <></>;
-
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
     const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
+
+    const fileNodes = useMemo(() => {
+        const fileNodes = [];
+        for(const file of tree?.files ?? []) {
+            const filePath = combinePaths(path, file.displayName!);
+            if(visiblePaths.has(filePath))
+                fileNodes.push(<File key={file.displayName} {...file} path={filePath} />);
+        }
+        return fileNodes;
+    }, [path, tree, visiblePaths]);
+
+    const directoryNodes = [];
+    for(const subdir of tree?.subdirectories ?? []) {
+        const dirPath = combinePaths(path, subdir.displayName!);
+        if(visiblePaths.has(dirPath))
+            directoryNodes.push(<Directory
+                key={subdir.displayName}
+                path={dirPath}
+                displayName={subdir.displayName!}
+                archiveFormat={archiveFormat}
+                expandedDirectories={expandedDirectories}
+                selectDirectory={selectDirectory}
+                deselectDirectory={deselectDirectory}
+                visiblePaths={visiblePaths}
+                onExpand={onExpand}
+                onCollapse={onCollapse}
+            />);
+    }
 
     // TODO_JU Make it not ugly
     return <div>
@@ -155,15 +181,8 @@ function Directory(props: DirectoryProps) {
             {
                 (!expanded && !loading) ? <></> : <List.List>
                     {loading ? <Loader indeterminate active inline size="tiny" /> : <>
-                        {tree?.subdirectories!.map(d => <Directory
-                            {...props}
-                            key={d.displayName}
-                            path={combinePaths(path, d.displayName!)}
-                            displayName={d.displayName!} />)}
-                        {tree?.files!.map(f => <File key={f.displayName}
-                            {...f}
-                            basePath={path}
-                            visiblePaths={visiblePaths} />)}
+                        {directoryNodes}
+                        {fileNodes}
                     </>}
                 </List.List>
             }
@@ -172,9 +191,7 @@ function Directory(props: DirectoryProps) {
 }
 
 interface FileProps extends FileDto {
-    basePath: string;
-    visiblePaths: Set<string>;
-    
+    path: string;
 }
 
 interface SneakyLinkProps {
@@ -210,8 +227,7 @@ function SneakyLink(props: SneakyLinkProps) {
 }
 
 function File(props: FileProps) {
-    const { basePath, displayName, sizeBytes, visiblePaths } = props;
-    const path = combinePaths(basePath, displayName!);
+    const { path, displayName, sizeBytes } = props;
 
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
@@ -225,8 +241,6 @@ function File(props: FileProps) {
             window.location.hash = path;
         }
     }, [hash, path]);
-
-    if(!visiblePaths.has(path)) return <></>;
 
     // TODO_JU Make it not ugly
     // TODO_JU Files don't seem to properly align with folders
