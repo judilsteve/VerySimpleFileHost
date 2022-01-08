@@ -147,6 +147,7 @@ function Directory(props: DirectoryProps) {
             <Checkbox checked={selected} onChange={_ => setSelected(!selected)} />
             <div className={treeNode}>
                 <Icon fitted name={expanded || loading ? 'folder open' : 'folder'} onClick={expanded ? collapse : expand}/>
+                {/* TODO_JU Bold text or something to better highlight selected items */}
                 <span className="anchor path" id={path} onClick={expanded ? collapse : expand}>{displayName}</span>
                 <IconLink className={showOnNodeHover} name="download" fitted href={downloadLink} />
                 <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
@@ -234,6 +235,7 @@ function File(props: FileProps) {
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
             <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
                 <Icon name="file" />
+                {/* TODO_JU Bold text or something to better highlight selected items */}
                 <span className="anchor path" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
             </SneakyLink>
             <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
