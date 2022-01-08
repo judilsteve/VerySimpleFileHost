@@ -415,9 +415,15 @@ function Browse() {
         <GlobalSidebar open={!!selectedPathsArray.length}>
             <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
             <List>
-                {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
-                    <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p || '<root>'}{selectedPaths[p] ? '/' : ''}
-                    {/* TODO_JU Deselect button */}
+                {selectedPathsArray.map(p => <List.Item key={p}>
+                    <div style={{ display: 'flex' }}>
+                        <Icon name={selectedPaths[p] ? 'folder' : 'file'} />
+                        <span className={pathClassName}>
+                            {p || '<root>'}{selectedPaths[p] ? '/' : ''}
+                        </span>
+                        <Icon link style={{ float: 'right' }} name="remove"
+                            onClick={() => { selectedPaths[p].deselect(); deselectPath(p); }} />
+                    </div>
                 </List.Item>)}
             </List>
             <form action={`/api/Files/DownloadManyForm?archiveFormat=${archiveFormat}&asAttachment=true`} method="post">
