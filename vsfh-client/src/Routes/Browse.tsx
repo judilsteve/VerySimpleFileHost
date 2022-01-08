@@ -2,7 +2,7 @@ import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
 import { useLocation } from "react-router";
-import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
+import { Button, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
 import { apiConfig } from "../apiInstances";
 import FilesApi from "../ApiOverrides/FilesApi";
@@ -14,6 +14,7 @@ import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
 import tryHandleError from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
+import SmallCheckbox from '../Components/SmallCheckbox';
 
 const api = new FilesApi(apiConfig);
 
@@ -54,8 +55,8 @@ interface DirectoryProps {
     displayName: string;
     archiveFormat: ArchiveFormat;
     expandedDirectories: Directories;
-    selectDirectory: (path: string) => void;
-    deselectDirectory: (path: string) => void;
+    selectPath: (path: string, isDirectory: boolean) => void;
+    deselectPath: (path: string) => void;
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
     onCollapse: (prefix: string) => void;
@@ -68,8 +69,8 @@ function Directory(props: DirectoryProps) {
         path,
         archiveFormat,
         expandedDirectories,
-        selectDirectory,
-        deselectDirectory,
+        selectPath,
+        deselectPath,
         visiblePaths,
         onExpand,
         onCollapse
@@ -122,13 +123,13 @@ function Directory(props: DirectoryProps) {
     // checked or unchecked
     const [selected, setSelected] = useState(false);
     useEffect(() => {
-        (selected ? selectDirectory : deselectDirectory)(path);
-    }, [selected, path, selectDirectory, deselectDirectory]);
+        (selected ? selectPath : deselectPath)(path, true);
+    }, [selected, path, selectPath, deselectPath]);
 
     // Ensure that we deselect ourself when unmounting
     useEffect(() => {
-        return () => deselectDirectory(path);
-    }, [deselectDirectory, path]);
+        return () => deselectPath(path);
+    }, [deselectPath, path]);
 
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
@@ -139,10 +140,10 @@ function Directory(props: DirectoryProps) {
         for(const file of tree?.files ?? []) {
             const filePath = combinePaths(path, file.displayName!);
             if(visiblePaths.has(filePath))
-                fileNodes.push(<File key={file.displayName} {...file} path={filePath} />);
+                fileNodes.push(<File key={file.displayName} {...file} path={filePath} selectFile={() => selectPath(filePath, false)} deselectFile={() => deselectPath(filePath)} />);
         }
         return fileNodes;
-    }, [path, tree, visiblePaths]);
+    }, [path, tree, visiblePaths, selectPath, deselectPath]);
 
     const directoryNodes = [];
     for(const subdir of tree?.subdirectories ?? []) {
@@ -154,8 +155,8 @@ function Directory(props: DirectoryProps) {
                 displayName={subdir.displayName!}
                 archiveFormat={archiveFormat}
                 expandedDirectories={expandedDirectories}
-                selectDirectory={selectDirectory}
-                deselectDirectory={deselectDirectory}
+                selectPath={selectPath}
+                deselectPath={deselectPath}
                 visiblePaths={visiblePaths}
                 onExpand={onExpand}
                 onCollapse={onCollapse}
@@ -165,13 +166,9 @@ function Directory(props: DirectoryProps) {
     // TODO_JU Make it not ugly
     return <div>
         <List.Item>
-            {/*
-                TODO_JU
-                Prevent selection if parent already selected
-                Pull this out into some sort of "InlineSmallCheckbox" component that fits better with everything else
-             */}
-            <Checkbox checked={selected} onChange={_ => setSelected(!selected)} />
+            {/* TODO_JU Prevent selection if parent already selected */}
             <div className={treeNode}>
+                <SmallCheckbox checked={selected} onChange={_ => setSelected(!selected)} />
                 <Icon fitted name={expanded || loading ? 'folder open' : 'folder'} onClick={expanded ? collapse : expand}/>
                 {/* TODO_JU Bold text or something to better highlight selected items */}
                 <span className="anchor path" id={path} onClick={expanded ? collapse : expand}>{displayName}</span>
@@ -188,10 +185,6 @@ function Directory(props: DirectoryProps) {
             }
         </List.Item>
     </div>;
-}
-
-interface FileProps extends FileDto {
-    path: string;
 }
 
 interface SneakyLinkProps {
@@ -226,8 +219,14 @@ function SneakyLink(props: SneakyLinkProps) {
     </a>
 }
 
+interface FileProps extends FileDto {
+    path: string;
+    selectFile: () => void;
+    deselectFile: () => void;
+}
+
 function File(props: FileProps) {
-    const { path, displayName, sizeBytes } = props;
+    const { path, displayName, sizeBytes, selectFile, deselectFile } = props;
 
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
@@ -242,11 +241,25 @@ function File(props: FileProps) {
         }
     }, [hash, path]);
 
+    // By managing this state ourselves and using an effect to update the global list,
+    // we avoid this component having a dependency on the set of selected paths.
+    // This means we don't have to re-render the entire tree every time a path is
+    // checked or unchecked
+    const [selected, setSelected] = useState(false);
+    useEffect(() => {
+        (selected ? selectFile : deselectFile)();
+    }, [selected, path, selectFile, deselectFile]);
+
+    // Ensure that we deselect ourself when unmounting
+    useEffect(() => {
+        return () => deselectFile();
+    }, [deselectFile, path]);
+
     // TODO_JU Make it not ugly
     // TODO_JU Files don't seem to properly align with folders
     return <div>
         <List.Item className={treeNode}>
-            {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
+            <SmallCheckbox checked={selected} onChange={() => setSelected(!selected)} />
             <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
                 <Icon name="file" />
                 {/* TODO_JU Bold text or something to better highlight selected items */}
@@ -335,8 +348,6 @@ function Browse() {
         return newPaths;
     }), []);
 
-    const selectDirectory = useCallback((path: string) => selectPath(path, true), [selectPath]);
-
     const downloadSelected = () => console.debug('TODO_JU');
 
     const selectedPathsArray = Object.keys(selectedPaths);
@@ -352,6 +363,7 @@ function Browse() {
             </List>
             <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
                 <Button primary onClick={downloadSelected}><Icon name='download' />Download</Button>
+                {/* TODO_JU Clear button no longer works because of the "optimisation" */}
                 <Button secondary onClick={() => setSelectedPaths({})}><Icon name='close' />Clear</Button>
             </div>
         </GlobalSidebar>
@@ -385,8 +397,8 @@ function Browse() {
                     <Directory
                         expandedDirectories={expandedDirectories}
                         visiblePaths={visiblePaths!}
-                        selectDirectory={selectDirectory}
-                        deselectDirectory={deselectPath}
+                        selectPath={selectPath}
+                        deselectPath={deselectPath}
                         displayName="<root>"
                         path=""
                         archiveFormat={archiveFormat}

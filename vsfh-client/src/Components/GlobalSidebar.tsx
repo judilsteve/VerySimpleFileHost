@@ -11,12 +11,11 @@ function GlobalSidebar(props: GlobalSidebarProps) {
         right: 0,
         height: '100vh',
         transform: `translate3d(${open ? 0 : '100%'}, 0, 0)`,
-        transition: 'transform 0.3s',
+        transition: 'transform 0.2s',
         background: '#171717',
         padding: '1em',
         zIndex: 9999,
-        maxWidth: '30vw',
-        minWidth: '20vw',
+        width: '30vw',
         overflowY: 'scroll'
     };
 
