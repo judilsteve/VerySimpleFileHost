@@ -255,7 +255,7 @@ function UserCard(props: UserEditProps) {
                             <Form.Input placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
                         </Form.Field>
                         <Form.Field>
-                            <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={() => setNewIsAdministrator(!newIsAdministrator)} />
+                            <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={_ => setNewIsAdministrator(!newIsAdministrator)} />
                         </Form.Field>
                         <Message error header="Edit Failed" content={error} />
                     </Form>
@@ -334,7 +334,7 @@ function NewUserCard(props: NewUserCardProps) {
                     <Form.Input disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
                 </Form.Field>
                 <Form.Field>
-                    <Checkbox disabled={loading} label="Admin" checked={newUserIsAdmin} onChange={e => setNewUserIsAdmin(!newUserIsAdmin)}/>
+                    <Checkbox disabled={loading} label="Admin" checked={newUserIsAdmin} onChange={_ => setNewUserIsAdmin(!newUserIsAdmin)}/>
                 </Form.Field>
                 <Message error header="Add Failed" content={error} />
             </Form>

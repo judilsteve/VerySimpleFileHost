@@ -19,7 +19,7 @@ function RememberMe(props: RememberMeProps) {
     }, [setRememberMe, allowRememberMe]);
 
     if(allowRememberMe)
-        return <Checkbox checked={rememberMe} disabled={disabled} tabIndex={tabIndex} label="Remember me" onChange={() => setRememberMe(!rememberMe)}/>;
+        return <Checkbox checked={rememberMe} disabled={disabled} tabIndex={tabIndex} label="Remember me" onChange={_ => setRememberMe(!rememberMe)}/>;
     else return <></>;
 }
 

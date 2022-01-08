@@ -2,7 +2,7 @@ import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
 import { useLocation } from "react-router";
-import { Button, Container, Grid, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
+import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
 import { apiConfig } from "../apiInstances";
 import FilesApi from "../ApiOverrides/FilesApi";
@@ -13,6 +13,7 @@ import { usePageTitle } from "../Hooks/usePageTitle";
 import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
 import tryHandleError from "../Utils/tryHandleError";
+import GlobalSidebar from '../Components/GlobalSidebar';
 
 const api = new FilesApi(apiConfig);
 
@@ -53,6 +54,8 @@ interface DirectoryProps {
     displayName: string;
     archiveFormat: ArchiveFormat;
     expandedDirectories: Directories;
+    selectDirectory: (path: string) => void;
+    deselectDirectory: (path: string) => void;
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
     onCollapse: (prefix: string) => void;
@@ -65,6 +68,8 @@ function Directory(props: DirectoryProps) {
         path,
         archiveFormat,
         expandedDirectories,
+        selectDirectory,
+        deselectDirectory,
         visiblePaths,
         onExpand,
         onCollapse
@@ -111,19 +116,38 @@ function Directory(props: DirectoryProps) {
         onCollapse(path);
     };
 
+    // By managing this state ourselves and using an effect to update the global list,
+    // we avoid this component having a dependency on the set of selected paths.
+    // This means we don't have to re-render the entire tree every time a path is
+    // checked or unchecked
+    const [selected, setSelected] = useState(false);
+    useEffect(() => {
+        (selected ? selectDirectory : deselectDirectory)(path);
+    }, [selected, path, selectDirectory, deselectDirectory]);
+
+    // Ensure that we deselect ourself when unmounting
+    useEffect(() => {
+        return () => deselectDirectory(path);
+    }, [deselectDirectory, path]);
+
+    if(path && !visiblePaths.has(path)) return <></>;
+
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
     const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
-    if(path && !visiblePaths.has(path)) return <></>;
-
     // TODO_JU Make it not ugly
     return <div>
         <List.Item>
-            {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
-            <div className={treeNode} onClick={expanded ? collapse : expand}>
-                <Icon fitted name={expanded || loading ? 'folder open' : 'folder'} />
-                <span className="anchor" id={path}>{displayName}</span>
+            {/*
+                TODO_JU
+                Prevent selection if parent already selected
+                Pull this out into some sort of "InlineSmallCheckbox" component that fits better with everything else
+             */}
+            <Checkbox checked={selected} onChange={_ => setSelected(!selected)} />
+            <div className={treeNode}>
+                <Icon fitted name={expanded || loading ? 'folder open' : 'folder'} onClick={expanded ? collapse : expand}/>
+                <span className="anchor path" id={path} onClick={expanded ? collapse : expand}>{displayName}</span>
                 <IconLink className={showOnNodeHover} name="download" fitted href={downloadLink} />
                 <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
             </div>
@@ -149,6 +173,7 @@ function Directory(props: DirectoryProps) {
 interface FileProps extends FileDto {
     basePath: string;
     visiblePaths: Set<string>;
+    
 }
 
 interface SneakyLinkProps {
@@ -209,14 +234,14 @@ function File(props: FileProps) {
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
             <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
                 <Icon name="file" />
-                <span className="anchor" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
+                <span className="anchor path" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
             </SneakyLink>
             <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
         </List.Item>
     </div>;
 }
 
-type Directories = { [key: string]: DirectoryDto };
+type Directories = { [path: string]: DirectoryDto };
 
 function* getAllPaths(expandedDirectories: Directories) {
     for(const path in expandedDirectories) {
@@ -231,7 +256,9 @@ function* getAllPaths(expandedDirectories: Directories) {
     }
 }
 
-// TODO_JU Deal with container overflow (ellipsis?)
+type SelectedPaths = { [path: string]: boolean }; // Boolean value represents isDirectory
+
+// TODO_JU Deal with container overflow (ellipsis rules don't seem to be working right for paths in the main tree)
 function Browse() {
     usePageTitle('Browse');
 
@@ -279,17 +306,40 @@ function Browse() {
 
     const stickyRef = useRef(null);
 
-    const [sidebar, setSidebar] = useState(false);
+    const [selectedPaths, setSelectedPaths] = useState<SelectedPaths>({});
+    const selectPath = useCallback((path: string, isDirectory: boolean) => setSelectedPaths(paths =>
+        ({ ...paths, [path]: isDirectory })
+    ), []);
+    const deselectPath = useCallback((path: string) => setSelectedPaths(paths => {
+        const newPaths: SelectedPaths = {};
+        for(const oldPath in paths) {
+            if(oldPath !== path)
+                newPaths[oldPath] = paths[oldPath];
+        }
+        return newPaths;
+    }), []);
 
-    // TODO_JU Slideout sidebar or sticky rail for multi-select (show selected list/count, clear button, and download button)
+    const selectDirectory = useCallback((path: string) => selectPath(path, true), [selectPath]);
+
+    const downloadSelected = () => console.debug('TODO_JU');
+
+    const selectedPathsArray = Object.keys(selectedPaths);
+
     return <>
-        <div style={{ position: 'fixed', right: 0, height: '100vh', transform: `translate3d(${sidebar ? 0 : '100%'}, 0, 0)`, transition: 'transform 0.3s' }}>
-            This is a sidebar test
-            <Button onClick={() => setSidebar(false)}>Close me</Button>
-        </div>
+        <GlobalSidebar open={!!selectedPathsArray.length}>
+            <Header as="h2">Selected</Header>
+            <List>
+                {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
+                    <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p}{selectedPaths[p] ? '/' : ''}
+                </List.Item>)}
+            </List>
+            <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
+                <Button primary onClick={downloadSelected}><Icon name='download' />Download ({selectedPathsArray.length})</Button>
+                <Button secondary onClick={() => setSelectedPaths({})}><Icon name='close' />Clear</Button>
+            </div>
+        </GlobalSidebar>
         <Container>
             <NavHeader pageTitle="Browse" />
-            <Button onClick={() => setSidebar(true)}>Open sidebar</Button>
             <div ref={stickyRef}>
                 <Sticky context={stickyRef} offset={14}>
                     <Grid stackable>
@@ -318,6 +368,8 @@ function Browse() {
                     <Directory
                         expandedDirectories={expandedDirectories}
                         visiblePaths={visiblePaths!}
+                        selectDirectory={selectDirectory}
+                        deselectDirectory={deselectPath}
                         displayName="<root>"
                         path=""
                         archiveFormat={archiveFormat}
