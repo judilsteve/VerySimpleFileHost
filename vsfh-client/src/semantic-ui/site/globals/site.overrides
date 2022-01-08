@@ -1,8 +1,3 @@
 /*******************************
          Site Overrides
 *******************************/
-
-.anchor:target {
-    color: @primaryColor;
-    font-weight: bold;
-}

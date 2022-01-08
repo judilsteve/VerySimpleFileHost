@@ -20,8 +20,13 @@ const api = new FilesApi(apiConfig);
 const fileSizeStepFactor = 1024;
 const fileSizeSuffixes = ["B", "KiB", "MiB", "GiB", "TiB"];
 
-const treeNode = "tree-node";
-const showOnNodeHover="show-on-node-hover";
+const treeNodeClassName = "tree-node";
+const showOnNodeHoverClassName = "show-on-node-hover";
+const pathClassName = "path";
+const hashAnchorClassName = "hash-anchor"; // TODO_JU https://stackoverflow.com/questions/10732690/offsetting-an-html-anchor-to-adjust-for-fixed-header
+const smallClassName = "small";
+const fileSizeClassName = "file-size";
+const directoryNodeClassName = "directory-node";
 
 function log(value: number, base: number): number {
     return Math.log(value) / Math.log(base);
@@ -63,7 +68,6 @@ interface DirectoryProps {
     onCollapse: (prefix: string) => void;
 }
 
-// TODO_JU Files and directories need consistent hover highlighting/cursor behaviour
 function Directory(props: DirectoryProps) {
     const {
         displayName,
@@ -87,6 +91,7 @@ function Directory(props: DirectoryProps) {
     // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
     // TODO_JU If this throws then it immediately starts again
     // TODO_JU Clicking root node results in 2 requests for some reason
+    // TODO_JU Cannot collapse highlighted node
     const expand = useCallback(async () => {
         if(loading || expanded) return;
         setLoading(true);
@@ -105,19 +110,20 @@ function Directory(props: DirectoryProps) {
     }, [loading, expanded, isMounted, onExpand, path]);
 
     const { hash } = useLocation();
+    const parsedHash = decodeURIComponent(hash).substring(1);
     useEffect(() => {
-        const parsedHash = decodeURIComponent(hash).substring(1);
         if(!path || parsedHash.startsWith(`${path}/`)) {
             expand();
         } else if (parsedHash === path) {
-            // Re-set the hash path to trigger CSS highlighting
+            // Re-set the hash path to trigger autoscroll and CSS highlighting
             window.location.hash = path; // TODO_JU Maybe a dimmer while this is happening
         }
-    }, [expand, hash, path]);
+    }, [expand, parsedHash, path]);
 
     const collapse = () => {
         if(loading || !expanded) return;
         onCollapse(path);
+        if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
     };
 
     // Make sure we deselect ourself on dismount
@@ -173,16 +179,16 @@ function Directory(props: DirectoryProps) {
         else selectPath(path, true);
     };
 
-    // TODO_JU Make it not ugly
     return <div>
         <List.Item>
-            <div className={treeNode}>
-                <Checkbox disabled={parentSelected} checked={selected} onChange={toggleSelect} />
-                <Icon name={expanded || loading ? 'folder open' : 'folder'} onClick={expanded ? collapse : expand}/>
-                {/* TODO_JU Bold text or something to better highlight selected items */}
-                <span className="anchor path" id={path} onClick={expanded ? collapse : expand}>{displayName} </span>
-                <IconLink className={showOnNodeHover} name="download" href={downloadLink} />
-                <IconLink className={showOnNodeHover} href={hashLink} name="linkify" />
+            <div className={`${treeNodeClassName} ${pathClassName}`}>
+                <Checkbox className={smallClassName} disabled={parentSelected} checked={selected} onChange={toggleSelect} />
+                <span className={`${hashAnchorClassName} ${directoryNodeClassName}`} id={path} onClick={expanded ? collapse : expand}>
+                    <Icon name={expanded || loading ? 'folder open' : 'folder'} />
+                    {displayName}&nbsp;
+                </span>
+                <IconLink className={showOnNodeHoverClassName} name="download" href={downloadLink} />
+                <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
             </div>
             {
                 (!expanded && !loading) ? <></> : <List.List>
@@ -255,7 +261,7 @@ function File(props: FileProps) {
     const { hash } = useLocation();
     useEffect(() => {
         if (decodeURIComponent(hash).substring(1) === path) {
-            // Re-set the hash path to trigger CSS highlighting
+            // Re-set the hash path to trigger autoscroll and CSS highlighting
             window.location.hash = path;
         }
     }, [hash, path]);
@@ -270,16 +276,17 @@ function File(props: FileProps) {
         else selectPath(path, false);
     }
 
-    // TODO_JU Make it not ugly
     return <div>
-        <List.Item className={treeNode}>
-            <Checkbox disabled={parentSelected} checked={selected} onChange={toggleSelected} />
-            <SneakyLink className="path" regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
-                <Icon name="file" />
-                {/* TODO_JU Bold text or something to better highlight selected items */}
-                <span className="anchor" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
+        <List.Item className={`${treeNodeClassName} ${pathClassName}`}>
+            <Checkbox className={smallClassName} disabled={parentSelected} checked={selected} onChange={toggleSelected} />
+            <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
+                <span className={hashAnchorClassName} id={path}>
+                    <Icon name="file" />
+                    {displayName}&nbsp;
+                </span>
             </SneakyLink>
-            <IconLink className={showOnNodeHover} href={hashLink} name="linkify" />
+            <span className={fileSizeClassName} >({humaniseBytes(sizeBytes!)})&nbsp;</span>
+            <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </List.Item>
     </div>;
 }
@@ -301,7 +308,6 @@ function* getAllPaths(expandedDirectories: Directories) {
 
 type SelectedPaths = { [path: string]: boolean }; // Boolean value represents isDirectory
 
-// TODO_JU Deal with container overflow (ellipsis rules don't seem to be working right for paths in the main tree)
 function Browse() {
     usePageTitle('Browse');
 
@@ -350,9 +356,18 @@ function Browse() {
     const stickyRef = useRef(null);
 
     const [selectedPaths, setSelectedPaths] = useState<SelectedPaths>({});
-    const selectPath = useCallback((path: string, isDirectory: boolean) => setSelectedPaths(paths =>
-        ({ ...paths, [path]: isDirectory })
-    ), []);
+    const selectPath = useCallback((path: string, isDirectory: boolean) => setSelectedPaths(paths => {
+        const newPaths: SelectedPaths = {};
+        const testPath = `${path}/`
+        for(const oldPath in paths) {
+            // Skip any sub-paths of the path being added,
+            // since they will now be captured implicitly by their parent
+            if(!oldPath.startsWith(testPath))
+                newPaths[oldPath] = paths[oldPath];
+        }
+        newPaths[path] = isDirectory;
+        return newPaths;
+    }), []);
     const deselectPath = useCallback((path: string) => setSelectedPaths(paths => {
         const newPaths: SelectedPaths = {};
         for(const oldPath in paths) {
