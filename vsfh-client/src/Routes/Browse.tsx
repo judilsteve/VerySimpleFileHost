@@ -327,14 +327,15 @@ function Browse() {
 
     return <>
         <GlobalSidebar open={!!selectedPathsArray.length}>
-            <Header as="h2">Selected</Header>
+            <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
             <List>
                 {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
                     <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p}{selectedPaths[p] ? '/' : ''}
+                    {/* TODO_JU Deselect button */}
                 </List.Item>)}
             </List>
             <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
-                <Button primary onClick={downloadSelected}><Icon name='download' />Download ({selectedPathsArray.length})</Button>
+                <Button primary onClick={downloadSelected}><Icon name='download' />Download</Button>
                 <Button secondary onClick={() => setSelectedPaths({})}><Icon name='close' />Clear</Button>
             </div>
         </GlobalSidebar>
