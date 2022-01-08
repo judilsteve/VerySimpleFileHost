@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
+import { Link } from "react-router-dom";
 import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../App";
 import useEndpointData from "../Hooks/useEndpointData";
 import { useIsMounted } from "../Hooks/useIsMounted";
-import IconLink from "./IconLink";
 import StandardModals from "./StandardModals";
 import ThemeRule from "./ThemeRule";
 
@@ -86,14 +86,18 @@ function NavHeader(props: NavHeaderProps) {
         .filter(r => isAdmin || !r.adminOnly)
     , [isAdmin, pathname]);
 
+    const linkIcons = links.map(l => {
+        const iconLink = <Link to={l.route}>
+            <Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" />
+        </Link>;
+        return <Popup key={l.route} trigger={iconLink} content={l.name} />;
+    });
+
     return <>
         <div style={{ paddingTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
             <Header as="h1" style={{ marginBottom: 0 }}>{pageTitle}</Header>
             <div>
-                {
-                    links.map(l =>
-                        <Popup key={l.route} trigger={<IconLink style={{ marginRight: '1em' }} href={l.route} name={l.icon} size="large" />} content={l.name} />)
-                }
+                { linkIcons }
                 <Popup trigger={<Icon link name="sign-out" size="large" onClick={() => setLoggingOut(true)} />} content="Log Out" />
             </div>
         </div>

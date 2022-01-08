@@ -15,7 +15,8 @@ function SessionExpiredModal() {
     const logIn = () => {
         setSessionExpiredPrompt(false);
         const then = `${location.pathname}${location.search}${location.hash}`;
-        navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`);
+        // Need to set this in a timeout to give time for the queue to clear and process the setSessionExpiredPrompt call
+        window.setTimeout(() => navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`), 0);
     }
 
     return <Modal size="tiny" open={sessionExpiredPrompt} onClose={() => setSessionExpiredPrompt(false)}>
@@ -37,8 +38,9 @@ function PasswordExpiredModal() {
     const changePassword = () => {
         setPasswordExpiredPrompt(null);
         const then = `${location.pathname}${location.search}${location.hash}`;
-        navigate(`${routes.changePassword}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`,
-            { state: { passwordExpiredPrompt }});
+        // Need to set this in a timeout to give time for the queue to clear and process the setPasswordExpiredPrompt call
+        window.setTimeout(() => navigate(`${routes.changePassword}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`,
+            { state: { passwordExpiredPrompt }}), 0);
     };
 
     return <Modal size="tiny" open={!!passwordExpiredPrompt} onClose={() => setPasswordExpiredPrompt(null)}>

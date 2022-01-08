@@ -14,6 +14,7 @@ import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
 import tryHandleError from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
+import useSharedSelection from '../Hooks/useSharedSelection';
 
 const api = new FilesApi(apiConfig);
 
@@ -59,9 +60,12 @@ interface DirectoryProps {
     displayName: string;
     archiveFormat: ArchiveFormat;
     expandedDirectories: Directories;
-    selectedPaths: SelectedPaths;
     parentSelected: boolean;
-    selectPath: (path: string, isDirectory: boolean) => void;
+    selectPath: (
+        path: string,
+        isDirectory: boolean,
+        deselect: () => void
+    ) => void;
     deselectPath: (path: string) => void;
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
@@ -74,7 +78,6 @@ function Directory(props: DirectoryProps) {
         path,
         archiveFormat,
         expandedDirectories,
-        selectedPaths,
         parentSelected,
         selectPath,
         deselectPath,
@@ -116,6 +119,8 @@ function Directory(props: DirectoryProps) {
             expand();
         } else if (parsedHash === path) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
+            // TODO_JU We often inadvertently hit this while backing out a filter,
+            // as this callback runs when the hash anchor becomes visible again
             window.location.hash = path; // TODO_JU Maybe a dimmer while this is happening
         }
     }, [expand, parsedHash, path]);
@@ -126,16 +131,11 @@ function Directory(props: DirectoryProps) {
         if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
     };
 
-    // Make sure we deselect ourself on dismount
-    useEffect(() => {
-        return () => deselectPath(path);
-    }, [deselectPath, path]);
+    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, path, true);
 
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
     const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
-
-    const selected = parentSelected || (selectedPaths[path] !== undefined);
 
     const fileNodes = useMemo(() => {
         const fileNodes = [];
@@ -144,15 +144,15 @@ function Directory(props: DirectoryProps) {
             if(visiblePaths.has(filePath))
                 fileNodes.push(<File
                     key={file.displayName}
-                    {...file}
+                    displayName={file.displayName!}
+                    sizeBytes={file.sizeBytes!}
                     path={filePath}
-                    selected={selected || (selectedPaths[filePath] !== undefined)}
                     parentSelected={selected}
                     selectPath={selectPath}
                     deselectPath={deselectPath} />);
         }
         return fileNodes;
-    }, [path, tree, visiblePaths, selectPath, deselectPath, selected, selectedPaths]);
+    }, [path, tree, visiblePaths, selectPath, deselectPath, selected]);
 
     const directoryNodes = [];
     for(const subdir of tree?.subdirectories ?? []) {
@@ -166,7 +166,6 @@ function Directory(props: DirectoryProps) {
                 expandedDirectories={expandedDirectories}
                 selectPath={selectPath}
                 deselectPath={deselectPath}
-                selectedPaths={selectedPaths}
                 parentSelected={selected}
                 visiblePaths={visiblePaths}
                 onExpand={onExpand}
@@ -174,15 +173,14 @@ function Directory(props: DirectoryProps) {
             />);
     }
 
-    const toggleSelect = () => {
-        if(selected) deselectPath(path);
-        else selectPath(path, true);
-    };
-
     return <div>
         <List.Item>
             <div className={`${treeNodeClassName} ${pathClassName}`}>
-                <Checkbox className={smallClassName} disabled={parentSelected} checked={selected} onChange={toggleSelect} />
+                <Checkbox
+                    className={smallClassName}
+                    disabled={parentSelected}
+                    checked={selected || parentSelected}
+                    onChange={toggleSelect} />
                 <span className={`${hashAnchorClassName} ${directoryNodeClassName}`} id={path} onClick={expanded ? collapse : expand}>
                     <Icon name={expanded || loading ? 'folder open' : 'folder'} />
                     {displayName}&nbsp;
@@ -234,11 +232,16 @@ function SneakyLink(props: SneakyLinkProps) {
     </a>
 }
 
-interface FileProps extends FileDto {
+interface FileProps {
     path: string;
-    selectPath: (path: string, isDirectory: boolean) => void;
+    displayName: string;
+    sizeBytes: number;
+    selectPath: (
+        path: string,
+        isDirectory: boolean,
+        deselect: () => void
+    ) => void;
     deselectPath: (path: string) => void;
-    selected: boolean;
     parentSelected: boolean;
 }
 
@@ -249,7 +252,6 @@ function File(props: FileProps) {
         sizeBytes,
         selectPath,
         deselectPath,
-        selected,
         parentSelected
     } = props;
 
@@ -266,26 +268,22 @@ function File(props: FileProps) {
         }
     }, [hash, path]);
 
-    // Make sure we deselect ourself on dismount
-    useEffect(() => {
-        return () => deselectPath(path);
-    }, [deselectPath, path]);
-
-    const toggleSelected = () => {
-        if(selected) deselectPath(path);
-        else selectPath(path, false);
-    }
+    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, path, false);
 
     return <div>
         <List.Item className={`${treeNodeClassName} ${pathClassName}`}>
-            <Checkbox className={smallClassName} disabled={parentSelected} checked={selected} onChange={toggleSelected} />
+            <Checkbox
+                className={smallClassName}
+                disabled={parentSelected}
+                checked={selected || parentSelected}
+                onChange={toggleSelect} />
             <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
                 <span className={hashAnchorClassName} id={path}>
                     <Icon name="file" />
                     {displayName}&nbsp;
                 </span>
             </SneakyLink>
-            <span className={fileSizeClassName} >({humaniseBytes(sizeBytes!)})&nbsp;</span>
+            <span className={fileSizeClassName} >({humaniseBytes(sizeBytes)})&nbsp;</span>
             <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </List.Item>
     </div>;
@@ -306,7 +304,12 @@ function* getAllPaths(expandedDirectories: Directories) {
     }
 }
 
-type SelectedPaths = { [path: string]: boolean }; // Boolean value represents isDirectory
+interface SelectedPath {
+    isDirectory: boolean;
+    deselect: () => void;
+}
+
+type SelectedPaths = { [path: string]: SelectedPath };
 
 function Browse() {
     usePageTitle('Browse');
@@ -356,17 +359,20 @@ function Browse() {
     const stickyRef = useRef(null);
 
     const [selectedPaths, setSelectedPaths] = useState<SelectedPaths>({});
-    const selectPath = useCallback((path: string, isDirectory: boolean) => setSelectedPaths(paths => {
-        const newPaths: SelectedPaths = {};
-        const testPath = `${path}/`
-        for(const oldPath in paths) {
-            // Skip any sub-paths of the path being added,
-            // since they will now be captured implicitly by their parent
-            if(!oldPath.startsWith(testPath))
-                newPaths[oldPath] = paths[oldPath];
-        }
-        newPaths[path] = isDirectory;
-        return newPaths;
+    const selectPath = useCallback((path: string, isDirectory: boolean, deselect: () => void) =>
+        setSelectedPaths(paths => {
+            const newPaths: SelectedPaths = {};
+            const testPath = `${path}/`
+            for(const oldPath in paths) {
+                // Skip any sub-paths of the path being added,
+                // since they will now be captured implicitly by their parent
+                if(!oldPath.startsWith(testPath))
+                    newPaths[oldPath] = paths[oldPath];
+                // Call the deselect handler to update the checkbox's local state
+                else paths[oldPath].deselect();
+            }
+            newPaths[path] = { isDirectory, deselect };
+            return newPaths;
     }), []);
     const deselectPath = useCallback((path: string) => setSelectedPaths(paths => {
         const newPaths: SelectedPaths = {};
@@ -376,23 +382,50 @@ function Browse() {
         }
         return newPaths;
     }), []);
+    const clearPaths = useCallback(() => setSelectedPaths(paths => {
+        for(const path of Object.values(paths)) {
+            path.deselect();
+        }
+        return {};
+    }), []);
 
     const selectedPathsArray = Object.keys(selectedPaths);
+
+    const root = useMemo(() => <Directory
+        expandedDirectories={expandedDirectories}
+        visiblePaths={visiblePaths!}
+        selectPath={selectPath}
+        deselectPath={deselectPath}
+        parentSelected={false}
+        displayName="<root>"
+        path=""
+        archiveFormat={archiveFormat}
+        onExpand={addExpandedDirectory}
+        onCollapse={removeExpandedDirectory} />
+    , [
+        expandedDirectories,
+        visiblePaths,
+        selectPath,
+        deselectPath,
+        archiveFormat,
+        addExpandedDirectory,
+        removeExpandedDirectory]);
 
     return <>
         <GlobalSidebar open={!!selectedPathsArray.length}>
             <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
+            <List>
+                {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
+                    <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p || '<root>'}{selectedPaths[p] ? '/' : ''}
+                    {/* TODO_JU Deselect button */}
+                </List.Item>)}
+            </List>
             <form action={`/api/Files/DownloadManyForm?archiveFormat=${archiveFormat}&asAttachment=true`} method="post">
-                <List>
-                    {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
-                        <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p || '<root>'}{selectedPaths[p] ? '/' : ''}
-                        {/* TODO_JU Deselect button */}
-                        <input type='hidden' name='paths' value={p} />
-                    </List.Item>)}
-                </List>
+                {/* Putting these input elements inside the List.Items was messing with their flow in weird ways */}
+                {selectedPathsArray.map(p => <input key={p} type='hidden' name='paths' value={p} />)}
                 <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
                     <Button primary type="submit"><Icon name='download' />Download</Button>
-                    <Button secondary type="reset" onClick={() => setSelectedPaths({})}><Icon name='close' />Clear</Button>
+                    <Button secondary type="reset" onClick={clearPaths}><Icon name='close' />Clear</Button>
                 </div>
             </form>
         </GlobalSidebar>
@@ -423,18 +456,7 @@ function Browse() {
                     </Grid>
                 </Sticky>
                 <List>
-                    <Directory
-                        expandedDirectories={expandedDirectories}
-                        visiblePaths={visiblePaths!}
-                        selectPath={selectPath}
-                        deselectPath={deselectPath}
-                        selectedPaths={selectedPaths}
-                        parentSelected={false}
-                        displayName="<root>"
-                        path=""
-                        archiveFormat={archiveFormat}
-                        onExpand={addExpandedDirectory}
-                        onCollapse={removeExpandedDirectory} />
+                    {root}
                 </List>
             </div>
         </Container>
