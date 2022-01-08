@@ -2,7 +2,7 @@ import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
 import { useLocation } from "react-router";
-import { Button, Container, Grid, Icon, Input, List, Loader } from "semantic-ui-react";
+import { Button, Container, Grid, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
 import { apiConfig } from "../apiInstances";
 import FilesApi from "../ApiOverrides/FilesApi";
@@ -77,6 +77,7 @@ function Directory(props: DirectoryProps) {
     // TODO_JU Test spamming the button
     // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
     // TODO_JU If this throws then it immediately starts again
+    // TODO_JU Clicking root node results in 2 requests for some reason
     const expand = useCallback(async () => {
         if(loading || expanded) return;
         setLoading(true);
@@ -202,6 +203,7 @@ function File(props: FileProps) {
     if(!visiblePaths.has(path)) return <></>;
 
     // TODO_JU Make it not ugly
+    // TODO_JU Files don't seem to properly align with folders
     return <div>
         <List.Item className={treeNode}>
             {/*TODO_JU Multi-select checkbox (maybe fades in and out on hover [of parent]?)*/}
@@ -244,6 +246,7 @@ function Browse() {
     })), []);
     const removeExpandedDirectory = useCallback((prefix: string) => setExpandedDirectories(expandedDirectories => {
         const newExpandedDirectories: Directories = {};
+        if(!prefix) return newExpandedDirectories;
         const testString = `${prefix}/`;
         for(const path in expandedDirectories) {
             if(path.startsWith(testString) || path === prefix) continue;
@@ -274,41 +277,56 @@ function Browse() {
         return filteredPaths;
     }, [textFilter, expandedDirectories]);
 
-    // TODO_JU Slideout sidebar for multi-select (show selected list/count, clear button, and download button)
-    return <Container>
-        <NavHeader pageTitle="Browse" />
-        <Grid stackable>{/* TODO_JU Would be nice to make this sticky so you can filter without scrolling back to the top */}
-            <Grid.Column width={13}>
-                {/*
-                    By not providing value={textFilter} in the input component below,
-                    we let the browser use the native value. This means that if the user's
-                    typing causes a lengthy update (i.e. if they're filtering a big tree)
-                    then they don't have to wait for react's render cycle to complete before
-                    they see the new characters appear in the text box. the onChange handler
-                    is wrapped in a setTimeout just to stop react from complaining about
-                    "setting components from controlled to uncontrolled" in the console.
-                 */}
-                <Input autoFocus fluid icon="filter" iconPosition="left" placeholder="Filter"
-                    onChange={e => window.setTimeout(() => setTextFilter(e.target.value), 0)} />
-            </Grid.Column>
-            <Grid.Column width={3}>
-                <Button.Group fluid style={{ height: '100%' }}>
-                    <Button secondary active={archiveFormat === ArchiveFormat.Tar} onClick={() => setArchiveFormat(ArchiveFormat.Tar)}>Tar</Button>
-                    <Button secondary active={archiveFormat === ArchiveFormat.Zip} onClick={() => setArchiveFormat(ArchiveFormat.Zip)}>Zip</Button>
-                </Button.Group>
-            </Grid.Column>
-        </Grid>
-        <List>
-            <Directory
-                expandedDirectories={expandedDirectories}
-                visiblePaths={visiblePaths!}
-                displayName="<root>"
-                path=""
-                archiveFormat={archiveFormat}
-                onExpand={addExpandedDirectory}
-                onCollapse={removeExpandedDirectory} />
-        </List>
-    </Container>;
+    const stickyRef = useRef(null);
+
+    const [sidebar, setSidebar] = useState(false);
+
+    // TODO_JU Slideout sidebar or sticky rail for multi-select (show selected list/count, clear button, and download button)
+    return <>
+        <div style={{ position: 'fixed', right: 0, height: '100vh', transform: `translate3d(${sidebar ? 0 : '100%'}, 0, 0)`, transition: 'transform 0.3s' }}>
+            This is a sidebar test
+            <Button onClick={() => setSidebar(false)}>Close me</Button>
+        </div>
+        <Container>
+            <NavHeader pageTitle="Browse" />
+            <Button onClick={() => setSidebar(true)}>Open sidebar</Button>
+            <div ref={stickyRef}>
+                <Sticky context={stickyRef} offset={14}>
+                    <Grid stackable>
+                        <Grid.Column width={13}>
+                            {/*
+                                By not providing value={textFilter} in the input component below,
+                                we let the browser use the native value. This means that if the user's
+                                typing causes a lengthy update (i.e. if they're filtering a big tree)
+                                then they don't have to wait for react's render cycle to complete before
+                                they see the new characters appear in the text box. the onChange handler
+                                is wrapped in a setTimeout just to stop react from complaining about
+                                "setting components from controlled to uncontrolled" in the console.
+                            */}
+                            <Input autoFocus fluid icon="filter" iconPosition="left" placeholder="Filter"
+                                onChange={e => window.setTimeout(() => setTextFilter(e.target.value), 0)} />
+                        </Grid.Column>
+                        <Grid.Column width={3}>
+                            <Button.Group fluid style={{ height: '100%' }}>
+                                <Button secondary active={archiveFormat === ArchiveFormat.Tar} onClick={() => setArchiveFormat(ArchiveFormat.Tar)}>Tar</Button>
+                                <Button secondary active={archiveFormat === ArchiveFormat.Zip} onClick={() => setArchiveFormat(ArchiveFormat.Zip)}>Zip</Button>
+                            </Button.Group>
+                        </Grid.Column>
+                    </Grid>
+                </Sticky>
+                <List>
+                    <Directory
+                        expandedDirectories={expandedDirectories}
+                        visiblePaths={visiblePaths!}
+                        displayName="<root>"
+                        path=""
+                        archiveFormat={archiveFormat}
+                        onExpand={addExpandedDirectory}
+                        onCollapse={removeExpandedDirectory} />
+                </List>
+            </div>
+        </Container>
+    </>;
 }
 
 export default Browse;

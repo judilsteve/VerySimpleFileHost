@@ -13,9 +13,9 @@ function SessionExpiredModal() {
     const [sessionExpiredPrompt, setSessionExpiredPrompt] = useSharedState(sessionExpiredPromptState);
 
     const logIn = () => {
+        setSessionExpiredPrompt(false);
         const then = `${location.pathname}${location.search}${location.hash}`;
         navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`);
-        setSessionExpiredPrompt(false);
     }
 
     return <Modal size="tiny" open={sessionExpiredPrompt} onClose={() => setSessionExpiredPrompt(false)}>
@@ -35,10 +35,10 @@ function PasswordExpiredModal() {
     const [passwordExpiredPrompt, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
     const changePassword = () => {
+        setPasswordExpiredPrompt(null);
         const then = `${location.pathname}${location.search}${location.hash}`;
         navigate(`${routes.changePassword}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`,
             { state: { passwordExpiredPrompt }});
-        setPasswordExpiredPrompt(null);
     };
 
     return <Modal size="tiny" open={!!passwordExpiredPrompt} onClose={() => setPasswordExpiredPrompt(null)}>

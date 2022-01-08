@@ -1,6 +1,6 @@
 .tree-node {
+    // Ensures that hover zone spans entire container width
     display: block;
-    width: 100%;
 }
 
 // TODO_JU This much "!important" cannot be good
@@ -15,4 +15,9 @@
 
 .tree-node:hover > a > .show-on-node-hover:hover {
     opacity: 1 !important;
+}
+
+.stuck-container .grid {
+    // Prevents tree nodes showing through the sticky filter box and archive buttons
+    background: #090909;
 }
