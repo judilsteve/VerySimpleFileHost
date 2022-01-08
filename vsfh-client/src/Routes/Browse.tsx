@@ -3,7 +3,7 @@ import './Browse.less';
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
 import { useLocation } from "react-router";
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
-import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
+import { ArchiveFormat, DirectoryDto } from "../API";
 import { apiConfig } from "../apiInstances";
 import FilesApi from "../ApiOverrides/FilesApi";
 import IconLink from "../Components/IconLink";
@@ -423,7 +423,7 @@ function Browse() {
             <form action={`/api/Files/DownloadManyForm?archiveFormat=${archiveFormat}&asAttachment=true`} method="post">
                 {/* Putting these input elements inside the List.Items was messing with their flow in weird ways */}
                 {selectedPathsArray.map(p => <input key={p} type='hidden' name='paths' value={p} />)}
-                <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', rowGap: '0.25em' }}>
                     <Button primary type="submit"><Icon name='download' />Download</Button>
                     <Button secondary type="reset" onClick={clearPaths}><Icon name='close' />Clear</Button>
                 </div>
