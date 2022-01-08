@@ -377,23 +377,24 @@ function Browse() {
         return newPaths;
     }), []);
 
-    const downloadSelected = () => console.debug('TODO_JU');
-
     const selectedPathsArray = Object.keys(selectedPaths);
 
     return <>
         <GlobalSidebar open={!!selectedPathsArray.length}>
             <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
-            <List>
-                {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
-                    <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p || '<root>'}{selectedPaths[p] ? '/' : ''}
-                    {/* TODO_JU Deselect button */}
-                </List.Item>)}
-            </List>
-            <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
-                <Button primary onClick={downloadSelected}><Icon name='download' />Download</Button>
-                <Button secondary onClick={() => setSelectedPaths({})}><Icon name='close' />Clear</Button>
-            </div>
+            <form action={`/api/Files/DownloadManyForm?archiveFormat=${archiveFormat}&asAttachment=true`} method="post">
+                <List>
+                    {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
+                        <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p || '<root>'}{selectedPaths[p] ? '/' : ''}
+                        {/* TODO_JU Deselect button */}
+                        <input type='hidden' name='paths' value={p} />
+                    </List.Item>)}
+                </List>
+                <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
+                    <Button primary type="submit"><Icon name='download' />Download</Button>
+                    <Button secondary type="reset" onClick={() => setSelectedPaths({})}><Icon name='close' />Clear</Button>
+                </div>
+            </form>
         </GlobalSidebar>
         <Container>
             <NavHeader pageTitle="Browse" />

@@ -20,6 +20,12 @@ import {
     DirectoryDto,
 } from '../models';
 
+export interface ApiFilesDownloadManyFormPostRequest {
+    archiveFormat: ArchiveFormat;
+    asAttachment?: boolean;
+    paths?: Array<string>;
+}
+
 export interface ApiFilesDownloadManyPostRequest {
     archiveFormat: ArchiveFormat;
     asAttachment?: boolean;
@@ -41,6 +47,60 @@ export interface ApiFilesListingPathGetRequest {
  * 
  */
 export class FilesApi extends runtime.BaseAPI {
+
+    /**
+     */
+    async apiFilesDownloadManyFormPostRaw(requestParameters: ApiFilesDownloadManyFormPostRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.archiveFormat === null || requestParameters.archiveFormat === undefined) {
+            throw new runtime.RequiredError('archiveFormat','Required parameter requestParameters.archiveFormat was null or undefined when calling apiFilesDownloadManyFormPost.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.archiveFormat !== undefined) {
+            queryParameters['archiveFormat'] = requestParameters.archiveFormat;
+        }
+
+        if (requestParameters.asAttachment !== undefined) {
+            queryParameters['asAttachment'] = requestParameters.asAttachment;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters.paths) {
+            formParams.append('paths', requestParameters.paths.join(runtime.COLLECTION_FORMATS["csv"]));
+        }
+
+        const response = await this.request({
+            path: `/api/Files/DownloadManyForm`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async apiFilesDownloadManyFormPost(requestParameters: ApiFilesDownloadManyFormPostRequest, initOverrides?: RequestInit): Promise<void> {
+        await this.apiFilesDownloadManyFormPostRaw(requestParameters, initOverrides);
+    }
 
     /**
      */
@@ -81,6 +141,7 @@ export class FilesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Download file/directory
      */
     async apiFilesDownloadPathGetRaw(requestParameters: ApiFilesDownloadPathGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.path === null || requestParameters.path === undefined) {
@@ -110,12 +171,14 @@ export class FilesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Download file/directory
      */
     async apiFilesDownloadPathGet(requestParameters: ApiFilesDownloadPathGetRequest, initOverrides?: RequestInit): Promise<void> {
         await this.apiFilesDownloadPathGetRaw(requestParameters, initOverrides);
     }
 
     /**
+     * Retrieve file listing for path
      */
     async apiFilesListingPathGetRaw(requestParameters: ApiFilesListingPathGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DirectoryDto>> {
         if (requestParameters.path === null || requestParameters.path === undefined) {
@@ -141,6 +204,7 @@ export class FilesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve file listing for path
      */
     async apiFilesListingPathGet(requestParameters: ApiFilesListingPathGetRequest, initOverrides?: RequestInit): Promise<DirectoryDto> {
         const response = await this.apiFilesListingPathGetRaw(requestParameters, initOverrides);

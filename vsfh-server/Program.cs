@@ -82,7 +82,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
 {
     o.OperationFilter<ErrorResponseTypeFilter<AuthenticationFailureDto>>(StatusCodes.Status401Unauthorized);
-    o.OperationFilter<FixCatchAllPathOperationFilter>();
     o.IncludeXmlComments(Path.Combine(
         AppContext.BaseDirectory,
         $"{typeof(ControllerBase).GetTypeInfo().Assembly.GetName().Name}.xml"

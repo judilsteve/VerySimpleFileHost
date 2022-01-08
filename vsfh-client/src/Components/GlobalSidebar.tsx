@@ -16,7 +16,7 @@ function GlobalSidebar(props: GlobalSidebarProps) {
         padding: '1em',
         zIndex: 9999,
         width: '30vw',
-        overflowY: 'scroll'
+        overflowY: 'auto'
     };
 
     return  <div style={style}>

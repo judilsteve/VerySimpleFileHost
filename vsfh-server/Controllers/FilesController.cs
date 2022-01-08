@@ -112,17 +112,22 @@ public class FilesController : ControllerBase
         Zip
     }
 
-    private void AddAttachmentHeader(string absolutePath, string extension)
+    private const int maxFileNameLength = 255;
+
+    private string GetDownloadName(string absolutePath)
     {
-        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(absolutePath);
+        var fileName = Path.GetFileName(Path.GetRelativePath(config.RootSharedDirectory, absolutePath));
         // "<" and ">" characters are illegal for file/directory names in Windows filesystems
-        if(string.IsNullOrEmpty(fileNameWithoutExtension)) fileNameWithoutExtension = "_root_";
-        var maxFileNameLength = 255;
+        return fileName == "." ? "_root_" : fileName;
+    }
+
+    private void AddAttachmentHeader(string fileNameWithoutExtension, string extension)
+    {
         var availableChars = maxFileNameLength - extension.Length;
         string trimmedFileName;
         if(availableChars < 0)
         {
-            trimmedFileName = Path.GetFileName(absolutePath).Substring(0, maxFileNameLength);
+            trimmedFileName = fileNameWithoutExtension.Substring(0, maxFileNameLength);
         }
         else if(availableChars < fileNameWithoutExtension.Length)
         {
@@ -170,7 +175,7 @@ public class FilesController : ControllerBase
             if(!archiveFormat.HasValue)
                 return BadRequest($"\"{nameof(archiveFormat)}\" is required when downloading a directory");
 
-            if(asAttachment ?? false) AddAttachmentHeader(absolutePath, GetArchiveExtension(archiveFormat.Value));
+            if(asAttachment ?? false) AddAttachmentHeader(GetDownloadName(absolutePath), GetArchiveExtension(archiveFormat.Value));
 
             return new FileCallbackResult(
                 (outputStream, _) => WriteArchiveToStream(
@@ -184,7 +189,7 @@ public class FilesController : ControllerBase
         var mimeType = config.MimeTypesByExtension
             .GetValueOrDefault(extension.Substring(1), "application/octet-stream");
 
-        if(asAttachment ?? false) AddAttachmentHeader(absolutePath, extension);
+        if(asAttachment ?? false) AddAttachmentHeader(Path.GetFileNameWithoutExtension(GetDownloadName(absolutePath)), extension);
 
         return new PhysicalFileResult(absolutePath, mimeType)
         {
@@ -277,25 +282,44 @@ public class FilesController : ControllerBase
         };
     }
 
+    private void AddAttachmentHeader(IEnumerable<string> absolutePaths, string extension)
+    {
+        var builder = new StringBuilder(maxFileNameLength);
+        foreach(var absolutePath in absolutePaths)
+        {
+            var downloadName = GetDownloadName(absolutePath);
+            builder.Append($"{(builder.Length > 0 ? "+" : "")}{downloadName}");
+            if(builder.Length > maxFileNameLength) break;
+        }
+        AddAttachmentHeader(builder.ToString(), extension);
+    }
+
     [HttpPost]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
     {
         var absolutePaths = new List<string>(paths.Length);
         foreach(var path in paths)
         {
-            var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
+            // Don't ask me how, but on the form version of this endpoint (which delegates to here) it's possible to receive a null path
+            var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path ?? ""));
             if(!absolutePath.ExistsAndIsAccessible(config, out var isDirectory))
-                return NotFound(NotFoundMessage(path));
+                return NotFound(NotFoundMessage(path ?? ""));
             absolutePaths.Add(absolutePath);
         }
 
-        if(asAttachment ?? false) AddAttachmentHeader(string.Join(",", absolutePaths), GetArchiveExtension(archiveFormat!.Value));
+        if(asAttachment ?? false) AddAttachmentHeader(absolutePaths, GetArchiveExtension(archiveFormat!.Value));
 
         return new FileCallbackResult(
             (outputStream, _) => WriteArchiveToStream(
                 absolutePaths,
                 outputStream,
                 archiveFormat!.Value),
-            GetArchiveMimeType(archiveFormat.Value));
+            GetArchiveMimeType(archiveFormat!.Value));
+    }
+
+    [HttpPost]
+    public ActionResult DownloadManyForm([MinLength(1)][FromForm] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
+    {
+        return DownloadMany(paths, archiveFormat, asAttachment);
     }
 }
