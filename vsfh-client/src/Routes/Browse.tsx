@@ -2,7 +2,7 @@ import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
 import { useLocation } from "react-router";
-import { Button, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
+import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto, FileDto } from "../API";
 import { apiConfig } from "../apiInstances";
 import FilesApi from "../ApiOverrides/FilesApi";
@@ -14,7 +14,6 @@ import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
 import tryHandleError from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
-import SmallCheckbox from '../Components/SmallCheckbox';
 
 const api = new FilesApi(apiConfig);
 
@@ -55,6 +54,8 @@ interface DirectoryProps {
     displayName: string;
     archiveFormat: ArchiveFormat;
     expandedDirectories: Directories;
+    selectedPaths: SelectedPaths;
+    parentSelected: boolean;
     selectPath: (path: string, isDirectory: boolean) => void;
     deselectPath: (path: string) => void;
     visiblePaths: Set<string>;
@@ -69,6 +70,8 @@ function Directory(props: DirectoryProps) {
         path,
         archiveFormat,
         expandedDirectories,
+        selectedPaths,
+        parentSelected,
         selectPath,
         deselectPath,
         visiblePaths,
@@ -117,16 +120,7 @@ function Directory(props: DirectoryProps) {
         onCollapse(path);
     };
 
-    // By managing this state ourselves and using an effect to update the global list,
-    // we avoid this component having a dependency on the set of selected paths.
-    // This means we don't have to re-render the entire tree every time a path is
-    // checked or unchecked
-    const [selected, setSelected] = useState(false);
-    useEffect(() => {
-        (selected ? selectPath : deselectPath)(path, true);
-    }, [selected, path, selectPath, deselectPath]);
-
-    // Ensure that we deselect ourself when unmounting
+    // Make sure we deselect ourself on dismount
     useEffect(() => {
         return () => deselectPath(path);
     }, [deselectPath, path]);
@@ -135,15 +129,24 @@ function Directory(props: DirectoryProps) {
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
     const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
+    const selected = parentSelected || (selectedPaths[path] !== undefined);
+
     const fileNodes = useMemo(() => {
         const fileNodes = [];
         for(const file of tree?.files ?? []) {
             const filePath = combinePaths(path, file.displayName!);
             if(visiblePaths.has(filePath))
-                fileNodes.push(<File key={file.displayName} {...file} path={filePath} selectFile={() => selectPath(filePath, false)} deselectFile={() => deselectPath(filePath)} />);
+                fileNodes.push(<File
+                    key={file.displayName}
+                    {...file}
+                    path={filePath}
+                    selected={selected || (selectedPaths[filePath] !== undefined)}
+                    parentSelected={selected}
+                    selectPath={selectPath}
+                    deselectPath={deselectPath} />);
         }
         return fileNodes;
-    }, [path, tree, visiblePaths, selectPath, deselectPath]);
+    }, [path, tree, visiblePaths, selectPath, deselectPath, selected, selectedPaths]);
 
     const directoryNodes = [];
     for(const subdir of tree?.subdirectories ?? []) {
@@ -157,23 +160,29 @@ function Directory(props: DirectoryProps) {
                 expandedDirectories={expandedDirectories}
                 selectPath={selectPath}
                 deselectPath={deselectPath}
+                selectedPaths={selectedPaths}
+                parentSelected={selected}
                 visiblePaths={visiblePaths}
                 onExpand={onExpand}
                 onCollapse={onCollapse}
             />);
     }
 
+    const toggleSelect = () => {
+        if(selected) deselectPath(path);
+        else selectPath(path, true);
+    };
+
     // TODO_JU Make it not ugly
     return <div>
         <List.Item>
-            {/* TODO_JU Prevent selection if parent already selected */}
             <div className={treeNode}>
-                <SmallCheckbox checked={selected} onChange={_ => setSelected(!selected)} />
-                <Icon fitted name={expanded || loading ? 'folder open' : 'folder'} onClick={expanded ? collapse : expand}/>
+                <Checkbox disabled={parentSelected} checked={selected} onChange={toggleSelect} />
+                <Icon name={expanded || loading ? 'folder open' : 'folder'} onClick={expanded ? collapse : expand}/>
                 {/* TODO_JU Bold text or something to better highlight selected items */}
-                <span className="anchor path" id={path} onClick={expanded ? collapse : expand}>{displayName}</span>
-                <IconLink className={showOnNodeHover} name="download" fitted href={downloadLink} />
-                <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
+                <span className="anchor path" id={path} onClick={expanded ? collapse : expand}>{displayName} </span>
+                <IconLink className={showOnNodeHover} name="download" href={downloadLink} />
+                <IconLink className={showOnNodeHover} href={hashLink} name="linkify" />
             </div>
             {
                 (!expanded && !loading) ? <></> : <List.List>
@@ -187,7 +196,7 @@ function Directory(props: DirectoryProps) {
     </div>;
 }
 
-interface SneakyLinkProps {
+interface SneakyLinkProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
     regularClickHref: string;
     altClickHref: string;
     children?: ReactNode;
@@ -221,12 +230,22 @@ function SneakyLink(props: SneakyLinkProps) {
 
 interface FileProps extends FileDto {
     path: string;
-    selectFile: () => void;
-    deselectFile: () => void;
+    selectPath: (path: string, isDirectory: boolean) => void;
+    deselectPath: (path: string) => void;
+    selected: boolean;
+    parentSelected: boolean;
 }
 
 function File(props: FileProps) {
-    const { path, displayName, sizeBytes, selectFile, deselectFile } = props;
+    const {
+        path,
+        displayName,
+        sizeBytes,
+        selectPath,
+        deselectPath,
+        selected,
+        parentSelected
+    } = props;
 
     const loc = window.location;
     const hashLink = `${loc.pathname}${loc.search}#${path}`;
@@ -241,31 +260,26 @@ function File(props: FileProps) {
         }
     }, [hash, path]);
 
-    // By managing this state ourselves and using an effect to update the global list,
-    // we avoid this component having a dependency on the set of selected paths.
-    // This means we don't have to re-render the entire tree every time a path is
-    // checked or unchecked
-    const [selected, setSelected] = useState(false);
+    // Make sure we deselect ourself on dismount
     useEffect(() => {
-        (selected ? selectFile : deselectFile)();
-    }, [selected, path, selectFile, deselectFile]);
+        return () => deselectPath(path);
+    }, [deselectPath, path]);
 
-    // Ensure that we deselect ourself when unmounting
-    useEffect(() => {
-        return () => deselectFile();
-    }, [deselectFile, path]);
+    const toggleSelected = () => {
+        if(selected) deselectPath(path);
+        else selectPath(path, false);
+    }
 
     // TODO_JU Make it not ugly
-    // TODO_JU Files don't seem to properly align with folders
     return <div>
         <List.Item className={treeNode}>
-            <SmallCheckbox checked={selected} onChange={() => setSelected(!selected)} />
-            <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
+            <Checkbox disabled={parentSelected} checked={selected} onChange={toggleSelected} />
+            <SneakyLink className="path" regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
                 <Icon name="file" />
                 {/* TODO_JU Bold text or something to better highlight selected items */}
-                <span className="anchor path" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
+                <span className="anchor" id={path}>{displayName}</span> ({humaniseBytes(sizeBytes!)})
             </SneakyLink>
-            <IconLink className={showOnNodeHover} href={hashLink} name="linkify" fitted />
+            <IconLink className={showOnNodeHover} href={hashLink} name="linkify" />
         </List.Item>
     </div>;
 }
@@ -357,13 +371,12 @@ function Browse() {
             <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
             <List>
                 {selectedPathsArray.map(p => <List.Item key={p} className="path" alt={p}>
-                    <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p}{selectedPaths[p] ? '/' : ''}
+                    <Icon name={selectedPaths[p] ? 'folder' : 'file'} />{p || '<root>'}{selectedPaths[p] ? '/' : ''}
                     {/* TODO_JU Deselect button */}
                 </List.Item>)}
             </List>
             <div style={{ float: 'right' }}>{/* TODO_JU These buttons look ugly when they stack */}
                 <Button primary onClick={downloadSelected}><Icon name='download' />Download</Button>
-                {/* TODO_JU Clear button no longer works because of the "optimisation" */}
                 <Button secondary onClick={() => setSelectedPaths({})}><Icon name='close' />Clear</Button>
             </div>
         </GlobalSidebar>
@@ -399,6 +412,8 @@ function Browse() {
                         visiblePaths={visiblePaths!}
                         selectPath={selectPath}
                         deselectPath={deselectPath}
+                        selectedPaths={selectedPaths}
+                        parentSelected={false}
                         displayName="<root>"
                         path=""
                         archiveFormat={archiveFormat}

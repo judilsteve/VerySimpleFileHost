@@ -1,3 +1,4 @@
+import './IconLink.less';
 import { Icon, IconProps } from "semantic-ui-react";
 
 export interface IconLinkProps extends IconProps {
@@ -7,8 +8,7 @@ export interface IconLinkProps extends IconProps {
 function IconLink(props: IconLinkProps) {
     const { href, newTab, ...iconProps } = props;
 
-    // TODO_JU Remove inline styling for this
-    return <a style={{ all: 'unset' }} href={href} target={newTab ? '_blank' : undefined} rel="noreferrer">
+    return <a className='iconlink' href={href} target={newTab ? '_blank' : undefined} rel="noreferrer">
         <Icon link {...iconProps} />
     </a>;
 }
