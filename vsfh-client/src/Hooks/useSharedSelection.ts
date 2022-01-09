@@ -1,8 +1,16 @@
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
+
+export interface SelectedPath {
+    isDirectory: boolean;
+    deselect: (() => void) | null;
+}
+
+export type SelectedPaths = { [path: string]: SelectedPath };
 
 function useSharedSelection(
     selectPath: (path: string, isDirectory: boolean, deselect: () => void) => void,
     deselectPath: (path: string) => void,
+    selectedPaths: RefObject<SelectedPaths>,
     path: string,
     isDirectory: boolean
 ): [boolean, () => void] {
@@ -12,14 +20,26 @@ function useSharedSelection(
     // every selectable component each time a single component is selected/deselected.
     const [selected, setSelected] = useState(false);
 
-    // Make sure we deselect ourself on dismount
-    // TODO_JU This is causing nodes to be deselected when they are dismounted by
-    // the text filter. It would be convenient if this only happened when the folder
-    // was collapsed (or maybe not even then), but it would make it difficult to enable
-    // the checkbox again when the node becomes visible again.
+    // TODO_JU Bug:
+    // 1. Select a file
+    // 2. Collapse its containing folder
+    // 3. Expand its containing folder
+    // 4. Select the containing folder
+    // 5. Deselect the containing folder
+    // 6 The above operation fails, because it's using the old callback for the wrong instance of the component
+    // 6. Observe that the file appears checked but is not in the selection list
+
+    // Use the ref object to restore the correct checkbox state when the component remounts
+    // e.g. after being filtered/collapsed and then unfiltered/reopened
     useEffect(() => {
-        return () => deselectPath(path);
-    }, [deselectPath, path]);
+        const selectedPathInfo = selectedPaths.current![path];
+        if(!selectedPathInfo) return;
+        setSelected(true);
+        // Update the deselect handle in the map of selectedPaths
+        selectedPathInfo.isDirectory = isDirectory;
+        selectedPathInfo.deselect = () => setSelected(false);
+        return () => { selectedPathInfo.deselect = null; };
+    }, [selectedPaths, path, isDirectory]);
 
     const toggleSelect = () => {
         if(selected) {

@@ -1,6 +1,6 @@
 import './Browse.less';
 
-import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
 import { useLocation } from "react-router";
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
@@ -14,7 +14,7 @@ import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
 import tryHandleError from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
-import useSharedSelection from '../Hooks/useSharedSelection';
+import useSharedSelection, { SelectedPaths } from '../Hooks/useSharedSelection';
 
 const api = new FilesApi(apiConfig);
 
@@ -67,6 +67,7 @@ interface DirectoryProps {
         deselect: () => void
     ) => void;
     deselectPath: (path: string) => void;
+    selectedPaths: RefObject<SelectedPaths>;
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
     onCollapse: (prefix: string) => void;
@@ -81,6 +82,7 @@ function Directory(props: DirectoryProps) {
         parentSelected,
         selectPath,
         deselectPath,
+        selectedPaths,
         visiblePaths,
         onExpand,
         onCollapse
@@ -131,7 +133,7 @@ function Directory(props: DirectoryProps) {
         if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
     };
 
-    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, path, true);
+    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
 
     const hashLink = `#${path}`;
     const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
@@ -148,10 +150,11 @@ function Directory(props: DirectoryProps) {
                     path={filePath}
                     parentSelected={selected}
                     selectPath={selectPath}
-                    deselectPath={deselectPath} />);
+                    deselectPath={deselectPath}
+                    selectedPaths={selectedPaths} />);
         }
         return fileNodes;
-    }, [path, tree, visiblePaths, selectPath, deselectPath, selected]);
+    }, [path, tree, visiblePaths, selectPath, deselectPath, selectedPaths, selected]);
 
     const directoryNodes = [];
     for(const subdir of tree?.subdirectories ?? []) {
@@ -165,6 +168,7 @@ function Directory(props: DirectoryProps) {
                 expandedDirectories={expandedDirectories}
                 selectPath={selectPath}
                 deselectPath={deselectPath}
+                selectedPaths={selectedPaths}
                 parentSelected={selected}
                 visiblePaths={visiblePaths}
                 onExpand={onExpand}
@@ -242,6 +246,7 @@ interface FileProps {
         deselect: () => void
     ) => void;
     deselectPath: (path: string) => void;
+    selectedPaths: RefObject<SelectedPaths>;
     parentSelected: boolean;
 }
 
@@ -252,6 +257,7 @@ function File(props: FileProps) {
         sizeBytes,
         selectPath,
         deselectPath,
+        selectedPaths,
         parentSelected
     } = props;
 
@@ -267,7 +273,7 @@ function File(props: FileProps) {
         }
     }, [hash, path]);
 
-    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, path, false);
+    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, selectedPaths, path, false);
 
     return <div>
         <List.Item className={`${treeNodeClassName} ${pathClassName}`}>
@@ -303,13 +309,6 @@ function* getAllPaths(expandedDirectories: Directories) {
         }
     }
 }
-
-interface SelectedPath {
-    isDirectory: boolean;
-    deselect: () => void;
-}
-
-type SelectedPaths = { [path: string]: SelectedPath };
 
 function Browse() {
     usePageTitle('Browse');
@@ -359,6 +358,9 @@ function Browse() {
     const stickyRef = useRef(null);
 
     const [selectedPaths, setSelectedPaths] = useState<SelectedPaths>({});
+    // Provides child components access to the selected path set
+    // without causing them to re-render every time it changes
+    const selectedPathsRef = useRef(selectedPaths);
     const selectPath = useCallback((path: string, isDirectory: boolean, deselect: () => void) =>
         setSelectedPaths(paths => {
             const newPaths: SelectedPaths = {};
@@ -368,10 +370,13 @@ function Browse() {
                 // since they will now be captured implicitly by their parent
                 if(!oldPath.startsWith(testPath))
                     newPaths[oldPath] = paths[oldPath];
-                // Call the deselect handler to update the checkbox's local state
-                else paths[oldPath].deselect();
+                else {
+                    // Call the deselect handler to update the checkbox's local state
+                    paths[oldPath].deselect?.();
+                }
             }
             newPaths[path] = { isDirectory, deselect };
+            selectedPathsRef.current = newPaths;
             return newPaths;
     }), []);
     const deselectPath = useCallback((path: string) => setSelectedPaths(paths => {
@@ -380,13 +385,16 @@ function Browse() {
             if(oldPath !== path)
                 newPaths[oldPath] = paths[oldPath];
         }
+        selectedPathsRef.current = newPaths;
         return newPaths;
     }), []);
     const clearPaths = useCallback(() => setSelectedPaths(paths => {
         for(const path of Object.values(paths)) {
-            path.deselect();
+            path.deselect?.();
         }
-        return {};
+        const newPaths = {};
+        selectedPathsRef.current = newPaths;
+        return newPaths;
     }), []);
 
     const selectedPathsArray = Object.keys(selectedPaths);
@@ -396,6 +404,7 @@ function Browse() {
         visiblePaths={visiblePaths!}
         selectPath={selectPath}
         deselectPath={deselectPath}
+        selectedPaths={selectedPathsRef}
         parentSelected={false}
         displayName="<root>"
         path=""
@@ -407,6 +416,7 @@ function Browse() {
         visiblePaths,
         selectPath,
         deselectPath,
+        selectedPathsRef,
         archiveFormat,
         addExpandedDirectory,
         removeExpandedDirectory]);
@@ -423,7 +433,7 @@ function Browse() {
                             {p || '<root>'}{selectedPaths[p] ? '/' : ''}
                         </span>
                         <Icon link name="remove" className={showOnNodeHoverClassName}
-                            onClick={() => { selectedPaths[p].deselect(); deselectPath(p); }} />
+                            onClick={() => { selectedPaths[p].deselect?.(); deselectPath(p); }} />
                     </div>
                 </List.Item>)}
             </List>
