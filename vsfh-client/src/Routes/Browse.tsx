@@ -24,7 +24,7 @@ const fileSizeSuffixes = ["B", "KiB", "MiB", "GiB", "TiB"];
 const treeNodeClassName = "tree-node";
 const showOnNodeHoverClassName = "show-on-node-hover";
 const pathClassName = "path";
-const hashAnchorClassName = "hash-anchor"; // TODO_JU https://stackoverflow.com/questions/10732690/offsetting-an-html-anchor-to-adjust-for-fixed-header
+const hashAnchorClassName = "hash-anchor";
 const smallClassName = "small";
 const fileSizeClassName = "file-size";
 const directoryNodeClassName = "directory-node";
@@ -133,8 +133,7 @@ function Directory(props: DirectoryProps) {
 
     const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, path, true);
 
-    const loc = window.location;
-    const hashLink = `${loc.pathname}${loc.search}#${path}`;
+    const hashLink = `#${path}`;
     const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
     const fileNodes = useMemo(() => {
@@ -181,7 +180,8 @@ function Directory(props: DirectoryProps) {
                     disabled={parentSelected}
                     checked={selected || parentSelected}
                     onChange={toggleSelect} />
-                <span className={`${hashAnchorClassName} ${directoryNodeClassName}`} id={path} onClick={expanded ? collapse : expand}>
+                <div className={hashAnchorClassName} id={path}></div>
+                <span className={directoryNodeClassName} onClick={expanded ? collapse : expand}>
                     <Icon name={expanded || loading ? 'folder open' : 'folder'} />
                     {displayName}&nbsp;
                 </span>
@@ -255,8 +255,7 @@ function File(props: FileProps) {
         parentSelected
     } = props;
 
-    const loc = window.location;
-    const hashLink = `${loc.pathname}${loc.search}#${path}`;
+    const hashLink = `#${path}`;
 
     const href = `/api/Files/Download/${sanitisePath(path)}`;
 
@@ -278,7 +277,8 @@ function File(props: FileProps) {
                 checked={selected || parentSelected}
                 onChange={toggleSelect} />
             <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
-                <span className={hashAnchorClassName} id={path}>
+                <div className={hashAnchorClassName} id={path}></div>
+                <span>
                     <Icon name="file" />
                     {displayName}&nbsp;
                 </span>

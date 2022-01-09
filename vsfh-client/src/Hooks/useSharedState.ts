@@ -7,10 +7,10 @@ export class SharedState<T> {
 
     watch(watcher: (v: T) => void) {
         this.watchers.push(watcher);
-        return this.watchers.length - 1;
     }
 
-    removeWatcher(index: number) {
+    removeWatcher(watcher: (v: T) => void) {
+        const index = this.watchers.indexOf(watcher);
         this.watchers.splice(index, 1);
     }
 
@@ -42,8 +42,8 @@ export class SharedPersistedState<T> extends SharedState<T> {
 export function useSharedState<T>(sharedState: SharedState<T>): [T, (newValue: T) => void] {
     const [value, setValue] = useState(sharedState.value);
     useEffect(() => {
-        const watcherIndex = sharedState.watch(setValue);
-        return () => sharedState.removeWatcher(watcherIndex);
+        sharedState.watch(setValue);
+        return () => sharedState.removeWatcher(setValue);
     }, [sharedState]);
     return [value, useCallback((newValue: T) => sharedState.setValue(newValue), [sharedState])];
 }

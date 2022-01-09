@@ -78,11 +78,24 @@
     cursor: pointer;
 }
 
-.hash-anchor:target {
+// Browsers scroll the hash anchor to the top of the page,
+// causing them to get hidden under the sticky header.
+// We use an invisible hash anchor offset a little from the actual
+// desired scroll location.
+// This way, the anchor clears the sticky header *and* the user
+// gets a little context from the files/folders directly above it.
+.hash-anchor {
+    display: inline;
+    visibility: hidden;
+    position: relative;
+    top: -15vh;
+}
+
+.hash-anchor:target + span {
     font-weight: bold;
 }
 
-.hash-anchor:target::before {
+.hash-anchor:target + span::before {
     content: '\f101';
     font-family: 'Icons';
     color: #c91e27;
