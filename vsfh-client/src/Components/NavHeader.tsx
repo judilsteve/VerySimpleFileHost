@@ -35,7 +35,7 @@ const routeLinks: RouteLink[] = [
         adminOnly: true
     },
     {
-        route: routes.changePassword, // TODO_JU State is required when navigating here (maybe remove that requirement and just have it fetch it from local storage)
+        route: routes.changePassword,
         icon: 'key',
         name: 'Change Password',
         adminOnly: false

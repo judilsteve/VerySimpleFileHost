@@ -110,7 +110,7 @@ function AcceptInvite() {
             <Message error header="Activation Failed" content={error} />
             <Form.Field>
                 <RememberMe {...rememberMeProps} />
-                <Button tabIndex={4} primary type="submit" floated="right" onClick={activateAccount} disabled={!canActivate} loading={loading}>Activate</Button>
+                <Button tabIndex={4} primary type="button" floated="right" onClick={activateAccount} disabled={!canActivate} loading={loading}>Activate</Button>
             </Form.Field>
         </Form>
     </SkinnyForm>;

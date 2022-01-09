@@ -14,11 +14,13 @@ using VerySimpleFileHost.Utils;
 
 var connectionString = "Filename=Database.sqlite";
 
+// TODO_JU Maybe use System.CommandLine or something for this
 if(args.Contains("--create-admin-account"))
 {
     var context = new VsfhContext(new DbContextOptionsBuilder<VsfhContext>().UseSqlite(connectionString).Options);
     await context.Database.MigrateAsync();
 
+    // TODO_JU if statement bad now
     if(!await context.Users.AnyAsync(u => u.IsAdministrator && u.PasswordHash != null))
     {
         await Console.Out.WriteLineAsync("What should the new administrator's name be?");

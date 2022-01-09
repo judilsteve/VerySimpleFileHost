@@ -417,6 +417,7 @@ function Browse() {
             <List>
                 {selectedPathsArray.map(p => <List.Item key={p} className={treeNodeClassName}>
                     <div>
+                        {/* TODO_JU Ellipsis overflow is broken again */}
                         <Icon name={selectedPaths[p] ? 'folder' : 'file'} />
                         <span className={pathClassName}>
                             {p || '<root>'}{selectedPaths[p] ? '/' : ''}

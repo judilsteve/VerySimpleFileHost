@@ -11,21 +11,20 @@ import useEndpointData from "../Hooks/useEndpointData";
 import { usePageTitle } from "../Hooks/usePageTitle";
 import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
-import { rememberMeState } from "../State/sharedState";
+import { passwordExpiredPromptState, rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
-
-export interface ChangePasswordProps {
-    message?: string;
-    userName: string;
-}
 
 export enum ChangePasswordRouteParameters {
     then = 'then'
 };
 
-function ChangePassword(props: ChangePasswordProps) {
-    const { message, userName } = props;
+function ChangePassword() {
+    const [passwordExpiredPrompt, setPasswordExpiredPrompt]
+        = useSharedState(passwordExpiredPromptState);
+
+    const userName = passwordExpiredPrompt?.userName ?? '';
+    const message = passwordExpiredPrompt?.message ?? '';
 
     usePageTitle('Change Password');
 
@@ -99,9 +98,14 @@ function ChangePassword(props: ChangePasswordProps) {
                 setCheckPassword('');
             }
         }
-        if(isMounted.current) navigate(then ?? routes.browseFiles);
+        if(isMounted.current) {
+            setPasswordExpiredPrompt(null);
+            navigate(then ?? routes.browseFiles)
+        };
     };
 
+    // TODO_JU Tab indices are wrong now
+    // TODO_JU There is no state variable for user-entered username
     return <SkinnyForm width={350}>
         <Header as="h1" style={{ marginBottom: 0 }}>Change Password<ThemeRule /></Header>
         {
@@ -109,7 +113,7 @@ function ChangePassword(props: ChangePasswordProps) {
         }
         <Form>
             <Form.Field>
-                <Input icon="user" iconPosition="left" placeholder="Username" value={userName} disabled={true} />
+                <Input icon="user" iconPosition="left" placeholder="Username" value={userName} disabled={!!passwordExpiredPrompt} />
             </Form.Field>
             <Form.Field>
                 <Input autoFocus disabled={loading} icon="key" iconPosition="left" placeholder="Current Password" value={userName} type="password" tabIndex={1} />
@@ -118,7 +122,7 @@ function ChangePassword(props: ChangePasswordProps) {
             <Message error header="Change Password Failed" content={error} />
             <Form.Field>
                 <RememberMe {...rememberMeProps} />
-                <Button tabIndex={4} primary type="submit" floated="right" onClick={changePassword} disabled={!passwordValid} loading={loading}>Change Password</Button>
+                <Button tabIndex={4} primary type="button" floated="right" onClick={changePassword} disabled={!passwordValid} loading={loading}>Change Password</Button>
             </Form.Field>
         </Form>
     </SkinnyForm>

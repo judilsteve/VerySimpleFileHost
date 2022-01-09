@@ -8,10 +8,10 @@ import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
 import { usePageTitle } from "../Hooks/usePageTitle";
-import { ChangePasswordProps, ChangePasswordRouteParameters } from "./ChangePassword";
+import { ChangePasswordRouteParameters } from "./ChangePassword";
 import { loginApi as api } from "../apiInstances";
 import { useSharedState } from "../Hooks/useSharedState";
-import { rememberMeState } from "../State/sharedState";
+import { passwordExpiredPromptState, rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
 
@@ -28,6 +28,8 @@ function Login() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const [, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
     const navigate = useNavigate();
     const then = useSearchParams()[0].get(LoginRouteParameters.then);
@@ -54,13 +56,13 @@ function Login() {
                 const reasonCode = responseObject.reasonCode;
                 if(!isMounted.current) return;
                 if(reasonCode === AuthenticationFailureReasonCode.PasswordExpired) {
-                    const changePasswordProps: ChangePasswordProps = {
+                    setPasswordExpiredPrompt({
                         message: responseObject.reason!,
                         userName: userName
-                    };
+                    });
                     let destination = routes.changePassword;
                     if(then) destination += `?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
-                    navigate(destination, { state: changePasswordProps });
+                    navigate(destination);
                 }
                 else setError(responseObject.reason ?? 'Unknown authentication error');
             }
@@ -101,7 +103,7 @@ function Login() {
             <Message error header="Login Failed" content={error} />
             <Form.Field>
                 <RememberMe {...rememberMeProps} />
-                <Button tabIndex={3} primary type="submit" floated="right" onClick={login} disabled={!userName || !password} loading={loading}>Log In</Button>
+                <Button tabIndex={3} primary type="button" floated="right" onClick={login} disabled={!userName || !password} loading={loading}>Log In</Button>
             </Form.Field>
         </Form>
     </SkinnyForm>;

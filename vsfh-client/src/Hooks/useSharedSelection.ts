@@ -13,6 +13,10 @@ function useSharedSelection(
     const [selected, setSelected] = useState(false);
 
     // Make sure we deselect ourself on dismount
+    // TODO_JU This is causing nodes to be deselected when they are dismounted by
+    // the text filter. It would be convenient if this only happened when the folder
+    // was collapsed (or maybe not even then), but it would make it difficult to enable
+    // the checkbox again when the node becomes visible again.
     useEffect(() => {
         return () => deselectPath(path);
     }, [deselectPath, path]);
