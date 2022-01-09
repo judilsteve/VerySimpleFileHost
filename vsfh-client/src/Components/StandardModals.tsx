@@ -13,6 +13,7 @@ function SessionExpiredModal() {
     const [sessionExpiredPrompt, setSessionExpiredPrompt] = useSharedState(sessionExpiredPromptState);
 
     const logIn = () => {
+        // TODO_JU This *still* doesn't work properly on first page load
         setSessionExpiredPrompt(false);
         const then = `${location.pathname}${location.search}${location.hash}`;
         navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`);
