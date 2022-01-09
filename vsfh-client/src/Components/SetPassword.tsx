@@ -23,7 +23,7 @@ const zxcvbnScores = [
     },
     {
         color: 'teal',
-        // TODO_JU This overflows on most screens
+        // TODO_JU This overflows on my laptop for some reason
         content: 'Adamantine',
         icon: 'diamond'
     }

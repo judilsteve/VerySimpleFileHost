@@ -20,15 +20,6 @@ function useSharedSelection(
     // every selectable component each time a single component is selected/deselected.
     const [selected, setSelected] = useState(false);
 
-    // TODO_JU Bug:
-    // 1. Select a file
-    // 2. Collapse its containing folder
-    // 3. Expand its containing folder
-    // 4. Select the containing folder
-    // 5. Deselect the containing folder
-    // 6 The above operation fails, because it's using the old callback for the wrong instance of the component
-    // 6. Observe that the file appears checked but is not in the selection list
-
     // Use the ref object to restore the correct checkbox state when the component remounts
     // e.g. after being filtered/collapsed and then unfiltered/reopened
     useEffect(() => {
@@ -43,7 +34,6 @@ function useSharedSelection(
 
     const toggleSelect = () => {
         if(selected) {
-            setSelected(false);
             deselectPath(path);
         } else {
             setSelected(true);

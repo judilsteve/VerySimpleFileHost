@@ -91,6 +91,12 @@ function Login() {
         disabled: loading
     };
 
+    // TODO_JU Do this for other forms:
+    // Set password, add user, edit user, accept invite
+    const submitOnEnter = (e: KeyboardEvent) => {
+        if(e.key === 'Enter') login();
+    };
+
     return <SkinnyForm>
         <Header as="h1">VSFH<ThemeRule /></Header>
         <Form error={!!error}>
@@ -98,7 +104,16 @@ function Login() {
                 <Input disabled={loading} autoFocus tabIndex={1} icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
             </Form.Field>
             <Form.Field>
-                <Input disabled={loading} tabIndex={2} icon="key" iconPosition="left" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+                <Input
+                    disabled={loading}
+                    tabIndex={2}
+                    icon="key"
+                    iconPosition="left"
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    onKeyUp={(e: KeyboardEvent) => submitOnEnter(e)} />
             </Form.Field>
             <Message error header="Login Failed" content={error} />
             <Form.Field>

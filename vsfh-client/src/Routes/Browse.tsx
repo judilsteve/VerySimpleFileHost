@@ -385,6 +385,7 @@ function Browse() {
             if(oldPath !== path)
                 newPaths[oldPath] = paths[oldPath];
         }
+        paths[path].deselect?.();
         selectedPathsRef.current = newPaths;
         return newPaths;
     }), []);
@@ -426,14 +427,13 @@ function Browse() {
             <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
             <List>
                 {selectedPathsArray.map(p => <List.Item key={p} className={treeNodeClassName}>
-                    <div>
-                        {/* TODO_JU Ellipsis overflow is broken again */}
+                    <div style={{ display: 'flex' }}>
                         <Icon name={selectedPaths[p] ? 'folder' : 'file'} />
                         <span className={pathClassName}>
-                            {p || '<root>'}{selectedPaths[p] ? '/' : ''}
+                            {p || '<root>'}{selectedPaths[p].isDirectory ? '/' : ''}&nbsp;
                         </span>
-                        <Icon link name="remove" className={showOnNodeHoverClassName}
-                            onClick={() => { selectedPaths[p].deselect?.(); deselectPath(p); }} />
+                        <Icon link className={showOnNodeHoverClassName} name="remove"
+                            onClick={() => { deselectPath(p); }} />
                     </div>
                 </List.Item>)}
             </List>

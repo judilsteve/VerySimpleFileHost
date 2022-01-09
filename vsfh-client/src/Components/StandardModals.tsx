@@ -14,6 +14,8 @@ function SessionExpiredModal() {
 
     const logIn = () => {
         // TODO_JU This *still* doesn't work properly on first page load
+        // I have a feeling it will go away once I fix the "infinite retries" bug
+        // in the Browse page
         setSessionExpiredPrompt(false);
         const then = `${location.pathname}${location.search}${location.hash}`;
         navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`);
