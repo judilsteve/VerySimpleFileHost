@@ -7,6 +7,13 @@ export interface SelectedPath {
 
 export type SelectedPaths = { [path: string]: SelectedPath };
 
+/**
+ * Is this hook a terrifyingly fragile footgun of labyrinthinecomplexity
+ * and an abject mockery of the core idioms of react? Absolutely.
+ * 
+ * Is the improvement in UI responsiveness worth all the hassle?
+ * You bet your sweet bippy it is.
+ */
 function useSharedSelection(
     selectPath: (path: string, isDirectory: boolean, deselect: () => void) => void,
     deselectPath: (path: string) => void,
