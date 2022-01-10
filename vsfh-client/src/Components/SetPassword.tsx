@@ -23,7 +23,6 @@ const zxcvbnScores: LabelProps[] = [
     },
     {
         color: 'teal',
-        // TODO_JU This overflows on my laptop for some reason
         content: 'Adamantine',
         icon: 'diamond'
     }
@@ -84,8 +83,12 @@ function SetPassword(props: SetPasswordProps) {
 
     return <>
         <Form.Field>
+            {/*
+              * Note: Passing `fluid` to the input prevents it from overflowing the
+              * container on some displays when showing wide labels (e.g. "<>Adamantine")
+              */}
             <Input tabIndex={startTabIndex} disabled={disabled}
-                label={passwordStrengthLabel}
+                label={passwordStrengthLabel} fluid
                 labelPosition="right"
                 icon="key" iconPosition="left"
                 type="password" placeholder={passwordPlaceholder}
