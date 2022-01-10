@@ -164,7 +164,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
         </Modal.Content>
         <Modal.Actions>
             <Button onClick={deleteUser} negative loading={loading}><Icon name="remove user" />Delete</Button>
-            <Button onClick={cancel} secondary diabled={loading}><Icon name="close" />Cancel</Button>
+            <Button onClick={cancel} secondary disabled={loading}><Icon name="close" />Cancel</Button>
         </Modal.Actions>
     </Modal>
 }
@@ -238,6 +238,10 @@ function UserCard(props: UserEditProps) {
         if(isMounted.current) reloadList();
     };
 
+    const submitOnEnter = (e: KeyboardEvent) => {
+        if(e.key === 'Enter' && newFullName) save();
+    };
+
     return <Card>
         <Card.Content>
             <Card.Header>
@@ -252,7 +256,7 @@ function UserCard(props: UserEditProps) {
                 editMode && <>
                     <Form error={!!error} style={{ paddingTop: '1.5rem' }}>
                         <Form.Field>
-                            <Form.Input placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
+                            <Form.Input onKeyDown={submitOnEnter} placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
                         </Form.Field>
                         <Form.Field>
                             <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={_ => setNewIsAdministrator(!newIsAdministrator)} />
@@ -323,6 +327,10 @@ function NewUserCard(props: NewUserCardProps) {
         });
     };
 
+    const submitOnEnter = (e: KeyboardEvent) => {
+        if(e.key === 'Enter' && newUserFullName) add();
+    };
+
     return <Card>
         <Card.Content>
             <Card.Header>
@@ -331,7 +339,7 @@ function NewUserCard(props: NewUserCardProps) {
             </Card.Header>
             <Form error={!!error} style={{ paddingTop: '1.5rem' }}>
                 <Form.Field>
-                    <Form.Input disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
+                    <Form.Input onKeyDown={submitOnEnter} disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
                 </Form.Field>
                 <Form.Field>
                     <Checkbox disabled={loading} label="Admin" checked={newUserIsAdmin} onChange={_ => setNewUserIsAdmin(!newUserIsAdmin)}/>

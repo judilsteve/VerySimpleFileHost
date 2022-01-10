@@ -62,6 +62,25 @@ export interface AuthConfigDto {
 /**
  * 
  * @export
+ * @interface AuthStatusDto
+ */
+export interface AuthStatusDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthStatusDto
+     */
+    userName?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AuthStatusDto
+     */
+    isAdministrator?: boolean;
+}
+/**
+ * 
+ * @export
  * @interface AuthenticationFailureDto
  */
 export interface AuthenticationFailureDto {

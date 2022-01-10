@@ -1,29 +1,63 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useSearchParams } from "react-router-dom";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
-import { AuthenticationFailureDto } from "../API";
+import { AuthenticationFailureDto, AuthStatusDto } from "../API";
 import { routes } from "../App";
 import RememberMe from "../Components/RememberMe";
 import SetPassword from "../Components/SetPassword";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
 import { usePageTitle } from "../Hooks/usePageTitle";
-import { loginApi as api } from '../apiInstances';
+import { loginApi as api, loginApi } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
 import { passwordExpiredPromptState, rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
+import { LoginRouteParameters } from "./Login";
+import CenteredSpinner from "../Components/CenteredSpinner";
 
 export enum ChangePasswordRouteParameters {
     then = 'then'
 };
 
 function ChangePassword() {
-    const [passwordExpiredPrompt, setPasswordExpiredPrompt]
-        = useSharedState(passwordExpiredPromptState);
+    const [passwordExpiredPrompt, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
-    const userName = passwordExpiredPrompt?.userName ?? '';
+    const [userName, setUserName] = useState('');
+
+    const navigate = useNavigate();
+    useEffect(() => {
+        if(passwordExpiredPrompt?.userName) {
+            setUserName(passwordExpiredPrompt?.userName);
+            return;
+        }
+        let cancel = false;
+        (async () => {
+            let authStatus: AuthStatusDto;
+            try {
+                authStatus = await loginApi.apiLoginAuthStatusGet();
+            } catch(e) {
+                const errorResponse = e as Response;
+                if(errorResponse.status === 401) {
+                    const location = window.location;
+                    const then = `${location.pathname}${location.search}${location.hash}`;
+                    if(cancel) return;
+                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
+                } else {
+                    console.error('Unexpected response from auth status endpoint:');
+                    console.error(e);
+                    console.error(await errorResponse.text());
+                    if(cancel) return;
+                    setError('An unexpected error occurred');
+                }
+                return;
+            }
+            if(!cancel) setUserName(authStatus.userName!);
+        })();
+        return () => { cancel = true; };
+    }, [passwordExpiredPrompt, navigate]);
+
     const message = passwordExpiredPrompt?.message ?? '';
 
     usePageTitle('Change Password');
@@ -44,19 +78,6 @@ function ChangePassword() {
 
     const [loading, setLoading] = useState(false);
 
-    const setPasswordProps = {
-        password: newPassword,
-        setPassword: setNewPassword,
-        checkPassword,
-        setCheckPassword,
-        authConfig,
-        passwordPlaceholder: 'New Password',
-        setPasswordValid,
-        startTabIndex: 2,
-        currentPassword,
-        disabled: loading
-    };
-
     const [rememberMe, ] = useSharedState(rememberMeState);
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
@@ -64,7 +85,6 @@ function ChangePassword() {
         disabled: loading
     };
 
-    const navigate = useNavigate();
     const then = useSearchParams()[0].get(ChangePasswordRouteParameters.then);
     const isMounted = useIsMounted();
     const changePassword = async () => {
@@ -104,25 +124,51 @@ function ChangePassword() {
         };
     };
 
-    // TODO_JU Tab indices are wrong now
-    // TODO_JU There is no state variable for user-entered username
+    const setPasswordProps = {
+        password: newPassword,
+        setPassword: setNewPassword,
+        checkPassword,
+        setCheckPassword,
+        authConfig,
+        passwordPlaceholder: 'New Password',
+        setPasswordValid,
+        startTabIndex: 2,
+        currentPassword,
+        disabled: loading,
+        trySubmit: () => {
+            if(passwordValid) changePassword();
+        }
+    };
+
+    if(!userName) return <CenteredSpinner />;
+
     return <SkinnyForm width={350}>
         <Header as="h1" style={{ marginBottom: 0 }}>Change Password<ThemeRule /></Header>
         {
             message && <p><em>{message}</em></p>
         }
-        <Form>
+        <Form error={!!error}>
             <Form.Field>
-                <Input icon="user" iconPosition="left" placeholder="Username" value={userName} disabled={!!passwordExpiredPrompt} />
+                <Input icon="user" iconPosition="left" placeholder="Username"
+                    value={userName} disabled={true} />
             </Form.Field>
             <Form.Field>
-                <Input autoFocus disabled={loading} icon="key" iconPosition="left" placeholder="Current Password" value={userName} type="password" tabIndex={1} />
+                <Input autoFocus disabled={loading}
+                    icon="key" iconPosition="left"
+                    placeholder="Current Password"
+                    value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
+                    type="password" tabIndex={1} />
             </Form.Field>
             <SetPassword {...setPasswordProps}/>
             <Message error header="Change Password Failed" content={error} />
             <Form.Field>
                 <RememberMe {...rememberMeProps} />
-                <Button tabIndex={4} primary type="button" floated="right" onClick={changePassword} disabled={!passwordValid} loading={loading}>Change Password</Button>
+                <Button tabIndex={4}
+                    primary type="button"
+                    floated="right" onClick={changePassword}
+                    disabled={!passwordValid} loading={loading}>
+                    Change Password
+                </Button>
             </Form.Field>
         </Form>
     </SkinnyForm>

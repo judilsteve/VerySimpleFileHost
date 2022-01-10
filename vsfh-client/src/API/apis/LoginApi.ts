@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import {
     AcceptInviteDto,
     AuthConfigDto,
+    AuthStatusDto,
     AuthenticationFailureDto,
     ChangePasswordAttemptDto,
     LoginAttemptDto,
@@ -67,30 +68,6 @@ export class LoginApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiLoginAdminStatusGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<boolean>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/api/Login/AdminStatus`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.TextApiResponse(response) as any;
-    }
-
-    /**
-     */
-    async apiLoginAdminStatusGet(initOverrides?: RequestInit): Promise<boolean> {
-        const response = await this.apiLoginAdminStatusGetRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
     async apiLoginAuthConfigGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<AuthConfigDto>> {
         const queryParameters: any = {};
 
@@ -110,6 +87,30 @@ export class LoginApi extends runtime.BaseAPI {
      */
     async apiLoginAuthConfigGet(initOverrides?: RequestInit): Promise<AuthConfigDto> {
         const response = await this.apiLoginAuthConfigGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async apiLoginAuthStatusGetRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<AuthStatusDto>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/Login/AuthStatus`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response);
+    }
+
+    /**
+     */
+    async apiLoginAuthStatusGet(initOverrides?: RequestInit): Promise<AuthStatusDto> {
+        const response = await this.apiLoginAuthStatusGetRaw(initOverrides);
         return await response.value();
     }
 

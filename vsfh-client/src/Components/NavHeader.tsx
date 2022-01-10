@@ -42,7 +42,7 @@ const routeLinks: RouteLink[] = [
     }
 ];
 
-const getAdminStatus = () => loginApi.apiLoginAdminStatusGet();
+const getAuthStatus = () => loginApi.apiLoginAuthStatusGet();
 const handleError = async (e: any) => {
     const response = e as Response;
     console.error('Unexpected response from admin status endpoint:');
@@ -57,7 +57,8 @@ function NavHeader(props: NavHeaderProps) {
 
     const [loggingOut, setLoggingOut] = useState(false);
 
-    const [isAdmin, , ] = useEndpointData(getAdminStatus, handleError);
+    const [authStatus, , ] = useEndpointData(getAuthStatus, handleError);
+    const { isAdministrator } = authStatus ?? { isAdministrator: false };
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -83,8 +84,8 @@ function NavHeader(props: NavHeaderProps) {
     const { pathname } = useLocation();
     const links = useMemo(() => routeLinks
         .filter(r => r.route !== pathname)
-        .filter(r => isAdmin || !r.adminOnly)
-    , [isAdmin, pathname]);
+        .filter(r => isAdministrator || !r.adminOnly)
+    , [isAdministrator, pathname]);
 
     const linkIcons = links.map(l => {
         const iconLink = <Link to={l.route}>

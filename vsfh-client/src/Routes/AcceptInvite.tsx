@@ -92,7 +92,10 @@ function AcceptInvite() {
         passwordPlaceholder: 'Password',
         setPasswordValid,
         startTabIndex: 2,
-        disabled: loading
+        disabled: loading,
+        trySubmit: () => {
+            if(canActivate) activateAccount();
+        }
     };
 
     return <SkinnyForm width={350}>

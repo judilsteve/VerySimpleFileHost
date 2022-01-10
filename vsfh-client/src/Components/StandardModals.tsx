@@ -1,5 +1,5 @@
 import { useLocation } from "react-router";
-import { useNavigate } from "react-router";
+import { Link } from "react-router-dom";
 import { Modal, Button, Icon } from "semantic-ui-react";
 import { routes } from "../App";
 import { useSharedState } from "../Hooks/useSharedState";
@@ -8,18 +8,11 @@ import { LoginRouteParameters } from "../Routes/Login";
 import { sessionExpiredPromptState, passwordExpiredPromptState } from "../State/sharedState";
 
 function SessionExpiredModal() {
-    const navigate = useNavigate();
     const location = useLocation();
     const [sessionExpiredPrompt, setSessionExpiredPrompt] = useSharedState(sessionExpiredPromptState);
 
-    const logIn = () => {
-        // TODO_JU This *still* doesn't work properly on first page load
-        // I have a feeling it will go away once I fix the "infinite retries" bug
-        // in the Browse page
-        setSessionExpiredPrompt(false);
-        const then = `${location.pathname}${location.search}${location.hash}`;
-        navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`);
-    }
+    const then = `${location.pathname}${location.search}${location.hash}`;
+    const loginRoute = `${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={sessionExpiredPrompt} onClose={() => setSessionExpiredPrompt(false)}>
         <Modal.Header>Session Expired</Modal.Header>
@@ -27,22 +20,19 @@ function SessionExpiredModal() {
             <p>Log in again to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <Button onClick={logIn} primary ><Icon name="sign-in" />Log In</Button>
+            <Link to={loginRoute}>
+                <Button primary ><Icon name="sign-in" />Log In</Button>
+            </Link>
         </Modal.Actions>
     </Modal>;
 }
 
 function PasswordExpiredModal() {
-    const navigate = useNavigate();
     const location = useLocation();
     const [passwordExpiredPrompt, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
-    const changePassword = () => {
-        setPasswordExpiredPrompt(null);
-        const then = `${location.pathname}${location.search}${location.hash}`;
-        navigate(`${routes.changePassword}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`,
-            { state: { passwordExpiredPrompt }});
-    };
+    const then = `${location.pathname}${location.search}${location.hash}`;
+    const changePasswordRoute = `${routes.changePassword}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={!!passwordExpiredPrompt} onClose={() => setPasswordExpiredPrompt(null)}>
         <Modal.Header>Password Expired</Modal.Header>
@@ -50,7 +40,9 @@ function PasswordExpiredModal() {
             <p>Change your password to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <Button onClick={changePassword} primary ><Icon name="key" />Change Password</Button>
+            <Link to={changePasswordRoute}>
+                <Button primary ><Icon name="key" />Change Password</Button>
+            </Link>
         </Modal.Actions>
     </Modal>;
 }

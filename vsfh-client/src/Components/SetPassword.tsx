@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { Form, Input } from "semantic-ui-react";
+import { Form, Input, LabelProps } from "semantic-ui-react";
 import zxcvbn from "zxcvbn";
 import { AuthConfigDto } from "../API";
 import ErrorText from "./ErrorText";
 
-const zxcvbnScores = [
+const zxcvbnScores: LabelProps[] = [
     {
         color: 'brown',
         content: 'Catastrophic'
@@ -40,6 +40,7 @@ export interface SetPasswordProps {
     startTabIndex: number;
     currentPassword?: string;
     disabled: boolean;
+    trySubmit: () => void;
 }
 
 function SetPassword(props: SetPasswordProps) {
@@ -51,7 +52,8 @@ function SetPassword(props: SetPasswordProps) {
         setPasswordValid,
         startTabIndex,
         currentPassword,
-        disabled
+        disabled,
+        trySubmit
     } = props;
 
     const passwordsMatch = password === checkPassword;
@@ -72,20 +74,38 @@ function SetPassword(props: SetPasswordProps) {
         setPasswordValid(passwordValid)
     }, [passwordValid, setPasswordValid]);
 
+    const submitOnEnter = (e: KeyboardEvent) => {
+        if(e.key === 'Enter') trySubmit();
+    };
+
+    const passwordStrengthLabel = passwordStrength
+        ? zxcvbnScores[passwordStrength.score]
+        : null;
+
     return <>
         <Form.Field>
-            <Input tabIndex={startTabIndex} diabled={disabled}
-                action={passwordStrength ? zxcvbnScores[passwordStrength.score] : null} 
+            <Input tabIndex={startTabIndex} disabled={disabled}
+                label={passwordStrengthLabel}
+                labelPosition="right"
                 icon="key" iconPosition="left"
                 type="password" placeholder={passwordPlaceholder}
-                value={password} onChange={e => setPassword(e.target.value)}/>
+                value={password} onChange={e => setPassword(e.target.value)} />
             {passwordIsSame && <ErrorText>New password cannot be the same as current password</ErrorText>}
             {passwordTooWeak && <ErrorText>{`Password strength must be at least '${zxcvbnScores[authConfig.minimumPasswordScore!].content}'`}</ErrorText>}
             {passwordStrength?.feedback.warning && <p><em>{passwordStrength.feedback.warning}</em></p>}
-            {passwordStrength?.feedback.suggestions && passwordStrength.feedback.suggestions.map(s => <p><em>{s}</em></p>)}
+            {passwordStrength?.feedback.suggestions && passwordStrength.feedback.suggestions.map(s => <p key={s}><em>{s}</em></p>)}
         </Form.Field>
         <Form.Field>
-            <Input tabIndex={startTabIndex + 1} diabled={disabled} icon="key" iconPosition="left" type="password" placeholder="Confirm" value={checkPassword} onChange={e => setCheckPassword(e.target.value)} />
+            <Input
+                tabIndex={startTabIndex + 1}
+                onKeyUp={submitOnEnter}
+                disabled={disabled}
+                icon="key"
+                iconPosition="left"
+                type="password"
+                placeholder="Confirm"
+                value={checkPassword}
+                onChange={e => setCheckPassword(e.target.value)} />
             {checkPassword && !passwordsMatch && <ErrorText>Passwords do not match</ErrorText>}
         </Form.Field>
     </>;

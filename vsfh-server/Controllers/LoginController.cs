@@ -246,9 +246,19 @@ public class LoginController : ControllerBase
         AllowRememberMe = config.AllowRememberMe
     };
 
+    public class AuthStatusDto
+    {
+        public string UserName { get; init; } = null!;
+        public bool IsAdministrator { get; init; }
+    }
+
     [HttpGet]
-    public Task<bool> AdminStatus() => context.Users
+    public Task<AuthStatusDto> AuthStatus() => context.Users
         .Where(u => u.Id == Guid.Parse(HttpContext.User.Identity!.Name!))
-        .Select(u => u.IsAdministrator)
+        .Select(u => new AuthStatusDto
+        {
+            UserName = u.LoginName!,
+            IsAdministrator = u.IsAdministrator
+        })
         .SingleAsync();
 }

@@ -1,3 +1,7 @@
 /*******************************
          Site Overrides
 *******************************/
+
+.right.labeled.input .label {
+  border-radius: 0px @borderRadius @borderRadius 0px;
+}

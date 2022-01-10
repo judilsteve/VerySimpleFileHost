@@ -11,7 +11,7 @@ import { usePageTitle } from "../Hooks/usePageTitle";
 import { ChangePasswordRouteParameters } from "./ChangePassword";
 import { loginApi as api } from "../apiInstances";
 import { useSharedState } from "../Hooks/useSharedState";
-import { passwordExpiredPromptState, rememberMeState } from "../State/sharedState";
+import { passwordExpiredPromptState, rememberMeState, sessionExpiredPromptState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
 
@@ -28,8 +28,6 @@ function Login() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
-    const [, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
     const navigate = useNavigate();
     const then = useSearchParams()[0].get(LoginRouteParameters.then);
@@ -56,7 +54,7 @@ function Login() {
                 const reasonCode = responseObject.reasonCode;
                 if(!isMounted.current) return;
                 if(reasonCode === AuthenticationFailureReasonCode.PasswordExpired) {
-                    setPasswordExpiredPrompt({
+                    passwordExpiredPromptState.setValue({
                         message: responseObject.reason!,
                         userName: userName
                     });
@@ -73,6 +71,7 @@ function Login() {
                 setPassword('');
             }
         }
+        sessionExpiredPromptState.setValue(false);
         if(isMounted.current) navigate(then ?? routes.browseFiles);
     };
 
@@ -91,10 +90,8 @@ function Login() {
         disabled: loading
     };
 
-    // TODO_JU Do this for other forms:
-    // Set password, add user, edit user, accept invite
     const submitOnEnter = (e: KeyboardEvent) => {
-        if(e.key === 'Enter') login();
+        if(e.key === 'Enter' && userName && password) login();
     };
 
     return <SkinnyForm>
@@ -113,7 +110,7 @@ function Login() {
                     placeholder="Password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    onKeyUp={(e: KeyboardEvent) => submitOnEnter(e)} />
+                    onKeyDown={submitOnEnter} />
             </Form.Field>
             <Message error header="Login Failed" content={error} />
             <Form.Field>

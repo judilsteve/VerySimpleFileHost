@@ -10,7 +10,7 @@ function NotFound() {
 
     return <SkinnyForm>
         <Header as="h1">Wrong Turn<ThemeRule /></Header>
-        <p>Could not find the requested page</p>
+        <p>The requested page could not be found</p>
         <Link to={routes.browseFiles}>
             <Icon link name="home" size="large" style={{float: 'right'}} />
         </Link>
