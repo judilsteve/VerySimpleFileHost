@@ -8,7 +8,7 @@ export interface SelectedPath {
 export type SelectedPaths = { [path: string]: SelectedPath };
 
 /**
- * Is this hook a terrifyingly fragile footgun of labyrinthinecomplexity
+ * Is this hook a terrifyingly fragile footgun of labyrinthine complexity
  * and an abject mockery of the core idioms of react? Absolutely.
  * 
  * Is the improvement in UI responsiveness worth all the hassle?
