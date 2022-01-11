@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
@@ -52,7 +52,7 @@ function NavHeader(props: NavHeaderProps) {
 
     const [loggingOut, setLoggingOut] = useState(false);
 
-    const [authStatus, , ] = useEndpointData(getAuthStatus, async e => printResponseError(e, 'auth status'));
+    const [authStatus, , ] = useEndpointData(getAuthStatus, useCallback(async e => printResponseError(e, 'auth status'), []));
     const { isAdministrator } = authStatus ?? { isAdministrator: false };
 
     const [loading, setLoading] = useState(false);
