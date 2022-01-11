@@ -127,16 +127,7 @@ function Directory(props: DirectoryProps) {
         }
     }, [expand, parsedHash, path]);
 
-    const collapse = () => {
-        if(loading || !expanded) return;
-        onCollapse(path);
-        if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
-    };
-
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
-
-    const hashLink = `#${path}`;
-    const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
 
     const fileNodes = useMemo(() => {
         const fileNodes = [];
@@ -176,22 +167,35 @@ function Directory(props: DirectoryProps) {
             />);
     }
 
+    const thisNode = useMemo(() => {
+        const collapse = () => {
+            if(loading || !expanded) return;
+            onCollapse(path);
+            if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
+        };
+
+        const hashLink = `#${path}`;
+        const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
+
+        return <div className={`${treeNodeClassName} ${pathClassName}`}>
+            <Checkbox
+                className={smallClassName}
+                disabled={parentSelected}
+                checked={selected || parentSelected}
+                onChange={toggleSelect} />
+            <div className={hashAnchorClassName} id={path}></div>
+            <span className={directoryNodeClassName} onClick={expanded ? collapse : expand}>
+                <Icon name={expanded || loading ? 'folder open' : 'folder'} />
+                {displayName}&nbsp;
+            </span>
+            <IconLink className={showOnNodeHoverClassName} name="download" href={downloadLink} />
+            <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
+        </div>;
+    }, [displayName, expanded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, parsedHash, archiveFormat]);
+
     return <div>
         <List.Item>
-            <div className={`${treeNodeClassName} ${pathClassName}`}>
-                <Checkbox
-                    className={smallClassName}
-                    disabled={parentSelected}
-                    checked={selected || parentSelected}
-                    onChange={toggleSelect} />
-                <div className={hashAnchorClassName} id={path}></div>
-                <span className={directoryNodeClassName} onClick={expanded ? collapse : expand}>
-                    <Icon name={expanded || loading ? 'folder open' : 'folder'} />
-                    {displayName}&nbsp;
-                </span>
-                <IconLink className={showOnNodeHoverClassName} name="download" href={downloadLink} />
-                <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
-            </div>
+            { thisNode }
             {
                 (!expanded && !loading) ? <></> : <List.List>
                     {loading ? <Loader indeterminate active inline size="tiny" /> : <>
