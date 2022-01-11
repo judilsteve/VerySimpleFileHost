@@ -6,7 +6,7 @@ import CenteredSpinner from "../../Components/CenteredSpinner";
 import useEndpointData from "../../Hooks/useEndpointData";
 import { usePageTitle } from "../../Hooks/usePageTitle";
 import NavHeader from "../../Components/NavHeader";
-import tryHandleError from "../../Utils/tryHandleError";
+import tryHandleError, { printResponseError } from "../../Utils/tryHandleError";
 import { useIsMounted } from "../../Hooks/useIsMounted";
 
 const api = new UsersApi(apiConfig);
@@ -85,9 +85,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
-                    console.error('Unexpected response from reset password endpoint:');
-                    console.error(e);
-                    console.error(await errorResponse.text());
+                    await printResponseError(e as Response, 'reset password');
                     newError = 'An unexpected error occurred';
                 }
                 if(isMounted.current) setError(newError);
@@ -142,9 +140,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
-                    console.error('Unexpected response from delete user endpoint:');
-                    console.error(e);
-                    console.error(await errorResponse.text());
+                    await printResponseError(e as Response, 'delete user');
                     newError = 'An unexpected error occurred';
                 }
                 if(isMounted.current) setError(newError);
@@ -224,9 +220,7 @@ function UserCard(props: UserEditProps) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
-                    console.error('Unexpected response from edit user endpoint:');
-                    console.error(e);
-                    console.error(await errorResponse.text());
+                    await printResponseError(e as Response, 'edit user');
                     newError = 'An unexpected error occurred';
                 }
                 if(isMounted.current) setError(newError);
@@ -311,9 +305,7 @@ function NewUserCard(props: NewUserCardProps) {
         } catch(e) {
             const errorResponse = e as Response;
             if(!await tryHandleError(errorResponse)) {
-                console.error('Unexpected response from add user endpoint:');
-                console.error(e);
-                console.error(await errorResponse.text());
+                await printResponseError(e as Response, 'add user');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
             return;
@@ -371,9 +363,7 @@ function ManageUsers() {
             const response = e as Response;
             if(await tryHandleError(response)) return;
             else {
-                console.error('Unexpected response from user listing endpoint:');
-                console.error(e);
-                console.error(await response.text());
+                await printResponseError(e as Response, 'user listing');
                 setListingError(true);
             }
         }, []));

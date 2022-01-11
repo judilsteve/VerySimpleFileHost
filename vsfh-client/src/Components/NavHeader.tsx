@@ -7,6 +7,7 @@ import { loginApi } from "../apiInstances";
 import { routes } from "../App";
 import useEndpointData from "../Hooks/useEndpointData";
 import { useIsMounted } from "../Hooks/useIsMounted";
+import { printResponseError } from "../Utils/tryHandleError";
 import StandardModals from "./StandardModals";
 import ThemeRule from "./ThemeRule";
 
@@ -43,12 +44,6 @@ const routeLinks: RouteLink[] = [
 ];
 
 const getAuthStatus = () => loginApi.apiLoginAuthStatusGet();
-const handleError = async (e: any) => {
-    const response = e as Response;
-    console.error('Unexpected response from admin status endpoint:');
-    console.error(response);
-    console.error(await response.text());
-};
 
 function NavHeader(props: NavHeaderProps) {
     const { pageTitle } = props;
@@ -57,7 +52,7 @@ function NavHeader(props: NavHeaderProps) {
 
     const [loggingOut, setLoggingOut] = useState(false);
 
-    const [authStatus, , ] = useEndpointData(getAuthStatus, handleError);
+    const [authStatus, , ] = useEndpointData(getAuthStatus, async e => printResponseError(e, 'auth status'));
     const { isAdministrator } = authStatus ?? { isAdministrator: false };
 
     const [loading, setLoading] = useState(false);
@@ -71,10 +66,7 @@ function NavHeader(props: NavHeaderProps) {
         try {
             await loginApi.apiLoginLogoutPost();
         } catch(e) {
-            const response = e as Response;
-            console.error('Unexpected response from logout endpoint:');
-            console.error(e);
-            console.error(await response.text());
+            await printResponseError(e as Response, 'logout');
             if(isMounted.current) setError('An unexpected error occurred');
             return;
         }

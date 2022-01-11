@@ -1,6 +1,12 @@
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
 import { passwordExpiredPromptState, sessionExpiredPromptState, unauthorisedBlockState } from "../State/sharedState";
 
+export async function printResponseError(e: Response, endpointName: string) {
+    console.error(`Unexpected response from ${endpointName} endpoint`);
+    console.error(e);
+    console.error(await e.text());
+}
+
 async function tryHandleError(e: Response) {
     if(e.status === 401) {
         let responseObject: AuthenticationFailureDto;

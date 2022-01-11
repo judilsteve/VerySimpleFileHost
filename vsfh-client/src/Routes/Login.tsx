@@ -14,6 +14,7 @@ import { useSharedState } from "../Hooks/useSharedState";
 import { passwordExpiredPromptState, rememberMeState, sessionExpiredPromptState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
+import { printResponseError } from "../Utils/tryHandleError";
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -45,9 +46,7 @@ function Login() {
         } catch(e) {
             const response = e as Response;
             if(response.status !== 401) {
-                console.error('Unexpected response from login endpoint:');
-                console.error(response);
-                console.error(await response.text());
+                await printResponseError(e as Response, 'login');
                 if(isMounted.current) setError('An unexpected error occurred');
             } else {
                 const responseObject: AuthenticationFailureDto = await response.json();
@@ -78,9 +77,7 @@ function Login() {
     const [authConfig, ] = useEndpointData(
         useCallback(() => api.apiLoginAuthConfigGet(), []),
         useCallback(async e => {
-            console.error('Unexpected response from auth config endpoint:');
-            console.error(e);
-            console.error(await e.text());
+            await printResponseError(e as Response, 'auth config');
             setError('An unexpected error occurred');
     }, []));
 

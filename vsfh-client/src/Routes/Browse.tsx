@@ -14,7 +14,7 @@ import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
 import tryHandleError from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
-import useSharedSelection, { SelectedPaths } from '../Hooks/useSharedSelection';
+import { SelectedPaths, useSharedSelection, useSharedSelectionSource } from '../Hooks/useSharedSelection';
 
 const api = new FilesApi(apiConfig);
 
@@ -133,7 +133,7 @@ function Directory(props: DirectoryProps) {
         if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
     };
 
-    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
+    const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
 
     const hashLink = `#${path}`;
     const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
@@ -273,7 +273,7 @@ function File(props: FileProps) {
         }
     }, [hash, path]);
 
-    const [selected, toggleSelect] = useSharedSelection(selectPath, deselectPath, selectedPaths, path, false);
+    const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, false);
 
     return <div>
         <List.Item className={`${treeNodeClassName} ${pathClassName}`}>
@@ -357,46 +357,13 @@ function Browse() {
 
     const stickyRef = useRef(null);
 
-    const [selectedPaths, setSelectedPaths] = useState<SelectedPaths>({});
-    // Provides child components access to the selected path set
-    // without causing them to re-render every time it changes
-    const selectedPathsRef = useRef(selectedPaths);
-    const selectPath = useCallback((path: string, isDirectory: boolean, deselect: () => void) =>
-        setSelectedPaths(paths => {
-            const newPaths: SelectedPaths = {};
-            const testPath = `${path}/`
-            for(const oldPath in paths) {
-                // Skip any sub-paths of the path being added,
-                // since they will now be captured implicitly by their parent
-                if(!oldPath.startsWith(testPath))
-                    newPaths[oldPath] = paths[oldPath];
-                else {
-                    // Call the deselect handler to update the checkbox's local state
-                    paths[oldPath].deselect?.();
-                }
-            }
-            newPaths[path] = { isDirectory, deselect };
-            selectedPathsRef.current = newPaths;
-            return newPaths;
-    }), []);
-    const deselectPath = useCallback((path: string) => setSelectedPaths(paths => {
-        const newPaths: SelectedPaths = {};
-        for(const oldPath in paths) {
-            if(oldPath !== path)
-                newPaths[oldPath] = paths[oldPath];
-        }
-        paths[path].deselect?.();
-        selectedPathsRef.current = newPaths;
-        return newPaths;
-    }), []);
-    const clearPaths = useCallback(() => setSelectedPaths(paths => {
-        for(const path of Object.values(paths)) {
-            path.deselect?.();
-        }
-        const newPaths = {};
-        selectedPathsRef.current = newPaths;
-        return newPaths;
-    }), []);
+    const {
+        selectedPaths,
+        selectedPathsRef,
+        selectPath,
+        deselectPath,
+        clearPaths
+    } = useSharedSelectionSource();
 
     const selectedPathsArray = Object.keys(selectedPaths);
 

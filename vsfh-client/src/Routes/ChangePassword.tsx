@@ -16,6 +16,7 @@ import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { LoginRouteParameters } from "./Login";
 import CenteredSpinner from "../Components/CenteredSpinner";
+import { printResponseError } from "../Utils/tryHandleError";
 
 export enum ChangePasswordRouteParameters {
     then = 'then'
@@ -45,9 +46,7 @@ function ChangePassword() {
                     if(cancel) return;
                     navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
                 } else {
-                    console.error('Unexpected response from auth status endpoint:');
-                    console.error(e);
-                    console.error(await errorResponse.text());
+                    await printResponseError(e as Response, 'auth status');
                     if(cancel) return;
                     setError('An unexpected error occurred');
                 }
@@ -70,9 +69,7 @@ function ChangePassword() {
     const [authConfig, ] = useEndpointData(
         useCallback(() => api.apiLoginAuthConfigGet(), []),
         useCallback(async e => {
-            console.error('Unexpected response from auth config endpoint:');
-            console.error(e);
-            console.error(await e.text());
+            await printResponseError(e as Response, 'auth config');
             setError('An unexpected error occurred');
     }, []));
 
@@ -101,9 +98,7 @@ function ChangePassword() {
         } catch(e) {
             const response = e as Response;
             if(response.status !== 401) {
-                console.error('Unexpected response from login endpoint:');
-                console.error(response);
-                console.error(await response.text());
+                await printResponseError(e as Response, 'change password');
                 if(isMounted.current) setError('An unexpected error occurred');
             } else {
                 const responseObject: AuthenticationFailureDto = await response.json();

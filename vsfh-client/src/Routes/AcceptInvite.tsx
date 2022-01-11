@@ -14,6 +14,7 @@ import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
+import { printResponseError } from "../Utils/tryHandleError";
 
 function AcceptInvite() {
     usePageTitle('Accept Invite');
@@ -49,9 +50,7 @@ function AcceptInvite() {
             } else if(response.status === 400) {
                 if(isMounted.current) setError(`A user with the name '${userName}' already exists`)
             } else {
-                console.error('Unexpected response from login endpoint:');
-                console.error(response);
-                console.error(await response.text());
+                await printResponseError(e as Response, 'accept invite')
                 if(isMounted.current) setError('An unexpected error occurred');
             }
             return;
@@ -68,9 +67,7 @@ function AcceptInvite() {
     const [authConfig, ] = useEndpointData(
         useCallback(() => api.apiLoginAuthConfigGet(), []),
         useCallback(async e => {
-            console.error('Unexpected response from auth config endpoint:');
-            console.error(e);
-            console.error(await e.text());
+            await printResponseError(e as Response, 'auth config');
             setError('An unexpected error occurred');
         }, []));
 
