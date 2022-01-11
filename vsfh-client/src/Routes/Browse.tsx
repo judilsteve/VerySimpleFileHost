@@ -97,8 +97,17 @@ function Directory(props: DirectoryProps) {
     // TODO_JU If this throws then it immediately starts again
     // TODO_JU Clicking root node results in 2 requests for some reason
     // TODO_JU Cannot collapse highlighted node
+
+    // Plan to yeet all this and fix about 8 bugs at once:
+    // Boolean state variable in Browse() for navigatingToHash
+    // An effect in Browse sets it to true whenever the hash changes
+    //  - This turns on the dimmer
+    // Effect in directory/file that triggers on hash change
+    //  - If the node path is the hash, turn off dimmer and set hash to itself to trigger scroll/highlight
+    //  - If the node path is a prefix of the hash, expand
+    //  - Once expanded, if none of the children match the hash, call setNavigateToHashFailed (provided by Browse)
     const expand = useCallback(async () => {
-        if(loading || expanded) return;
+        if(loading || expanded) return; // I think all we need to do is pull this line out into a different callback to use for the onClick
         setLoading(true);
         let newTree;
         try {
