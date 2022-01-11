@@ -99,15 +99,18 @@ function Directory(props: DirectoryProps) {
     // TODO_JU Cannot collapse highlighted node
 
     // Plan to yeet all this and fix about 8 bugs at once:
-    // Boolean state variable in Browse() for navigatingToHash
-    // An effect in Browse sets it to true whenever the hash changes
+    // Boolean ref variable in Browse() for navigatedToHash
+    // An effect in Browse sets it to false whenever the hash changes
     //  - This turns on the dimmer
     // Effect in directory/file that triggers on hash change
-    //  - If the node path is the hash, turn off dimmer and set hash to itself to trigger scroll/highlight
+    //  - If navigatedToHash.current === true, bail
+    //  - If the node path is the hash:
+    //      - turn off dimmer
+    //      - set navigatedToHash = true
+    //      - set hash to itself to trigger scroll/highlight
     //  - If the node path is a prefix of the hash, expand
-    //  - Once expanded, if none of the children match the hash, call setNavigateToHashFailed (provided by Browse)
+    //       - Once expanded, if none of the children match the hash, call setNavigateToHashFailed (provided by Browse)
     const expand = useCallback(async () => {
-        if(loading || expanded) return; // I think all we need to do is pull this line out into a different callback to use for the onClick
         setLoading(true);
         let newTree;
         try {
@@ -121,11 +124,11 @@ function Directory(props: DirectoryProps) {
             if(isMounted.current) setLoading(false);
         }
         if(isMounted.current) onExpand(newTree, path);
-    }, [loading, expanded, isMounted, onExpand, path]);
+    }, [isMounted, onExpand, path]);
 
     const { hash } = useLocation();
     const parsedHash = decodeURIComponent(hash).substring(1);
-    useEffect(() => {
+    useEffect(() => { // TODO_JU This now causes the tree to refresh when the path changes
         if(!path || parsedHash.startsWith(`${path}/`)) {
             expand();
         } else if (parsedHash === path) {
@@ -177,7 +180,12 @@ function Directory(props: DirectoryProps) {
     }
 
     const thisNode = useMemo(() => {
-        const collapse = () => {
+        const tryExpand = async () => {
+            if(loading || expanded) return;
+            await expand();
+        }
+
+        const tryCollapse = () => {
             if(loading || !expanded) return;
             onCollapse(path);
             if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
@@ -193,7 +201,7 @@ function Directory(props: DirectoryProps) {
                 checked={selected || parentSelected}
                 onChange={toggleSelect} />
             <div className={hashAnchorClassName} id={path}></div>
-            <span className={directoryNodeClassName} onClick={expanded ? collapse : expand}>
+            <span className={directoryNodeClassName} onClick={expanded ? tryCollapse : tryExpand}>
                 <Icon name={expanded || loading ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
