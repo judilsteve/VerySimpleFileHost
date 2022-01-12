@@ -28,6 +28,7 @@ const hashAnchorClassName = "hash-anchor";
 const smallClassName = "small";
 const fileSizeClassName = "file-size";
 const directoryNodeClassName = "directory-node";
+const emptyListPlaceholderClassName = "empty-list-placeholder";
 
 function log(value: number, base: number): number {
     return Math.log(value) / Math.log(base);
@@ -210,19 +211,27 @@ function Directory(props: DirectoryProps) {
         </div>;
     }, [displayName, expanded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, parsedHash, archiveFormat]);
 
-    return <div>
-        <List.Item>
-            { thisNode }
-            {
-                (!expanded && !loading) ? <></> : <List.List>
-                    {loading ? <Loader indeterminate active inline size="tiny" /> : <>
-                        {directoryNodes}
-                        {fileNodes}
-                    </>}
-                </List.List>
-            }
-        </List.Item>
-    </div>;
+    return <List.Item>
+        { thisNode }
+        {
+            (!expanded && !loading) ? <></> : <List.List>
+                {loading ? <Loader indeterminate active inline size="tiny" /> : <>
+                    {directoryNodes}
+                    {fileNodes}
+                    {
+                        !directoryNodes.length && !fileNodes.length &&
+                        <List.Item className={emptyListPlaceholderClassName}>
+                            {
+                                !!(tree.files!.length + tree.subdirectories!.length)
+                                ? 'No matches'
+                                : 'Empty'
+                            }
+                        </List.Item>
+                    }
+                </>}
+            </List.List>
+        }
+    </List.Item>;
 }
 
 interface SneakyLinkProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
@@ -296,24 +305,22 @@ function File(props: FileProps) {
 
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, false);
 
-    return <div>
-        <List.Item className={`${treeNodeClassName} ${pathClassName}`}>
-            <Checkbox
-                className={smallClassName}
-                disabled={parentSelected}
-                checked={selected || parentSelected}
-                onChange={toggleSelect} />
-            <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
-                <div className={hashAnchorClassName} id={path}></div>
-                <span>
-                    <Icon name="file" />
-                    {displayName}&nbsp;
-                </span>
-            </SneakyLink>
-            <span className={fileSizeClassName} >({humaniseBytes(sizeBytes)})&nbsp;</span>
-            <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
-        </List.Item>
-    </div>;
+    return <List.Item className={`${treeNodeClassName} ${pathClassName}`}>
+        <Checkbox
+            className={smallClassName}
+            disabled={parentSelected}
+            checked={selected || parentSelected}
+            onChange={toggleSelect} />
+        <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
+            <div className={hashAnchorClassName} id={path}></div>
+            <span>
+                <Icon name="file" />
+                {displayName}&nbsp;
+            </span>
+        </SneakyLink>
+        <span className={fileSizeClassName} >({humaniseBytes(sizeBytes)})&nbsp;</span>
+        <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
+    </List.Item>;
 }
 
 type Directories = { [path: string]: DirectoryDto };
