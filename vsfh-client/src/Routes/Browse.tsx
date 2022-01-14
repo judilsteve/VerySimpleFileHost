@@ -348,8 +348,8 @@ function Browse() {
             setNavigatedToHash(false);
         }
     }, []);
-    // TODO_JU Not even sure this needs to be a ref
-    // Maybe we just pass down navigatedToHash
+    // TODO_JU Not even sure this needs to be a ref; maybe we just pass down navigatedToHash
+    // TODO_JU Need to check for and handle the case where the hash cannot be found
     const navigatedToHashRef = useRef(false);
     const onFoundHash = useCallback(() => {
         setNavigatedToHash(true);
