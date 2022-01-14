@@ -1,7 +1,13 @@
 import { Dimmer, Loader } from 'semantic-ui-react'
 
-function CenteredSpinner() {
-    return <Dimmer active>
+export interface CenteredSpinnerProps {
+    active?: boolean;
+}
+
+function CenteredSpinner(props: CenteredSpinnerProps) {
+    const active = props.active ?? true;
+
+    return <Dimmer active={active}>
         <Loader indeterminate />
     </Dimmer>;
 }

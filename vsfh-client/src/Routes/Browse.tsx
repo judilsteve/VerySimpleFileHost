@@ -1,6 +1,6 @@
 import './Browse.less';
 
-import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject, MutableRefObject } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
 import { useLocation } from "react-router";
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
@@ -15,6 +15,7 @@ import { archiveFormatState } from "../State/sharedState";
 import tryHandleError from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
 import { SelectedPaths, useSharedSelection, useSharedSelectionSource } from '../Hooks/useSharedSelection';
+import CenteredSpinner from '../Components/CenteredSpinner';
 
 const api = new FilesApi(apiConfig);
 
@@ -25,6 +26,7 @@ const treeNodeClassName = "tree-node";
 const showOnNodeHoverClassName = "show-on-node-hover";
 const pathClassName = "path";
 const hashAnchorClassName = "hash-anchor";
+const hashAnchorNodeClassName = "hash-anchor-node";
 const smallClassName = "small";
 const fileSizeClassName = "file-size";
 const directoryNodeClassName = "directory-node";
@@ -73,7 +75,8 @@ interface DirectoryProps {
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
     onCollapse: (prefix: string) => void;
-    navigatedToHash: MutableRefObject<boolean>;
+    navigatedToHash: RefObject<boolean>;
+    onFoundHash: () => void;
 }
 
 function Directory(props: DirectoryProps) {
@@ -89,14 +92,14 @@ function Directory(props: DirectoryProps) {
         visiblePaths,
         onExpand,
         onCollapse,
-        navigatedToHash
+        navigatedToHash,
+        onFoundHash
     } = props;
 
     const tree = expandedDirectories[path];
     const loaded = !!tree;
     const [loading, setLoading] = useState(false);
     const isMounted = useIsMounted();
-    // TODO_JU If this throws then it immediately starts again - maybe fixed?
     const expand = useCallback(async () => {
         setLoading(true);
         let newTree;
@@ -121,10 +124,10 @@ function Directory(props: DirectoryProps) {
             expand();
         } else if (parsedHash === path) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
-            window.location.hash = path; // TODO_JU Maybe a dimmer while this is happening
-            navigatedToHash.current = true;
+            window.location.hash = path;
+            onFoundHash();
         }
-    }, [expand, parsedHash, path, navigatedToHash]);
+    }, [expand, parsedHash, path, navigatedToHash, onFoundHash]);
 
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
 
@@ -142,10 +145,11 @@ function Directory(props: DirectoryProps) {
                     selectPath={selectPath}
                     deselectPath={deselectPath}
                     selectedPaths={selectedPaths}
-                    navigatedToHash={navigatedToHash} />);
+                    navigatedToHash={navigatedToHash}
+                    onFoundHash={onFoundHash} />);
         }
         return fileNodes;
-    }, [path, tree, visiblePaths, selectPath, deselectPath, selectedPaths, selected, navigatedToHash]);
+    }, [path, tree, visiblePaths, selectPath, deselectPath, selectedPaths, selected, navigatedToHash, onFoundHash]);
 
     const directoryNodes = [];
     for(const subdir of tree?.subdirectories ?? []) {
@@ -165,9 +169,11 @@ function Directory(props: DirectoryProps) {
                 onExpand={onExpand}
                 onCollapse={onCollapse}
                 navigatedToHash={navigatedToHash}
+                onFoundHash={onFoundHash}
             />);
     }
 
+    const isHash = decodeURIComponent(hash).substring(1) === path;;
     const thisNode = useMemo(() => {
         const tryExpand = async () => {
             if(loading || loaded) return;
@@ -176,7 +182,6 @@ function Directory(props: DirectoryProps) {
 
         const tryCollapse = () => {
             onCollapse(path);
-            if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
         };
 
         const hashLink = `#${path}`;
@@ -189,14 +194,15 @@ function Directory(props: DirectoryProps) {
                 checked={selected || parentSelected}
                 onChange={toggleSelect} />
             <div className={hashAnchorClassName} id={path}></div>
-            <span className={directoryNodeClassName} onClick={loaded ? tryCollapse : tryExpand}>
+            {isHash && <Icon className={hashAnchorNodeClassName} name="angle double right" />}
+            <span className={`${directoryNodeClassName}${isHash ? ' ' + hashAnchorNodeClassName : ''}`} onClick={loaded ? tryCollapse : tryExpand}>
                 <Icon name={loaded || loading ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
             <IconLink className={showOnNodeHoverClassName} name="download" href={downloadLink} />
             <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </div>;
-    }, [displayName, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, parsedHash, archiveFormat]);
+    }, [displayName, isHash, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, archiveFormat]);
 
     return <List.Item>
         { thisNode }
@@ -265,7 +271,8 @@ interface FileProps {
     deselectPath: (path: string) => void;
     selectedPaths: RefObject<SelectedPaths>;
     parentSelected: boolean;
-    navigatedToHash: MutableRefObject<boolean>;
+    navigatedToHash: RefObject<boolean>;
+    onFoundHash: () => void;
 }
 
 function File(props: FileProps) {
@@ -277,7 +284,8 @@ function File(props: FileProps) {
         deselectPath,
         selectedPaths,
         parentSelected,
-        navigatedToHash
+        navigatedToHash,
+        onFoundHash
     } = props;
 
     const hashLink = `#${path}`;
@@ -285,13 +293,15 @@ function File(props: FileProps) {
     const href = `/api/Files/Download/${sanitisePath(path)}`;
 
     const { hash } = useLocation();
+    const isHash = decodeURIComponent(hash).substring(1) === path;
     useEffect(() => {
-        if (decodeURIComponent(hash).substring(1) === path) {
+        if(navigatedToHash.current) return;
+        if (isHash) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
             window.location.hash = path;
-            navigatedToHash.current = true;
+            onFoundHash()
         }
-    }, [hash, path, navigatedToHash]);
+    }, [isHash, path, navigatedToHash, onFoundHash]);
 
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, false);
 
@@ -303,7 +313,8 @@ function File(props: FileProps) {
             onChange={toggleSelect} />
         <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
             <div className={hashAnchorClassName} id={path}></div>
-            <span>
+            <span className={isHash ? hashAnchorNodeClassName : undefined}>
+                {isHash && <Icon className={hashAnchorNodeClassName} name="angle double right" />}
                 <Icon name="file" />
                 {displayName}&nbsp;
             </span>
@@ -331,7 +342,19 @@ function* getAllPaths(expandedDirectories: Directories) {
 function Browse() {
     usePageTitle('Browse');
 
-    const navigatedToHash = useRef(false);
+    const [navigatedToHash, setNavigatedToHash] = useState(true);
+    useEffect(() => {
+        if(!!window.location.hash.substring(1)) {
+            setNavigatedToHash(false);
+        }
+    }, []);
+    // TODO_JU Not even sure this needs to be a ref
+    // Maybe we just pass down navigatedToHash
+    const navigatedToHashRef = useRef(false);
+    const onFoundHash = useCallback(() => {
+        setNavigatedToHash(true);
+        navigatedToHashRef.current = true;
+    }, []);
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
@@ -399,7 +422,8 @@ function Browse() {
         archiveFormat={archiveFormat}
         onExpand={addExpandedDirectory}
         onCollapse={removeExpandedDirectory}
-        navigatedToHash={navigatedToHash} />
+        navigatedToHash={navigatedToHashRef}
+        onFoundHash={onFoundHash} />
     , [
         expandedDirectories,
         visiblePaths,
@@ -409,10 +433,12 @@ function Browse() {
         archiveFormat,
         addExpandedDirectory,
         removeExpandedDirectory,
-        navigatedToHash
+        navigatedToHashRef,
+        onFoundHash
     ]);
 
     return <>
+        <CenteredSpinner active={!navigatedToHash} />
         <GlobalSidebar open={!!selectedPathsArray.length}>
             <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
             <List>
