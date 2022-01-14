@@ -27,8 +27,8 @@ namespace VerySimpleFileHost.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<byte[]>("InviteKey")
-                        .HasColumnType("BLOB");
+                    b.Property<string>("InviteKey")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsAdministrator")
                         .HasColumnType("INTEGER");

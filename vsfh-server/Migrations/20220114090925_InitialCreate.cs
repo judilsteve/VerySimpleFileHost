@@ -17,7 +17,7 @@ namespace VerySimpleFileHost.Migrations
                     FullName = table.Column<string>(type: "TEXT", nullable: false),
                     LoginName = table.Column<string>(type: "TEXT", nullable: true),
                     PasswordSaltedHash = table.Column<string>(type: "TEXT", nullable: true),
-                    InviteKey = table.Column<byte[]>(type: "BLOB", nullable: true),
+                    InviteKey = table.Column<string>(type: "TEXT", nullable: true),
                     IsAdministrator = table.Column<bool>(type: "INTEGER", nullable: false),
                     LastPasswordChangeUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
                     RejectCookiesOlderThanUtc = table.Column<DateTime>(type: "TEXT", nullable: false)

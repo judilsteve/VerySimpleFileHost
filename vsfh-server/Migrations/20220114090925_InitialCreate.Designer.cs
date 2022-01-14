@@ -11,7 +11,7 @@ using VerySimpleFileHost.Database;
 namespace VerySimpleFileHost.Migrations
 {
     [DbContext(typeof(VsfhContext))]
-    [Migration("20220114061006_InitialCreate")]
+    [Migration("20220114090925_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,8 +29,8 @@ namespace VerySimpleFileHost.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<byte[]>("InviteKey")
-                        .HasColumnType("BLOB");
+                    b.Property<string>("InviteKey")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsAdministrator")
                         .HasColumnType("INTEGER");

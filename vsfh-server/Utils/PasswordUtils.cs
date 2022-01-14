@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.WebUtilities;
-using System.Text;
 using System.Security.Cryptography;
 using VerySimpleFileHost.Entities;
 using Sodium;
@@ -8,7 +7,7 @@ namespace VerySimpleFileHost.Utils;
 
 public static class PasswordUtils
 {
-    private const PasswordHash.StrengthArgon hashStrength = PasswordHash.StrengthArgon.Medium;
+    private const PasswordHash.StrengthArgon hashStrength = PasswordHash.StrengthArgon.Moderate;
 
     public static bool PasswordExpired(DateTime lastPasswordChangeUtc, double? passwordExpiryDays)
     {
@@ -19,13 +18,14 @@ public static class PasswordUtils
 
     public static string AssignInviteKey(User user)
     {
-        var inviteKey = RandomNumberGenerator.GetBytes(64);
+        var inviteKey = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(64));
+
         user.PasswordSaltedHash = null;
         user.InviteKey = inviteKey;
         user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
         user.LastPasswordChangeUtc = DateTime.UtcNow;
 
-        return WebEncoders.Base64UrlEncode(inviteKey);
+        return inviteKey;
     }
 
     public static string GenerateSaltedHash(string password)
@@ -36,18 +36,23 @@ public static class PasswordUtils
         );
     }
 
-    public static bool PasswordIsCorrect(string attemptedPassword, string passwordHash)
+    public static bool PasswordIsCorrect(User user, string attemptedPassword, out bool rehashed)
     {
         var correct = PasswordHash.ArgonHashStringVerify(
-            passwordHash,
+            user.PasswordSaltedHash!,
             attemptedPassword
         );
+        rehashed = false;
 
-        if(!correct) return false;
-
-        if(PasswordHash.ArgonPasswordNeedsRehash(passwordHash, hashStrength))
+        if(!correct)
         {
-            // TODO_JU Re-hash
+            return false;
+        }
+
+        if(PasswordHash.ArgonPasswordNeedsRehash(user.PasswordSaltedHash, hashStrength))
+        {
+            user.PasswordSaltedHash = GenerateSaltedHash(attemptedPassword);
+            rehashed = true;
         }
 
         return correct;

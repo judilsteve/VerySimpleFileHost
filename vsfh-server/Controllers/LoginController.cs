@@ -90,7 +90,7 @@ public class LoginController : ControllerBase
             // already-activated user (since their invite key would be null) and
             // set their password to whatever the attacker desires
             .Where(u => u.InviteKey != null)
-            .SingleOrDefaultAsync(u => u.InviteKey == WebEncoders.Base64UrlDecode(acceptDto.InviteKey));
+            .SingleOrDefaultAsync(u => u.InviteKey == acceptDto.InviteKey);
 
         if(user is null)
         {
@@ -140,33 +140,33 @@ public class LoginController : ControllerBase
         if(loginAttempt.RememberMe!.Value && !config.AllowRememberMe)
             return BadRequest("The administrator has disabled the \"Remember Me\" option");
 
-        var userDetails = await context.Users
+        var user = await context.Users
+            .AsTracking()
             .Where(u => u.LoginName == loginAttempt.UserName)
-            .Select(u => new
-            {
-                u.Id,
-                u.LastPasswordChangeUtc,
-                u.PasswordSaltedHash
-            })
             .SingleOrDefaultAsync();
 
-        if(userDetails?.PasswordSaltedHash is null ||
-            !PasswordUtils.PasswordIsCorrect(loginAttempt.Password, userDetails.PasswordSaltedHash))
+        if(user?.PasswordSaltedHash is null ||
+            !PasswordUtils.PasswordIsCorrect(user, loginAttempt.Password, out var rehashed))
         {
             await TaskUtils.RandomWait();
             return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
         }
 
+        if(rehashed)
+        {
+            await context.SaveChangesAsync();
+        }
+
         if(config.PasswordExpiryDays.HasValue)
         {
-            if(userDetails.LastPasswordChangeUtc.AddDays(config.PasswordExpiryDays.Value) < DateTime.UtcNow)
+            if(user.LastPasswordChangeUtc.AddDays(config.PasswordExpiryDays.Value) < DateTime.UtcNow)
             {
                 await TaskUtils.RandomWait();
                 return Unauthorized(AuthenticationFailureDto.PasswordExpired(loginAttempt.UserName));
             }
         }
 
-        await GrantAuthCookie(userDetails.Id, loginAttempt.RememberMe!.Value);
+        await GrantAuthCookie(user.Id, loginAttempt.RememberMe!.Value);
 
         return Ok();
     }
@@ -211,7 +211,7 @@ public class LoginController : ControllerBase
             .SingleOrDefaultAsync(u => u.LoginName == changePasswordAttempt.UserName);
 
         if(user is null ||
-            !PasswordUtils.PasswordIsCorrect(changePasswordAttempt.CurrentPassword, user.PasswordSaltedHash!))
+            !PasswordUtils.PasswordIsCorrect(user, changePasswordAttempt.CurrentPassword, out var _))
         {
             await TaskUtils.RandomWait();
             return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
