@@ -75,7 +75,7 @@ interface DirectoryProps {
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
     onCollapse: (prefix: string) => void;
-    navigatedToHash: RefObject<boolean>;
+    navigatedToHash: boolean;
     onFoundHash: () => void;
 }
 
@@ -119,8 +119,8 @@ function Directory(props: DirectoryProps) {
     const { hash } = useLocation();
     const parsedHash = decodeURIComponent(hash).substring(1);
     useEffect(() => {
-        if(navigatedToHash.current) return;
-        if(!path || parsedHash.startsWith(`${path}/`)) {
+        if(navigatedToHash && path) return;
+        else if(!path || parsedHash.startsWith(`${path}/`)) {
             expand();
         } else if (parsedHash === path) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
@@ -173,7 +173,7 @@ function Directory(props: DirectoryProps) {
             />);
     }
 
-    const isHash = decodeURIComponent(hash).substring(1) === path;;
+    const isHash = hash && decodeURIComponent(hash).substring(1) === path;
     const thisNode = useMemo(() => {
         const tryExpand = async () => {
             if(loading || loaded) return;
@@ -271,7 +271,7 @@ interface FileProps {
     deselectPath: (path: string) => void;
     selectedPaths: RefObject<SelectedPaths>;
     parentSelected: boolean;
-    navigatedToHash: RefObject<boolean>;
+    navigatedToHash: boolean;
     onFoundHash: () => void;
 }
 
@@ -293,9 +293,9 @@ function File(props: FileProps) {
     const href = `/api/Files/Download/${sanitisePath(path)}`;
 
     const { hash } = useLocation();
-    const isHash = decodeURIComponent(hash).substring(1) === path;
+    const isHash = hash && decodeURIComponent(hash).substring(1) === path;
     useEffect(() => {
-        if(navigatedToHash.current) return;
+        if(navigatedToHash) return;
         if (isHash) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
             window.location.hash = path;
@@ -348,13 +348,8 @@ function Browse() {
             setNavigatedToHash(false);
         }
     }, []);
-    // TODO_JU Not even sure this needs to be a ref; maybe we just pass down navigatedToHash
     // TODO_JU Need to check for and handle the case where the hash cannot be found
-    const navigatedToHashRef = useRef(false);
-    const onFoundHash = useCallback(() => {
-        setNavigatedToHash(true);
-        navigatedToHashRef.current = true;
-    }, []);
+    const onFoundHash = useCallback(() => setNavigatedToHash(true), []);
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
@@ -422,7 +417,7 @@ function Browse() {
         archiveFormat={archiveFormat}
         onExpand={addExpandedDirectory}
         onCollapse={removeExpandedDirectory}
-        navigatedToHash={navigatedToHashRef}
+        navigatedToHash={navigatedToHash}
         onFoundHash={onFoundHash} />
     , [
         expandedDirectories,
@@ -433,7 +428,7 @@ function Browse() {
         archiveFormat,
         addExpandedDirectory,
         removeExpandedDirectory,
-        navigatedToHashRef,
+        navigatedToHash,
         onFoundHash
     ]);
 
