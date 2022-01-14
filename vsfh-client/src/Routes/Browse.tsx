@@ -29,6 +29,7 @@ const smallClassName = "small";
 const fileSizeClassName = "file-size";
 const directoryNodeClassName = "directory-node";
 const emptyListPlaceholderClassName = "empty-list-placeholder";
+const loadingDirectoryClassName = "loading-directory";
 
 function log(value: number, base: number): number {
     return Math.log(value) / Math.log(base);
@@ -92,27 +93,10 @@ function Directory(props: DirectoryProps) {
     } = props;
 
     const tree = expandedDirectories[path];
-    const expanded = !!tree;
+    const loaded = !!tree;
     const [loading, setLoading] = useState(false);
     const isMounted = useIsMounted();
-    // TODO_JU Test spamming the button
-    // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
-    // TODO_JU If this throws then it immediately starts again - fixed
-    // TODO_JU Clicking root node results in 2 requests for some reason - fixed
-    // TODO_JU Cannot collapse highlighted node - fixed
-
-    // Plan to yeet all this and fix about 8 bugs at once:
-    // Boolean ref variable in Browse() for navigatedToHash
-    // An effect in Browse sets it to false whenever the hash changes
-    //  - This turns on the dimmer
-    // Effect in directory/file that triggers on hash change
-    //  - If navigatedToHash.current === true, bail
-    //  - If the node path is the hash:
-    //      - turn off dimmer
-    //      - set navigatedToHash = true
-    //      - set hash to itself to trigger scroll/highlight
-    //  - If the node path is a prefix of the hash, expand
-    //       - Once expanded, if none of the children match the hash, call setNavigateToHashFailed (provided by Browse)
+    // TODO_JU If this throws then it immediately starts again - maybe fixed?
     const expand = useCallback(async () => {
         setLoading(true);
         let newTree;
@@ -131,14 +115,12 @@ function Directory(props: DirectoryProps) {
 
     const { hash } = useLocation();
     const parsedHash = decodeURIComponent(hash).substring(1);
-    useEffect(() => { // TODO_JU This now causes the tree to refresh when the path changes - fixed
+    useEffect(() => {
         if(navigatedToHash.current) return;
         if(!path || parsedHash.startsWith(`${path}/`)) {
             expand();
         } else if (parsedHash === path) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
-            // TODO_JU We often inadvertently hit this while backing out a filter,
-            // as this callback runs when the hash anchor becomes visible again - fixed
             window.location.hash = path; // TODO_JU Maybe a dimmer while this is happening
             navigatedToHash.current = true;
         }
@@ -188,12 +170,11 @@ function Directory(props: DirectoryProps) {
 
     const thisNode = useMemo(() => {
         const tryExpand = async () => {
-            if(loading || expanded) return;
+            if(loading || loaded) return;
             await expand();
         }
 
         const tryCollapse = () => {
-            if(loading || !expanded) return;
             onCollapse(path);
             if(parsedHash.startsWith(`${path}/`)) window.location.hash = '';
         };
@@ -208,20 +189,20 @@ function Directory(props: DirectoryProps) {
                 checked={selected || parentSelected}
                 onChange={toggleSelect} />
             <div className={hashAnchorClassName} id={path}></div>
-            <span className={directoryNodeClassName} onClick={expanded ? tryCollapse : tryExpand}>
-                <Icon name={expanded || loading ? 'folder open' : 'folder'} />
+            <span className={directoryNodeClassName} onClick={loaded ? tryCollapse : tryExpand}>
+                <Icon name={loaded || loading ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
             <IconLink className={showOnNodeHoverClassName} name="download" href={downloadLink} />
             <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </div>;
-    }, [displayName, expanded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, parsedHash, archiveFormat]);
+    }, [displayName, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, parsedHash, archiveFormat]);
 
     return <List.Item>
         { thisNode }
         {
-            (!expanded && !loading) ? <></> : <List.List>
-                {loading ? <Loader indeterminate active inline size="tiny" /> : <>
+            (!loaded && !loading) ? <></> : <List.List>
+                {loading ? <Loader className={loadingDirectoryClassName} indeterminate active inline size="tiny" /> : <>
                     {directoryNodes}
                     {fileNodes}
                     {
@@ -351,10 +332,6 @@ function Browse() {
     usePageTitle('Browse');
 
     const navigatedToHash = useRef(false);
-    const { hash } = useLocation();
-    useEffect(() => {
-        navigatedToHash.current = false;
-    }, [hash]);
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
