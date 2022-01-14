@@ -16,16 +16,15 @@ namespace VerySimpleFileHost.Run;
 
 public static class VerySimpleFileHost
 {
-    static VerySimpleFileHost()
+    private static ConfigurationManager BuildConfigManager(string[] args, WebApplicationBuilder builder)
     {
+        var configManager = new ConfigurationManager();
+        configManager.AddCommandLine(args);
         configManager.AddJsonFile("appsettings.Default.json");
         configManager.AddJsonFile("appsettings.json");
         configManager.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+        return configManager;
     }
-
-    private static ConfigurationManager configManager = new();
-    // TODO_JU Need to refactor so that args can be plumbed here for migration script
-    private static WebApplicationBuilder builder = WebApplication.CreateBuilder();
 
     private const string connectionString = "Filename=Database.sqlite";
 
@@ -40,13 +39,17 @@ public static class VerySimpleFileHost
     /// Useful when VSFH is running inside a container and the configured Kestrel host
     /// would be unreachable from the host machine.
     /// </param>
-    public static async Task Main(bool createAdminAccount, string? hostnameOverride)
+    /// <param name="args">Extra args for Kestrel/ASP.NET</param>
+    public static async Task Main(bool createAdminAccount, string? hostnameOverride, string[] args)
     {
-        if(createAdminAccount) await CreateAdminAccount(hostnameOverride);
-        else await RunHost();
+        var builder = WebApplication.CreateBuilder(args);
+        var configManager = BuildConfigManager(args, builder);
+
+        if(createAdminAccount) await CreateAdminAccount(configManager, hostnameOverride);
+        else await RunHost(builder, configManager);
     }
 
-    private static async Task CreateAdminAccount(string? hostnameOverride)
+    private static async Task CreateAdminAccount(ConfigurationManager configManager, string? hostnameOverride)
     {
         var context = new VsfhContext(new DbContextOptionsBuilder<VsfhContext>().UseSqlite(connectionString).Options);
         await context.Database.MigrateAsync();
@@ -75,12 +78,12 @@ public static class VerySimpleFileHost
             .GetSection("EndPoints")
             .GetSection("Https")
             .GetValue<string>("Url");
-        var inviteLink = $"{host}/AcceptInvite/{inviteKey}";
+        var inviteLink = new Uri(new Uri(host), $"AcceptInvite/{inviteKey}");
         await Console.Out.WriteLineAsync(
             $"Account for \"{name}\" created. Use one-time invite link below to log in:\n{inviteLink}");
     }
 
-    private static async Task RunHost()
+    private static async Task RunHost(WebApplicationBuilder builder, ConfigurationManager configManager)
     {
         void RegisterConfigObject<T>() where T: class, new()
         {

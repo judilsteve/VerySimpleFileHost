@@ -39,11 +39,8 @@ namespace VerySimpleFileHost.Migrations
                     b.Property<string>("LoginName")
                         .HasColumnType("TEXT");
 
-                    b.Property<byte[]>("PasswordHash")
-                        .HasColumnType("BLOB");
-
-                    b.Property<byte[]>("PasswordSalt")
-                        .HasColumnType("BLOB");
+                    b.Property<string>("PasswordSaltedHash")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("RejectCookiesOlderThanUtc")
                         .HasColumnType("TEXT");

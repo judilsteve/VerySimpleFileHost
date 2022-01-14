@@ -11,7 +11,7 @@ using VerySimpleFileHost.Database;
 namespace VerySimpleFileHost.Migrations
 {
     [DbContext(typeof(VsfhContext))]
-    [Migration("20211208105838_InitialCreate")]
+    [Migration("20220114061006_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -41,11 +41,8 @@ namespace VerySimpleFileHost.Migrations
                     b.Property<string>("LoginName")
                         .HasColumnType("TEXT");
 
-                    b.Property<byte[]>("PasswordHash")
-                        .HasColumnType("BLOB");
-
-                    b.Property<byte[]>("PasswordSalt")
-                        .HasColumnType("BLOB");
+                    b.Property<string>("PasswordSaltedHash")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("RejectCookiesOlderThanUtc")
                         .HasColumnType("TEXT");

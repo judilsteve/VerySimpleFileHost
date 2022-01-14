@@ -28,22 +28,19 @@ public static class PasswordUtils
         return WebEncoders.Base64UrlEncode(inviteKey);
     }
 
-    public static byte[] GenerateSaltedHash(string password)
+    public static string GenerateSaltedHash(string password)
     {
-        return PasswordHash.ArgonHashBinary(
-            Encoding.UTF8.GetBytes(password),
-            PasswordHash.ArgonGenerateSalt(),
+        return PasswordHash.ArgonHashString(
+            password,
             hashStrength
         );
     }
 
-    public static bool PasswordIsCorrect(string attemptedPassword, byte[] passwordHash)
+    public static bool PasswordIsCorrect(string attemptedPassword, string passwordHash)
     {
-        var attemptedPasswordBytes = Encoding.UTF8.GetBytes(attemptedPassword);
-
         var correct = PasswordHash.ArgonHashStringVerify(
             passwordHash,
-            attemptedPasswordBytes
+            attemptedPassword
         );
 
         if(!correct) return false;
