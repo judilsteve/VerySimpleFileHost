@@ -24,6 +24,7 @@ public static class VerySimpleFileHost
     }
 
     private static ConfigurationManager configManager = new();
+    // TODO_JU Need to refactor so that args can be plumbed here for migration script
     private static WebApplicationBuilder builder = WebApplication.CreateBuilder();
 
     private const string connectionString = "Filename=Database.sqlite";

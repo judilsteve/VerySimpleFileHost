@@ -2,15 +2,13 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 using System.Security.Cryptography;
 using VerySimpleFileHost.Entities;
+using Sodium;
 
 namespace VerySimpleFileHost.Utils;
 
 public static class PasswordUtils
 {
-    public static byte[] GenerateSalt()
-    {
-        return RandomNumberGenerator.GetBytes(64);
-    }
+    private const PasswordHash.StrengthArgon hashStrength = PasswordHash.StrengthArgon.Medium;
 
     public static bool PasswordExpired(DateTime lastPasswordChangeUtc, double? passwordExpiryDays)
     {
@@ -22,8 +20,7 @@ public static class PasswordUtils
     public static string AssignInviteKey(User user)
     {
         var inviteKey = RandomNumberGenerator.GetBytes(64);
-        user.PasswordSalt = null;
-        user.PasswordHash = null;
+        user.PasswordSaltedHash = null;
         user.InviteKey = inviteKey;
         user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
         user.LastPasswordChangeUtc = DateTime.UtcNow;
@@ -31,20 +28,31 @@ public static class PasswordUtils
         return WebEncoders.Base64UrlEncode(inviteKey);
     }
 
-    public static byte[] GenerateSaltedHash(string password, byte[] salt)
+    public static byte[] GenerateSaltedHash(string password)
     {
-        var algorithm = HashAlgorithm.Create("SHA512")
-            ?? throw new ArgumentException("Invalid hash algorithm");
-
-        var saltedPassword = Encoding.UTF8.GetBytes(password)
-            .Concat(salt)
-            .ToArray();
-        return algorithm.ComputeHash(saltedPassword);
+        return PasswordHash.ArgonHashBinary(
+            Encoding.UTF8.GetBytes(password),
+            PasswordHash.ArgonGenerateSalt(),
+            hashStrength
+        );
     }
 
-    public static bool PasswordIsCorrect(string attemptedPassword, byte[] passwordHash, byte[] salt)
+    public static bool PasswordIsCorrect(string attemptedPassword, byte[] passwordHash)
     {
-        var attemptedHash = GenerateSaltedHash(attemptedPassword, salt);
-        return attemptedHash.SequenceEqual(passwordHash);
+        var attemptedPasswordBytes = Encoding.UTF8.GetBytes(attemptedPassword);
+
+        var correct = PasswordHash.ArgonHashStringVerify(
+            passwordHash,
+            attemptedPasswordBytes
+        );
+
+        if(!correct) return false;
+
+        if(PasswordHash.ArgonPasswordNeedsRehash(passwordHash, hashStrength))
+        {
+            // TODO_JU Re-hash
+        }
+
+        return correct;
     }
 }

@@ -70,7 +70,7 @@ public class AuthenticationFilter : IAsyncAuthorizationFilter
                 u.LoginName,
                 u.LastPasswordChangeUtc,
                 u.RejectCookiesOlderThanUtc,
-                HasPassword = u.PasswordHash != null
+                HasPassword = u.PasswordSaltedHash != null
             })
             .SingleOrDefaultAsync();
 

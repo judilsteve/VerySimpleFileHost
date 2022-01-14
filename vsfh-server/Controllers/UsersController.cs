@@ -42,7 +42,7 @@ public class UsersController : ControllerBase
                 FullName = u.FullName,
                 LoginName = u.LoginName,
                 IsAdministrator = u.IsAdministrator,
-                Activated = u.PasswordHash != null
+                Activated = u.PasswordSaltedHash != null
             });
     }
 

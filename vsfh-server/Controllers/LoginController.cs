@@ -115,8 +115,7 @@ public class LoginController : ControllerBase
 
         user.InviteKey = null; // Ensure that the invite key cannot be used again
         user.LoginName = acceptDto.UserName;
-        user.PasswordSalt = PasswordUtils.GenerateSalt();
-        user.PasswordHash = PasswordUtils.GenerateSaltedHash(acceptDto.NewPassword, user.PasswordSalt);
+        user.PasswordSaltedHash = PasswordUtils.GenerateSaltedHash(acceptDto.NewPassword);
         user.LastPasswordChangeUtc = DateTime.UtcNow;
         user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
 
@@ -147,13 +146,12 @@ public class LoginController : ControllerBase
             {
                 u.Id,
                 u.LastPasswordChangeUtc,
-                u.PasswordSalt,
-                u.PasswordHash
+                u.PasswordSaltedHash
             })
             .SingleOrDefaultAsync();
 
-        if(userDetails?.PasswordHash is null ||
-            !PasswordUtils.PasswordIsCorrect(loginAttempt.Password, userDetails.PasswordHash, userDetails.PasswordSalt!))
+        if(userDetails?.PasswordSaltedHash is null ||
+            !PasswordUtils.PasswordIsCorrect(loginAttempt.Password, userDetails.PasswordSaltedHash))
         {
             await TaskUtils.RandomWait();
             return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
@@ -209,18 +207,17 @@ public class LoginController : ControllerBase
 
         var user = await context.Users
             .AsTracking()
-            .Where(u => u.PasswordHash != null)
+            .Where(u => u.PasswordSaltedHash != null)
             .SingleOrDefaultAsync(u => u.LoginName == changePasswordAttempt.UserName);
 
         if(user is null ||
-            !PasswordUtils.PasswordIsCorrect(changePasswordAttempt.CurrentPassword, user.PasswordHash!, user.PasswordSalt!))
+            !PasswordUtils.PasswordIsCorrect(changePasswordAttempt.CurrentPassword, user.PasswordSaltedHash!))
         {
             await TaskUtils.RandomWait();
             return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
         }
 
-        user.PasswordSalt = PasswordUtils.GenerateSalt();
-        user.PasswordHash = PasswordUtils.GenerateSaltedHash(changePasswordAttempt.NewPassword, user.PasswordSalt);
+        user.PasswordSaltedHash = PasswordUtils.GenerateSaltedHash(changePasswordAttempt.NewPassword);
         user.LastPasswordChangeUtc = DateTime.UtcNow;
         user.RejectCookiesOlderThanUtc = DateTime.UtcNow;
 

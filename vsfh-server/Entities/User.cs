@@ -8,8 +8,7 @@ public class User
     public Guid Id { get; set; }
     public string FullName { get; set; } = null!;
     public string? LoginName { get; set; }
-    public byte[]? PasswordSalt { get; set; }
-    public byte[]? PasswordHash { get; set; }
+    public byte[]? PasswordSaltedHash { get; set; }
     public byte[]? InviteKey { get; set; }
     public bool IsAdministrator { get; set; }
     public DateTime LastPasswordChangeUtc { get; set; }
