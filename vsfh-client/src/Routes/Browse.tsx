@@ -1,6 +1,6 @@
 import './Browse.less';
 
-import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject, MutableRefObject } from "react";
 import { useLocation } from "react-router";
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
@@ -72,6 +72,7 @@ interface DirectoryProps {
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
     onCollapse: (prefix: string) => void;
+    navigatedToHash: MutableRefObject<boolean>;
 }
 
 function Directory(props: DirectoryProps) {
@@ -86,7 +87,8 @@ function Directory(props: DirectoryProps) {
         selectedPaths,
         visiblePaths,
         onExpand,
-        onCollapse
+        onCollapse,
+        navigatedToHash
     } = props;
 
     const tree = expandedDirectories[path];
@@ -95,9 +97,9 @@ function Directory(props: DirectoryProps) {
     const isMounted = useIsMounted();
     // TODO_JU Test spamming the button
     // TODO_JU Allow user to cancel loading: https://reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables
-    // TODO_JU If this throws then it immediately starts again
-    // TODO_JU Clicking root node results in 2 requests for some reason
-    // TODO_JU Cannot collapse highlighted node
+    // TODO_JU If this throws then it immediately starts again - fixed
+    // TODO_JU Clicking root node results in 2 requests for some reason - fixed
+    // TODO_JU Cannot collapse highlighted node - fixed
 
     // Plan to yeet all this and fix about 8 bugs at once:
     // Boolean ref variable in Browse() for navigatedToHash
@@ -129,16 +131,18 @@ function Directory(props: DirectoryProps) {
 
     const { hash } = useLocation();
     const parsedHash = decodeURIComponent(hash).substring(1);
-    useEffect(() => { // TODO_JU This now causes the tree to refresh when the path changes
+    useEffect(() => { // TODO_JU This now causes the tree to refresh when the path changes - fixed
+        if(navigatedToHash.current) return;
         if(!path || parsedHash.startsWith(`${path}/`)) {
             expand();
         } else if (parsedHash === path) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
             // TODO_JU We often inadvertently hit this while backing out a filter,
-            // as this callback runs when the hash anchor becomes visible again
+            // as this callback runs when the hash anchor becomes visible again - fixed
             window.location.hash = path; // TODO_JU Maybe a dimmer while this is happening
+            navigatedToHash.current = true;
         }
-    }, [expand, parsedHash, path]);
+    }, [expand, parsedHash, path, navigatedToHash]);
 
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
 
@@ -155,10 +159,11 @@ function Directory(props: DirectoryProps) {
                     parentSelected={selected}
                     selectPath={selectPath}
                     deselectPath={deselectPath}
-                    selectedPaths={selectedPaths} />);
+                    selectedPaths={selectedPaths}
+                    navigatedToHash={navigatedToHash} />);
         }
         return fileNodes;
-    }, [path, tree, visiblePaths, selectPath, deselectPath, selectedPaths, selected]);
+    }, [path, tree, visiblePaths, selectPath, deselectPath, selectedPaths, selected, navigatedToHash]);
 
     const directoryNodes = [];
     for(const subdir of tree?.subdirectories ?? []) {
@@ -177,6 +182,7 @@ function Directory(props: DirectoryProps) {
                 visiblePaths={visiblePaths}
                 onExpand={onExpand}
                 onCollapse={onCollapse}
+                navigatedToHash={navigatedToHash}
             />);
     }
 
@@ -278,6 +284,7 @@ interface FileProps {
     deselectPath: (path: string) => void;
     selectedPaths: RefObject<SelectedPaths>;
     parentSelected: boolean;
+    navigatedToHash: MutableRefObject<boolean>;
 }
 
 function File(props: FileProps) {
@@ -288,7 +295,8 @@ function File(props: FileProps) {
         selectPath,
         deselectPath,
         selectedPaths,
-        parentSelected
+        parentSelected,
+        navigatedToHash
     } = props;
 
     const hashLink = `#${path}`;
@@ -300,8 +308,9 @@ function File(props: FileProps) {
         if (decodeURIComponent(hash).substring(1) === path) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
             window.location.hash = path;
+            navigatedToHash.current = true;
         }
-    }, [hash, path]);
+    }, [hash, path, navigatedToHash]);
 
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, false);
 
@@ -340,6 +349,12 @@ function* getAllPaths(expandedDirectories: Directories) {
 
 function Browse() {
     usePageTitle('Browse');
+
+    const navigatedToHash = useRef(false);
+    const { hash } = useLocation();
+    useEffect(() => {
+        navigatedToHash.current = false;
+    }, [hash]);
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
@@ -406,7 +421,8 @@ function Browse() {
         path=""
         archiveFormat={archiveFormat}
         onExpand={addExpandedDirectory}
-        onCollapse={removeExpandedDirectory} />
+        onCollapse={removeExpandedDirectory}
+        navigatedToHash={navigatedToHash} />
     , [
         expandedDirectories,
         visiblePaths,
@@ -415,7 +431,9 @@ function Browse() {
         selectedPathsRef,
         archiveFormat,
         addExpandedDirectory,
-        removeExpandedDirectory]);
+        removeExpandedDirectory,
+        navigatedToHash
+    ]);
 
     return <>
         <GlobalSidebar open={!!selectedPathsArray.length}>
