@@ -37,10 +37,8 @@ public class RateLimitAnonymousApiRequestsFilter : IAsyncActionFilter
                 var nextTask = next();
                 if(await Task.WhenAny(nextTask, Task.Delay(timeout)) != nextTask)
                 {
-                    // We hit the timeout
                     throw new Exception("Request processing timed out");
                 }
-                await next();
             }
             finally
             {
