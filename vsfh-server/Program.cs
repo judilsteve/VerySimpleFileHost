@@ -103,9 +103,13 @@ public static class VerySimpleFileHost
         RegisterConfigObject<FilesConfiguration>();
         RegisterConfigObject<AuthenticationConfiguration>();
 
+        var authenticationConfiguration = new AuthenticationConfiguration();
+        configManager.Bind(nameof(AuthenticationConfiguration), authenticationConfiguration);
         builder.Services
             .AddControllers(o =>
             {
+                o.Filters.Add(new RateLimitAnonymousApiRequestsFilter(
+                    maxConcurrentRequests: authenticationConfiguration.MaxConcurrentAnonymousApiRequests ?? 4));
                 o.Filters.Add(new AuthenticationFilter());
                 o.Filters.Add(new AdminOnlyFilter());
             })
@@ -128,8 +132,6 @@ public static class VerySimpleFileHost
         // System.IO.Compression.ZipArchive requires synchronous IO
         builder.Services.Configure<KestrelServerOptions>(o => o.AllowSynchronousIO = true);
 
-        var authenticationConfiguration = new AuthenticationConfiguration();
-        configManager.Bind(nameof(AuthenticationConfiguration), authenticationConfiguration);
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             // By default, the cookie auth scheme assumes you are running an MVC application
             // with a few special routes. Thus it uses redirect responses to these routes

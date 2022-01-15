@@ -9,4 +9,5 @@ public class AuthenticationConfiguration
     public bool AllowRememberMe { get; init; }
     [Range(0, double.MaxValue)] public double? PasswordExpiryDays { get; init; }
     [Range(0, double.MaxValue)] public double? InviteLinkExpiryHours { get; init; }
+    [Range(1, int.MaxValue)] public int? MaxConcurrentAnonymousApiRequests { get; init; }
 }
