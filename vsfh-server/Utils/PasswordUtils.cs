@@ -30,10 +30,15 @@ public static class PasswordUtils
 
     public static string GenerateSaltedHash(string password)
     {
-        return PasswordHash.ArgonHashString(
+        var untrimmed = PasswordHash.ArgonHashString(
             password,
             hashStrength
         );
+
+        // Sodium.Core leaves null byte terminators in this string
+        // to pad it to 128 chars for some reason. Trim them off.
+        // https://github.com/tabrath/libsodium-core/issues/77
+        return untrimmed.TrimEnd('\0');
     }
 
     public static bool PasswordIsCorrect(User user, string attemptedPassword, out bool rehashed)
