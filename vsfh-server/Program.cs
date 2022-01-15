@@ -109,7 +109,8 @@ public static class VerySimpleFileHost
             .AddControllers(o =>
             {
                 o.Filters.Add(new RateLimitAnonymousApiRequestsFilter(
-                    maxConcurrentRequests: authenticationConfiguration.MaxConcurrentAnonymousApiRequests ?? 4));
+                    maxConcurrentRequests: authenticationConfiguration.MaxConcurrentAnonymousApiRequests ?? 4,
+                    anonymousRequestTimeout: TimeSpan.FromSeconds(authenticationConfiguration.AnonymousRequestTimeoutSeconds ?? 30)));
                 o.Filters.Add(new AuthenticationFilter());
                 o.Filters.Add(new AdminOnlyFilter());
             })
@@ -153,6 +154,9 @@ public static class VerySimpleFileHost
                     return Task.CompletedTask;
                 };
             });
+
+        if(!builder.Environment.IsDevelopment())
+            builder.Services.AddSpaStaticFiles(o => { o.RootPath = "wwwroot"; });
 
         var lettuceEncryptConfig = new LettuceEncryptConfiguration();
         configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
