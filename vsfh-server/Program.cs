@@ -77,7 +77,8 @@ public static class VerySimpleFileHost
             .GetSection("Kestrel")
             .GetSection("EndPoints")
             .GetSection("Https")
-            .GetValue<string>("Url");
+            .GetValue<string?>("Url")
+            ?? "https://localhost";
         var inviteLink = new Uri(new Uri(host), $"AcceptInvite/{inviteKey}");
         await Console.Out.WriteLineAsync(
             $"Account for \"{name}\" created. Use one-time invite link below to log in:\n{inviteLink}");
