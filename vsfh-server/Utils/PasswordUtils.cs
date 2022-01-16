@@ -43,7 +43,8 @@ public static class PasswordUtils
 
     public static bool PasswordIsCorrect(User user, string attemptedPassword, out bool rehashed)
     {
-        // TODO_JU Time this
+        // With parameters $argon2id$v=19$m=131072,t=6,p=1 ("Moderate" preset at time of writing),
+        // a single hash takes approx 225ms to compute on an AMD 5900X and requires 128MB of RAM.
         var correct = PasswordHash.ArgonHashStringVerify(
             user.PasswordSaltedHash!,
             attemptedPassword

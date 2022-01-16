@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Form, Input, LabelProps } from "semantic-ui-react";
-import zxcvbn from "zxcvbn";
+import zxcvbn from "zxcvbn"; // TODO_JU This is 400kb. Make it a dynamic import
 import { AuthConfigDto } from "../API";
 import ErrorText from "./ErrorText";
 
