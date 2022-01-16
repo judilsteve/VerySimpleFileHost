@@ -11,7 +11,7 @@ namespace VerySimpleFileHost.Middleware;
 /// In the event of a DDoS attack, the response time of anonymous
 /// API endpoints will still be extremely degraded for real users.
 /// </summary>
-// TODO_JU Turn this into a simple static member that lives in the login controller,
+// TODO_JU Turn this into a simple static member that lives in PasswordUtils,
 // and applies a concurrency limit to *just* the hash checking
 public class RateLimitAnonymousApiRequestsFilter : IAsyncActionFilter
 {

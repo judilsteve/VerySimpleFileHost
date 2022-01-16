@@ -41,6 +41,7 @@ public static class PasswordUtils
         return untrimmed.TrimEnd('\0');
     }
 
+    // TODO_JU Investigate client-side hashing for server relief
     public static bool PasswordIsCorrect(User user, string attemptedPassword, out bool rehashed)
     {
         // With parameters $argon2id$v=19$m=131072,t=6,p=1 ("Moderate" preset at time of writing),
