@@ -2,7 +2,7 @@ import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
 import { useLocation } from "react-router";
-import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Sticky } from "semantic-ui-react";
+import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Message, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
 import { apiConfig } from "../apiInstances";
 import FilesApi from "../ApiOverrides/FilesApi";
@@ -12,7 +12,7 @@ import { useIsMounted } from "../Hooks/useIsMounted";
 import { usePageTitle } from "../Hooks/usePageTitle";
 import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState } from "../State/sharedState";
-import tryHandleError from "../Utils/tryHandleError";
+import tryHandleError, { printResponseError } from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
 import { SelectedPaths, useSharedSelection, useSharedSelectionSource } from '../Hooks/useSharedSelection';
 import CenteredSpinner from '../Components/CenteredSpinner';
@@ -31,7 +31,7 @@ const smallClassName = "small";
 const fileSizeClassName = "file-size";
 const directoryNodeClassName = "directory-node";
 const emptyListPlaceholderClassName = "empty-list-placeholder";
-const loadingDirectoryClassName = "loading-directory";
+const underDirectoryClassName = "under-directory";
 
 function log(value: number, base: number): number {
     return Math.log(value) / Math.log(base);
@@ -99,15 +99,18 @@ function Directory(props: DirectoryProps) {
     const tree = expandedDirectories[path];
     const loaded = !!tree;
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const isMounted = useIsMounted();
     const expand = useCallback(async () => {
-        setLoading(true);
+        setLoading(true); setError('');
         let newTree;
         try {
             newTree = await api.apiFilesListingPathGet({ path, depth: 1});
         } catch(e) {
-            if(!await tryHandleError(e as Response)) {
-                // TODO_JU Handle error
+            const responseError = e as Response;
+            if(!await tryHandleError(responseError)) {
+                await printResponseError(responseError, 'listing');
+                if(isMounted.current) setError('An unexpected error occurred');
             }
             return;
         } finally {
@@ -207,8 +210,8 @@ function Directory(props: DirectoryProps) {
     return <List.Item>
         { thisNode }
         {
-            (!loaded && !loading) ? <></> : <List.List>
-                {loading ? <Loader className={loadingDirectoryClassName} indeterminate active inline size="tiny" /> : <>
+            (!loaded && !loading) ? (error && <Message className={underDirectoryClassName} compact error header="Listing Failed" content={error} />) : <List.List>
+                {loading ? <Loader className={underDirectoryClassName} indeterminate active inline size="tiny" /> : <>
                     {directoryNodes}
                     {fileNodes}
                     {

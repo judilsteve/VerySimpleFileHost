@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Form, Input, LabelProps } from "semantic-ui-react";
-import zxcvbn from "zxcvbn"; // TODO_JU This is 400kb. Make it a dynamic import
+import { ZXCVBNResult } from "zxcvbn";
 import { AuthConfigDto } from "../API";
 import ErrorText from "./ErrorText";
 
@@ -42,6 +42,8 @@ export interface SetPasswordProps {
     trySubmit: () => void;
 }
 
+declare type zxcvbnFunc = (password: string) => ZXCVBNResult;
+
 function SetPassword(props: SetPasswordProps) {
     const {
         password, setPassword,
@@ -57,13 +59,24 @@ function SetPassword(props: SetPasswordProps) {
 
     const passwordsMatch = password === checkPassword;
 
-    const passwordStrength = password ? zxcvbn(password) : null;
+    const [zxcvbn, setzxcvbn] = useState<(zxcvbnFunc | null)>(null);
+    useEffect(() => {
+        let cancel = false;
+        (async () => {
+            const zxcvbn = (await import('zxcvbn')).default;
+            if(!cancel) setzxcvbn((_state: zxcvbnFunc | null) => zxcvbn);
+        })();
+        return () => { cancel = true; };
+    }, []);
+
+    const passwordStrength = password && zxcvbn ? zxcvbn(password) : null;
     const passwordTooWeak = !!passwordStrength && !!authConfig
         && passwordStrength.score < authConfig.minimumPasswordScore!;
 
     const passwordIsSame = currentPassword && password && currentPassword === password;
 
     const passwordValid = !!password
+        && !!zxcvbn
         && !!checkPassword
         && passwordsMatch
         && !passwordTooWeak
