@@ -101,6 +101,8 @@ function Directory(props: DirectoryProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
+    // TODO_JU Expand, collapse, and the hash-finder effect could all
+    // be hoisted up into Browse, greatly simplifying this component.
     const expand = useCallback(async () => {
         setLoading(true); setError('');
         let newTree;
