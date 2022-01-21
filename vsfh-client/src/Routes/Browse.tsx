@@ -79,6 +79,10 @@ interface DirectoryProps {
     onFoundHash: () => void;
 }
 
+function parseHash(hash: string) {
+    return decodeURIComponent(hash).substring(1);
+}
+
 function Directory(props: DirectoryProps) {
     const {
         displayName,
@@ -122,7 +126,7 @@ function Directory(props: DirectoryProps) {
     }, [isMounted, onExpand, path]);
 
     const { hash } = useLocation();
-    const parsedHash = decodeURIComponent(hash).substring(1);
+    const parsedHash = parseHash(hash);
     useEffect(() => {
         if(navigatedToHash.current) return;
         else if(parsedHash.startsWith(`${path}/`)) {
@@ -359,21 +363,40 @@ function Browse() {
             navigatedToHashRef.current = false;
         }
     }, []);
-    // TODO_JU Need to check for and handle the case where the hash cannot be found
     const onFoundHash = useCallback(() => {
         setNavigatedToHash(true);
         navigatedToHashRef.current = true;
     }, []);
+
+    const [couldNotFindHash, setCouldNotFindHash] = useState(false);
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
     const [textFilter, setTextFilter] = useState('');
 
     const [expandedDirectories, setExpandedDirectories] = useState<Directories>({});
-    const addExpandedDirectory = useCallback((d: DirectoryDto, prefix: string) => setExpandedDirectories(expandedDirectories => ({
-        ...expandedDirectories,
-        [prefix]: d
-    })), []);
+    const addExpandedDirectory = useCallback((d: DirectoryDto, prefix: string) => setExpandedDirectories(expandedDirectories => {
+        if(!navigatedToHashRef.current) {
+            // Check to see if it's possible to actually reach the hash
+            const parsedHash = parseHash(window.location.hash);
+            const anyMatchingFiles = !!d.files!.find(f => combinePaths(prefix, f.displayName!) === parsedHash);
+            if(!anyMatchingFiles) {
+                const anyMatchingDirectories = !!d.subdirectories!.find(d => {
+                    const dirPath = combinePaths(prefix, d.displayName!);
+                    return dirPath === parsedHash || parsedHash.startsWith(`${dirPath}/`);
+                });
+                if(!anyMatchingDirectories) {
+                    setCouldNotFindHash(true);
+                    setNavigatedToHash(true);
+                    navigatedToHashRef.current = true;
+                }
+            }
+        }
+        return {
+            ...expandedDirectories,
+            [prefix]: d
+        };
+    }), []);
     const removeExpandedDirectory = useCallback((prefix: string) => setExpandedDirectories(expandedDirectories => {
         const newExpandedDirectories: Directories = {};
         if(!prefix) return newExpandedDirectories;
@@ -498,6 +521,7 @@ function Browse() {
                     </Grid>
                 </Sticky>
                 <List>
+                    {couldNotFindHash && "Couldn't find hash :(" /* TODO_JU A nice modal for this */}
                     {root}
                 </List>
             </div>
