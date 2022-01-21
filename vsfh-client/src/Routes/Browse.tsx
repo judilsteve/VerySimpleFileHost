@@ -75,7 +75,7 @@ interface DirectoryProps {
     visiblePaths: Set<string>;
     onExpand: (d: DirectoryDto, prefix: string) => void;
     onCollapse: (prefix: string) => void;
-    navigatedToHash: boolean;
+    navigatedToHash: RefObject<boolean>;
     onFoundHash: () => void;
 }
 
@@ -123,9 +123,9 @@ function Directory(props: DirectoryProps) {
 
     const { hash } = useLocation();
     const parsedHash = decodeURIComponent(hash).substring(1);
-    useEffect(() => { // TODO_JU Bug in here: It's running multiple times
-        if(navigatedToHash && path) return;
-        else if(!path || parsedHash.startsWith(`${path}/`)) {
+    useEffect(() => {
+        if(navigatedToHash.current) return;
+        else if(parsedHash.startsWith(`${path}/`)) {
             expand();
         } else if (parsedHash === path) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
@@ -133,6 +133,10 @@ function Directory(props: DirectoryProps) {
             onFoundHash();
         }
     }, [expand, parsedHash, path, navigatedToHash, onFoundHash]);
+
+    useEffect(() => {
+        if(!path) expand();
+    }, [path, expand]);
 
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
 
@@ -276,7 +280,7 @@ interface FileProps {
     deselectPath: (path: string) => void;
     selectedPaths: RefObject<SelectedPaths>;
     parentSelected: boolean;
-    navigatedToHash: boolean;
+    navigatedToHash: RefObject<boolean>;
     onFoundHash: () => void;
 }
 
@@ -300,7 +304,7 @@ function File(props: FileProps) {
     const { hash } = useLocation();
     const isHash = hash && decodeURIComponent(hash).substring(1) === path;
     useEffect(() => {
-        if(navigatedToHash) return;
+        if(navigatedToHash.current) return;
         if (isHash) {
             // Re-set the hash path to trigger autoscroll and CSS highlighting
             window.location.hash = path;
@@ -348,13 +352,18 @@ function Browse() {
     usePageTitle('Browse');
 
     const [navigatedToHash, setNavigatedToHash] = useState(true);
+    const navigatedToHashRef = useRef(true);
     useEffect(() => {
         if(!!window.location.hash.substring(1)) {
             setNavigatedToHash(false);
+            navigatedToHashRef.current = false;
         }
     }, []);
     // TODO_JU Need to check for and handle the case where the hash cannot be found
-    const onFoundHash = useCallback(() => setNavigatedToHash(true), []);
+    const onFoundHash = useCallback(() => {
+        setNavigatedToHash(true);
+        navigatedToHashRef.current = true;
+    }, []);
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
@@ -422,7 +431,7 @@ function Browse() {
         archiveFormat={archiveFormat}
         onExpand={addExpandedDirectory}
         onCollapse={removeExpandedDirectory}
-        navigatedToHash={navigatedToHash}
+        navigatedToHash={navigatedToHashRef}
         onFoundHash={onFoundHash} />
     , [
         expandedDirectories,
@@ -433,7 +442,7 @@ function Browse() {
         archiveFormat,
         addExpandedDirectory,
         removeExpandedDirectory,
-        navigatedToHash,
+        navigatedToHashRef,
         onFoundHash
     ]);
 
