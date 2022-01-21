@@ -123,7 +123,7 @@ function Directory(props: DirectoryProps) {
 
     const { hash } = useLocation();
     const parsedHash = decodeURIComponent(hash).substring(1);
-    useEffect(() => {
+    useEffect(() => { // TODO_JU Bug in here: It's running multiple times
         if(navigatedToHash && path) return;
         else if(!path || parsedHash.startsWith(`${path}/`)) {
             expand();
