@@ -144,8 +144,16 @@ public class LoginController : ControllerBase
             .Where(u => u.LoginName == loginAttempt.UserName)
             .SingleOrDefaultAsync();
 
-        if(user?.PasswordSaltedHash is null ||
-            !PasswordUtils.PasswordIsCorrect(user, loginAttempt.Password, out var rehashed))
+        if(user?.PasswordSaltedHash is null)
+        {
+            await TaskUtils.RandomWait();
+            return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
+        }
+
+        var (passwordIsCorrect, rehashed) = await PasswordUtils.PasswordIsCorrect(
+            user, loginAttempt.Password, HttpContext.RequestAborted);
+
+        if(!passwordIsCorrect)
         {
             await TaskUtils.RandomWait();
             return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
@@ -209,8 +217,16 @@ public class LoginController : ControllerBase
             .Where(u => u.PasswordSaltedHash != null)
             .SingleOrDefaultAsync(u => u.LoginName == changePasswordAttempt.UserName);
 
-        if(user is null ||
-            !PasswordUtils.PasswordIsCorrect(user, changePasswordAttempt.CurrentPassword, out var _))
+        if(user is null)
+        {
+            await TaskUtils.RandomWait();
+            return Unauthorized(AuthenticationFailureDto.InvalidCredentials);
+        }
+
+        var (passwordIsCorrect, rehashed) = await PasswordUtils.PasswordIsCorrect(
+            user, changePasswordAttempt.NewPassword, HttpContext.RequestAborted);
+
+        if(!passwordIsCorrect)
         {
             await TaskUtils.RandomWait();
             return Unauthorized(AuthenticationFailureDto.InvalidCredentials);

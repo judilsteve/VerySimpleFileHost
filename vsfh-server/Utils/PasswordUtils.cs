@@ -7,6 +7,22 @@ namespace VerySimpleFileHost.Utils;
 
 public static class PasswordUtils
 {
+    /// <summary>
+    /// Extremely rudimentary DDoS protection.
+    ///
+    /// Checking a password hash is a very CPU/memory intensive operation,
+    /// so if we try to do too many of them at once we can easily exhaust
+    /// system resources, making the login endpoint a perfect DDoS vector.
+    ///
+    /// Using a concurrency limit protects the host from being overloaded.
+    /// By "the host" we mean the other processes on the machine, not
+    /// our application.
+    ///
+    /// In the event of a DDoS attack, the response time of endpoints that
+    /// verify password hashes will  still be extremely degraded.
+    /// </summary>
+    private static readonly ConcurrencyLimiter concurrencyLimiter = new(4, TimeSpan.FromSeconds(10));
+
     private const PasswordHash.StrengthArgon hashStrength = PasswordHash.StrengthArgon.Moderate;
 
     public static bool PasswordExpired(DateTime lastPasswordChangeUtc, double? passwordExpiryDays)
@@ -43,27 +59,26 @@ public static class PasswordUtils
 
     // TODO_JU Investigate client-side hashing for server relief
     // https://libsodium.gitbook.io/doc/password_hashing#server-relief
-    public static bool PasswordIsCorrect(User user, string attemptedPassword, out bool rehashed)
+    public static async Task<(bool correct, bool rehashed)> PasswordIsCorrect(User user, string attemptedPassword, CancellationToken cancellationToken)
     {
         // With parameters $argon2id$v=19$m=131072,t=6,p=1 ("Moderate" preset at time of writing),
         // a single hash takes approx 225ms to compute on an AMD 5900X and requires 128MB of RAM.
-        var correct = PasswordHash.ArgonHashStringVerify(
+        var correct = await concurrencyLimiter.Run(() => PasswordHash.ArgonHashStringVerify(
             user.PasswordSaltedHash!,
             attemptedPassword
-        );
-        rehashed = false;
+        ), cancellationToken);
 
         if(!correct)
         {
-            return false;
+            return (false, false);
         }
 
         if(PasswordHash.ArgonPasswordNeedsRehash(user.PasswordSaltedHash, hashStrength))
         {
             user.PasswordSaltedHash = GenerateSaltedHash(attemptedPassword);
-            rehashed = true;
+            return (true, true);
         }
 
-        return correct;
+        return (true , false);
     }
 }
