@@ -115,12 +115,12 @@ function Directory(props: DirectoryProps) {
         try {
             newTree = await api.apiFilesListingPathGet({ path, depth: 1});
         } catch(e) {
+            handleListingError(path);
             const responseError = e as Response;
             if(!await tryHandleError(responseError)) {
                 await printResponseError(responseError, 'listing');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
-            handleListingError(path);
             return;
         } finally {
             if(isMounted.current) setLoading(false);
@@ -398,11 +398,12 @@ function Browse() {
 
     const [couldNotFindHash, setCouldNotFindHash] = useState('');
 
-    // TODO_JU Test this
+    // TODO_JU Important https://stackoverflow.com/questions/2919878/git-rewrite-previous-commit-usernames-and-emails
     const handleListingError = useCallback((path: string) => {
+        console.debug({ navigatedToHashRef });
         if(navigatedToHashRef.current) return;
         const parsedHash = parseHash(window.location.hash);
-        if(parsedHash.startsWith(`${path}/`)) {
+        if(!path || parsedHash.startsWith(`${path}/`)) {
             setCouldNotFindHash(parsedHash);
             setNavigatedToHash(true);
             navigatedToHashRef.current = true;
