@@ -2,7 +2,7 @@ import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
 import { useLocation } from "react-router";
-import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Message, Sticky } from "semantic-ui-react";
+import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Message, Modal, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
 import { apiConfig } from "../apiInstances";
 import FilesApi from "../ApiOverrides/FilesApi";
@@ -77,6 +77,7 @@ interface DirectoryProps {
     onCollapse: (prefix: string) => void;
     navigatedToHash: RefObject<boolean>;
     onFoundHash: () => void;
+    handleListingError: (path: string) => void;
 }
 
 function parseHash(hash: string) {
@@ -97,7 +98,8 @@ function Directory(props: DirectoryProps) {
         onExpand,
         onCollapse,
         navigatedToHash,
-        onFoundHash
+        onFoundHash,
+        handleListingError
     } = props;
 
     const tree = expandedDirectories[path];
@@ -118,12 +120,13 @@ function Directory(props: DirectoryProps) {
                 await printResponseError(responseError, 'listing');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
+            handleListingError(path);
             return;
         } finally {
             if(isMounted.current) setLoading(false);
         }
         if(isMounted.current) onExpand(newTree, path);
-    }, [isMounted, onExpand, path]);
+    }, [isMounted, onExpand, path, handleListingError]);
 
     const { hash } = useLocation();
     const parsedHash = parseHash(hash);
@@ -183,6 +186,7 @@ function Directory(props: DirectoryProps) {
                 onCollapse={onCollapse}
                 navigatedToHash={navigatedToHash}
                 onFoundHash={onFoundHash}
+                handleListingError={handleListingError}
             />);
     }
 
@@ -352,6 +356,30 @@ function* getAllPaths(expandedDirectories: Directories) {
     }
 }
 
+interface CouldNotFindHashModalProps {
+    parsedHash: string;
+    open: boolean;
+    close: () => void;
+}
+
+function CouldNotFindHashModal(props: CouldNotFindHashModalProps) {
+    const {
+        parsedHash,
+        open,
+        close
+    } = props;
+
+    return <Modal size="tiny" open={open} onClose={close}>
+        <Modal.Header>Path Not Found</Modal.Header>
+        <Modal.Content>
+            <p>Either the path "{parsedHash}" did not exist, or an error occurred</p>
+        </Modal.Content>
+        <Modal.Actions>
+            <Button primary onClick={close}>Resume Browsing</Button>
+        </Modal.Actions>
+    </Modal>;
+}
+
 function Browse() {
     usePageTitle('Browse');
 
@@ -368,7 +396,18 @@ function Browse() {
         navigatedToHashRef.current = true;
     }, []);
 
-    const [couldNotFindHash, setCouldNotFindHash] = useState(false);
+    const [couldNotFindHash, setCouldNotFindHash] = useState('');
+
+    // TODO_JU Test this
+    const handleListingError = useCallback((path: string) => {
+        if(navigatedToHashRef.current) return;
+        const parsedHash = parseHash(window.location.hash);
+        if(parsedHash.startsWith(`${path}/`)) {
+            setCouldNotFindHash(parsedHash);
+            setNavigatedToHash(true);
+            navigatedToHashRef.current = true;
+        }
+    }, []);
 
     const [archiveFormat, setArchiveFormat] = useSharedState(archiveFormatState);
 
@@ -386,7 +425,7 @@ function Browse() {
                     return dirPath === parsedHash || parsedHash.startsWith(`${dirPath}/`);
                 });
                 if(!anyMatchingDirectories) {
-                    setCouldNotFindHash(true);
+                    setCouldNotFindHash(parsedHash);
                     setNavigatedToHash(true);
                     navigatedToHashRef.current = true;
                 }
@@ -455,7 +494,8 @@ function Browse() {
         onExpand={addExpandedDirectory}
         onCollapse={removeExpandedDirectory}
         navigatedToHash={navigatedToHashRef}
-        onFoundHash={onFoundHash} />
+        onFoundHash={onFoundHash}
+        handleListingError={handleListingError} />
     , [
         expandedDirectories,
         visiblePaths,
@@ -466,7 +506,8 @@ function Browse() {
         addExpandedDirectory,
         removeExpandedDirectory,
         navigatedToHashRef,
-        onFoundHash
+        onFoundHash,
+        handleListingError
     ]);
 
     return <>
@@ -494,6 +535,7 @@ function Browse() {
                 </div>
             </form>
         </GlobalSidebar>
+        <CouldNotFindHashModal parsedHash={couldNotFindHash} open={!!couldNotFindHash} close={() => setCouldNotFindHash('')} />
         <Container>
             <NavHeader pageTitle="Browse" />
             <div ref={stickyRef}>
@@ -521,7 +563,6 @@ function Browse() {
                     </Grid>
                 </Sticky>
                 <List>
-                    {couldNotFindHash && "Couldn't find hash :(" /* TODO_JU A nice modal for this */}
                     {root}
                 </List>
             </div>
