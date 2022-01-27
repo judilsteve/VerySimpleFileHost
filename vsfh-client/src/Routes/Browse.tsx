@@ -398,7 +398,6 @@ function Browse() {
 
     const [couldNotFindHash, setCouldNotFindHash] = useState('');
 
-    // TODO_JU Important https://stackoverflow.com/questions/2919878/git-rewrite-previous-commit-usernames-and-emails
     const handleListingError = useCallback((path: string) => {
         console.debug({ navigatedToHashRef });
         if(navigatedToHashRef.current) return;
