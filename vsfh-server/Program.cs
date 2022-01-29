@@ -61,7 +61,7 @@ public static class VerySimpleFileHost
         // TODO_JU Probably need to rethink the config situation and/or add something for choosing cert in the install script
         var ecdsa = ECDsa.Create();
         var host = new Uri(hostnameOverride ?? GetHost(configManager)).Host;
-        var req = new CertificateRequest($"cn={host}", ecdsa, HashAlgorithmName.SHA512);
+        var req = new CertificateRequest($"cn={host}", ecdsa, HashAlgorithmName.SHA256);
         var expiry = DateTimeOffset.Now.AddYears(1);
         var cert = req.CreateSelfSigned(DateTimeOffset.Now, expiry);
         var exportPath = "TODO_JU plumbing this in podman will be fun";
