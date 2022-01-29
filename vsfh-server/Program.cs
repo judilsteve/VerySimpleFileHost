@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using VerySimpleFileHost.Controllers;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
@@ -34,20 +36,45 @@ public static class VerySimpleFileHost
     /// <param name="createAdminAccount">
     /// If provided, will not run VSFH, but instead add a new admin account and then exit.
     /// </param>
+    /// <param name="createCertificate">
+    /// If provided, will not run VSFH, but instead generate a self-signed SSL certificate for using VSFH on a local network.
+    /// For internet-facing deployments, you should configure LettuceEncrypt.
+    /// </param>
     /// <param name="hostnameOverride">
     /// Hostname to display in the new admin account invite link (not used at runtime).
     /// Useful when VSFH is running inside a container and the configured Kestrel host
     /// would be unreachable from the host machine.
     /// </param>
     /// <param name="args">Extra args for Kestrel/ASP.NET</param>
-    public static async Task Main(bool createAdminAccount, string? hostnameOverride, string[] args)
+    public static async Task Main(bool createAdminAccount, bool createCertificate, string? hostnameOverride, string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
         var configManager = BuildConfigManager(args, builder);
 
         if(createAdminAccount) await CreateAdminAccount(configManager, hostnameOverride);
+        else if(createCertificate) await CreateCertificate(configManager, hostnameOverride);
         else await RunHost(builder, configManager);
     }
+
+    private static async Task CreateCertificate(ConfigurationManager configManager, string? hostnameOverride)
+    {
+        // TODO_JU Probably need to rethink the config situation and/or add something for choosing cert in the install script
+        var ecdsa = ECDsa.Create();
+        var host = new Uri(hostnameOverride ?? GetHost(configManager)).Host;
+        var req = new CertificateRequest($"cn={host}", ecdsa, HashAlgorithmName.SHA512);
+        var expiry = DateTimeOffset.Now.AddYears(1);
+        var cert = req.CreateSelfSigned(DateTimeOffset.Now, expiry);
+        var exportPath = "TODO_JU plumbing this in podman will be fun";
+        await File.WriteAllBytesAsync(exportPath, cert.Export(X509ContentType.Pkcs12));
+        await Console.Out.WriteLineAsync($"A self signed certificate for \"{host}\" has been written to \"{exportPath}\". It will expire on {expiry.Date} at {expiry.TimeOfDay}");
+    }
+
+    private static string GetHost(IConfiguration config) => config
+        .GetSection("Kestrel")
+        .GetSection("EndPoints")
+        .GetSection("Https")
+        .GetValue<string?>("Url")
+        ?? "https://localhost";
 
     private static async Task CreateAdminAccount(ConfigurationManager configManager, string? hostnameOverride)
     {
@@ -73,12 +100,7 @@ public static class VerySimpleFileHost
         await context.Users.AddAsync(firstAdmin);
         await context.SaveChangesAsync();
 
-        var host = hostnameOverride ?? configManager
-            .GetSection("Kestrel")
-            .GetSection("EndPoints")
-            .GetSection("Https")
-            .GetValue<string?>("Url")
-            ?? "https://localhost";
+        var host = hostnameOverride ?? GetHost(configManager);
         var inviteLink = new Uri(new Uri(host), $"AcceptInvite/{inviteKey}");
         await Console.Out.WriteLineAsync(
             $"Account for \"{name}\" created. Use one-time invite link below to log in:\n{inviteLink}");
