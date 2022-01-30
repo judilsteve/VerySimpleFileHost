@@ -1,0 +1,18 @@
+1. Get a production build working
+    Test no certs (should fall back to dynamic self-signed and log a warning)
+    Test externally supplied cert
+    Test LettuceEncrypt
+2. Get a production build working in podman-compose
+    Add one thing at a time: Private network last
+    Bindings required:
+        appsettings.json (read-only)
+        certificate file (read-only)
+        port mappings
+        LettuceEncrypt certificate file (read-write)
+        Database (read-write)
+    Test running podman as root with root inside container first
+    Test running podman as root with non-root inside container
+    Test running podman as non-root with non-root inside container
+    Add private network
+3. Get the docker container running as a systemd service
+    Add the security features one by one
