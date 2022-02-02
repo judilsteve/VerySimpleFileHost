@@ -2,6 +2,7 @@ using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.Reflection;
@@ -213,7 +214,10 @@ public static class VerySimpleFileHost
             e.MapControllers().RequireAuthorization());
 
         if(!app.Environment.IsDevelopment())
+        {
             app.UseSpaStaticFiles();
+            app.UseSpa(o => {});
+        }
 
         using (var scope = app.Services.CreateAsyncScope())
         {
