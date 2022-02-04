@@ -2,12 +2,9 @@ using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Builder;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using VerySimpleFileHost.Controllers;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.Database;
@@ -52,18 +49,12 @@ public static class VerySimpleFileHost
         else await RunHost(builder, configManager);
     }
 
-    // TODO_JU Use this
-    private static async Task CreateCertificate(ConfigurationManager configManager, string host)
-    {
-        // TODO_JU Probably need to rethink the config situation and/or add something for choosing cert in the podman install script
-        var ecdsa = ECDsa.Create();
-        var req = new CertificateRequest($"cn={host}", ecdsa, HashAlgorithmName.SHA256);
-        var expiry = DateTimeOffset.Now.AddYears(1);
-        var cert = req.CreateSelfSigned(DateTimeOffset.Now, expiry);
-        var exportPath = "TODO_JU plumbing this in podman will be fun";
-        await File.WriteAllBytesAsync(exportPath, cert.Export(X509ContentType.Pkcs12));
-        await Console.Out.WriteLineAsync($"A self signed certificate for \"{host}\" has been written to \"{exportPath}\". It will expire on {expiry.Date} at {expiry.TimeOfDay}");
-    }
+    private static string GetHost(IConfiguration config) => config
+        .GetSection("Kestrel")
+        ?.GetSection("EndPoints")
+        ?.GetSection("Https")
+        ?.GetValue<string?>("Url")
+        ?? "https://localhost";
 
     private static async Task CreateAdminAccount(ConfigurationManager configManager, string? hostnameOverride)
     {
@@ -89,12 +80,7 @@ public static class VerySimpleFileHost
         await context.Users.AddAsync(firstAdmin);
         await context.SaveChangesAsync();
 
-        var host = hostnameOverride ?? configManager
-            .GetSection("Kestrel")
-            .GetSection("EndPoints")
-            .GetSection("Https")
-            .GetValue<string?>("Url")
-            ?? "https://localhost";
+        var host = hostnameOverride ?? GetHost(configManager);
         var inviteLink = new Uri(new Uri(host), $"AcceptInvite/{inviteKey}");
         await Console.Out.WriteLineAsync(
             $"Account for \"{name}\" created. Use one-time invite link below to log in:\n{inviteLink}");
@@ -173,21 +159,30 @@ public static class VerySimpleFileHost
 
         var lettuceEncryptConfig = new LettuceEncryptConfiguration();
         configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
-        var noCertificates = false; // TODO_JU
+        bool noCertificates = false;
         if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
         {
             builder.Services.AddLettuceEncrypt()
                 .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? "LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
-        } else if(noCertificates)
+        }
+        else
         {
-            // TODO_JU Log a warning here
-            var httpsPort = 42424; // TODO_JU
-            builder.WebHost.ConfigureKestrel(ko => {
-                ko.ListenAnyIP(httpsPort, lo => lo.UseHttps(x => {
-                    // TODO_JU Fetch/generate self-signed cert(s) from cache (per-hostname)
-                    // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-6.0#sni-with-servercertificateselector
-                }));
-            });
+            noCertificates = string.IsNullOrEmpty(configManager
+                .GetSection("Kestrel")
+                ?.GetSection("Endpoints")
+                ?.GetSection("Https")
+                ?.GetSection("Certificate")
+                ?.GetValue<string>("Path"));
+            if(noCertificates)
+            {
+                var host = new Uri(GetHost(configManager));
+                var defaultHostname = host.Host == "0.0.0.0" ? "localhost" : host.Host;
+                builder.WebHost.ConfigureKestrel(ko => {
+                    ko.ListenAnyIP(host.Port, lo => lo.UseHttps(ho => {
+                        ho.ServerCertificateSelector = (_, hostname) => SelfSignedCertProvider.GetCert(hostname ?? defaultHostname);
+                    }));
+                });
+            }
         }
 
         var app = builder.Build();
@@ -223,6 +218,12 @@ public static class VerySimpleFileHost
         {
             var context = scope.ServiceProvider.GetRequiredService<VsfhContext>();
             await context.Database.MigrateAsync();
+
+            if(noCertificates)
+            {
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger>();
+                logger.LogWarning("No certificates were found in appsettings or the default location, and LettuceEncrypt was not enabled. Falling back to dynamically generated self-signed certificates. Your users will encounter invalid certificate warnings!");
+            }
         }
 
         await app.RunAsync();
