@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using System.Security.Authentication;
 using System.Reflection;
 using VerySimpleFileHost.Controllers;
 using VerySimpleFileHost.Configuration;
@@ -21,7 +22,7 @@ public static class VerySimpleFileHost
         var configManager = new ConfigurationManager();
         configManager.AddCommandLine(args);
         configManager.AddJsonFile("appsettings.Default.json");
-        configManager.AddJsonFile("appsettings.json");
+        configManager.AddJsonFile("appsettings.json", optional: true);
         configManager.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
         return configManager;
     }
@@ -177,13 +178,17 @@ public static class VerySimpleFileHost
             {
                 var host = new Uri(GetHost(configManager));
                 var defaultHostname = host.Host == "0.0.0.0" ? "localhost" : host.Host;
-                builder.WebHost.ConfigureKestrel(ko => {
-                    ko.ListenAnyIP(host.Port, lo => lo.UseHttps(ho => {
-                        ho.ServerCertificateSelector = (_, hostname) => SelfSignedCertProvider.GetCert(hostname ?? defaultHostname);
-                    }));
+                builder.WebHost.ConfigureKestrel(kestrelOptions => {
+                    kestrelOptions.ConfigureHttpsDefaults(listenOptions => {
+                        listenOptions.ServerCertificateSelector = (_, hostname) => SelfSignedCertProvider.GetCert(hostname ?? defaultHostname);
+                        // For some reason this is SslProtocols.None by default in this callback
+                        listenOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+                    });
                 });
             }
         }
+
+        builder.Services.AddLogging();
 
         var app = builder.Build();
 
@@ -221,7 +226,7 @@ public static class VerySimpleFileHost
 
             if(noCertificates)
             {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger>();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<SelfSignedCertProviderLoggingTag>>();
                 logger.LogWarning("No certificates were found in appsettings or the default location, and LettuceEncrypt was not enabled. Falling back to dynamically generated self-signed certificates. Your users will encounter invalid certificate warnings!");
             }
         }

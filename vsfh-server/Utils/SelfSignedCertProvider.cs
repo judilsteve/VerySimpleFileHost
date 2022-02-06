@@ -4,6 +4,8 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace VerySimpleFileHost.Utils;
 
+public class SelfSignedCertProviderLoggingTag {}
+
 public static class SelfSignedCertProvider
 {
     private static readonly ConcurrentDictionary<string, (X509Certificate2 cert, DateTimeOffset expiry)> certs = new();
