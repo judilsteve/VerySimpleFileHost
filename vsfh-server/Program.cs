@@ -45,6 +45,7 @@ public static class VerySimpleFileHost
     {
         var builder = WebApplication.CreateBuilder(args);
         var configManager = BuildConfigManager(args, builder);
+        builder.WebHost.UseConfiguration(configManager);
 
         if(createAdminAccount) await CreateAdminAccount(configManager, hostnameOverride);
         else await RunHost(builder, configManager);
@@ -52,7 +53,7 @@ public static class VerySimpleFileHost
 
     private static string GetHost(IConfiguration config) => config
         .GetSection("Kestrel")
-        ?.GetSection("EndPoints")
+        ?.GetSection("Endpoints")
         ?.GetSection("Https")
         ?.GetValue<string?>("Url")
         ?? "https://localhost";
