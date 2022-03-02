@@ -134,8 +134,11 @@ public static class VerySimpleFileHost
             .UseSqlite(connectionString)
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
-        // System.IO.Compression.ZipArchive requires synchronous IO
-        builder.Services.Configure<KestrelServerOptions>(o => o.AllowSynchronousIO = true);
+        builder.Services.Configure<KestrelServerOptions>(o => 
+        {
+            o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
+            o.UseSystemd();
+        });
 
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             // By default, the cookie auth scheme assumes you are running an MVC application
