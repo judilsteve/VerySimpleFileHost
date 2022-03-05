@@ -40,7 +40,7 @@ export class SharedPersistedState<T> extends SharedState<T> {
         // comes from another tab: https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event
         window.onstorage = e => {
             if(e.storageArea !== window.localStorage || e.key !== localStorageKey) return;
-            this.setValue(e.newValue === null ? e.newValue: JSON.parse(e.newValue));
+            this.setValue(e.newValue === null ? e.newValue : JSON.parse(e.newValue));
         }
     }
 }
