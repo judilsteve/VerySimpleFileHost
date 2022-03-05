@@ -38,9 +38,9 @@ export class SharedPersistedState<T> extends SharedState<T> {
         });
         // Handle local storage updates from other tabs. Mozilla states that this event only fires if the update
         // comes from another tab: https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event
-        window.onstorage = () => {
-            const newValue = window.localStorage.getItem(localStorageKey);
-            this.setValue(newValue ? JSON.parse(newValue) : newValue);
+        window.onstorage = e => {
+            if(e.storageArea !== window.localStorage || e.key !== localStorageKey) return;
+            this.setValue(e.newValue === null ? e.newValue: JSON.parse(e.newValue));
         }
     }
 }
