@@ -137,7 +137,8 @@ public static class VerySimpleFileHost
         builder.Services.Configure<KestrelServerOptions>(o => 
         {
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
-            o.UseSystemd();
+            if(configManager.GetSection("Kestrel").GetValue<bool>("UseSystemdSocketActivation"))
+                o.UseSystemd();
         });
 
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
