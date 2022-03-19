@@ -2,6 +2,7 @@ using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Hosting;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.Security.Authentication;
@@ -103,6 +104,9 @@ public static class VerySimpleFileHost
 
             builder.Services.AddSingleton(configObject);
         }
+
+        // This no-ops if we are not running as a systemd service
+        builder.Host.UseSystemd();
 
         RegisterConfigObject<FilesConfiguration>();
         RegisterConfigObject<AuthenticationConfiguration>();
