@@ -142,6 +142,7 @@ public static class VerySimpleFileHost
         {
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
             if(configManager.GetSection("Kestrel").GetValue<bool>("UseSystemdSocketActivation"))
+                // TODO_JU Kestrel assumes the systemd file descriptor is HTTP, when we really want HTTPS (or ideally one of each with redirection)
                 o.UseSystemd();
         });
 
