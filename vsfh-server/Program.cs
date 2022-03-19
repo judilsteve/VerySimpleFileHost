@@ -2,7 +2,6 @@ using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Hosting;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.Security.Authentication;
@@ -28,7 +27,7 @@ public static class VerySimpleFileHost
         return configManager;
     }
 
-    private const string connectionString = "Filename=Database.sqlite";
+    private static string connectionString = $"Filename=data{Path.DirectorySeparatorChar}Database.sqlite";
 
     /// <summary>
     /// Very Simple File Host
@@ -62,6 +61,7 @@ public static class VerySimpleFileHost
     private static async Task CreateAdminAccount(ConfigurationManager configManager, string? hostnameOverride)
     {
         var context = new VsfhContext(new DbContextOptionsBuilder<VsfhContext>().UseSqlite(connectionString).Options);
+        Directory.CreateDirectory("data");
         await context.Database.MigrateAsync();
 
         await Console.Out.WriteLineAsync("What should the new administrator's name be?");
@@ -176,7 +176,7 @@ public static class VerySimpleFileHost
         if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
         {
             builder.Services.AddLettuceEncrypt()
-                .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? "LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
+                .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? $"data{Path.DirectorySeparatorChar}LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
         }
         else
         {
@@ -234,6 +234,7 @@ public static class VerySimpleFileHost
         using (var scope = app.Services.CreateAsyncScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<VsfhContext>();
+            Directory.CreateDirectory("data");
             await context.Database.MigrateAsync();
 
             if(noCertificates)
