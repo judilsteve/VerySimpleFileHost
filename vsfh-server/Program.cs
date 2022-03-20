@@ -205,6 +205,8 @@ public static class VerySimpleFileHost
 
         var app = builder.Build();
 
+        var debug = (app.Configuration as IConfigurationRoot).GetDebugView(); // TODO_JU Use this to figure out why the podman socket activated version is still trying to listen on TCP sockets.
+
         if(!app.Environment.IsDevelopment())
         {
             app.UseHttpsRedirection();
