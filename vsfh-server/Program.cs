@@ -15,6 +15,8 @@ using VerySimpleFileHost.Utils;
 
 namespace VerySimpleFileHost.Run;
 
+public class VerySimpleFileHostLoggingTag {}
+
 public static class VerySimpleFileHost
 {
     private static ConfigurationManager BuildConfigManager(string[] args, WebApplicationBuilder builder)
@@ -205,7 +207,7 @@ public static class VerySimpleFileHost
 
         var app = builder.Build();
 
-        var debug = (app.Configuration as IConfigurationRoot).GetDebugView(); // TODO_JU Use this to figure out why the podman socket activated version is still trying to listen on TCP sockets.
+        Console.WriteLine((app.Configuration as IConfigurationRoot).GetDebugView()); // TODO_JU Use this to figure out why the podman socket activated version is still trying to listen on TCP sockets.
 
         if(!app.Environment.IsDevelopment())
         {
