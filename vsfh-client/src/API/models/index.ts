@@ -111,7 +111,8 @@ export interface AuthenticationFailureDto {
 export enum AuthenticationFailureReasonCode {
     PasswordExpired = 'PasswordExpired',
     InvalidCredentials = 'InvalidCredentials',
-    InvalidInviteKey = 'InvalidInviteKey'
+    InvalidInviteKey = 'InvalidInviteKey',
+    SessionExpired = 'SessionExpired'
 }
 /**
  * 

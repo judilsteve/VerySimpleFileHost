@@ -1,7 +1,7 @@
 import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Message, Modal, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
 import { apiConfig } from "../apiInstances";
@@ -107,6 +107,8 @@ function Directory(props: DirectoryProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
+    const location = useLocation();
+    const navigate = useNavigate();
     // TODO_JU Expand, collapse, and the hash-finder effect could all
     // be hoisted up into Browse, greatly simplifying this component.
     const expand = useCallback(async () => {
@@ -117,7 +119,7 @@ function Directory(props: DirectoryProps) {
         } catch(e) {
             handleListingError(path);
             const responseError = e as Response;
-            if(!await tryHandleError(responseError)) {
+            if(!await tryHandleError(responseError, location, navigate)) {
                 await printResponseError(responseError, 'listing');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
@@ -126,9 +128,9 @@ function Directory(props: DirectoryProps) {
             if(isMounted.current) setLoading(false);
         }
         if(isMounted.current) onExpand(newTree, path);
-    }, [isMounted, onExpand, path, handleListingError]);
+    }, [isMounted, onExpand, path, handleListingError, location, navigate]);
 
-    const { hash } = useLocation();
+    const { hash } = location;
     const parsedHash = parseHash(hash);
     useEffect(() => {
         if(navigatedToHash.current) return;

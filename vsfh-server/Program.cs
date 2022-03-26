@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using System.Security.Authentication;
 using System.Reflection;
 using VerySimpleFileHost.Controllers;
 using VerySimpleFileHost.Configuration;
@@ -14,8 +13,6 @@ using VerySimpleFileHost.Entities;
 using VerySimpleFileHost.Utils;
 
 namespace VerySimpleFileHost.Run;
-
-public class VerySimpleFileHostLoggingTag {}
 
 public static class VerySimpleFileHost
 {
@@ -175,32 +172,10 @@ public static class VerySimpleFileHost
 
         var lettuceEncryptConfig = new LettuceEncryptConfiguration();
         configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
-        bool noCertificates = false;
         if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
         {
             builder.Services.AddLettuceEncrypt()
                 .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? $"data{Path.DirectorySeparatorChar}LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
-        }
-        else
-        {
-            noCertificates = string.IsNullOrEmpty(configManager
-                .GetSection("Kestrel")
-                ?.GetSection("Endpoints")
-                ?.GetSection("Https")
-                ?.GetSection("Certificate")
-                ?.GetValue<string>("Path"));
-            if(noCertificates)
-            {
-                var host = new Uri(GetHost(configManager));
-                var defaultHostname = host.Host == "0.0.0.0" ? "localhost" : host.Host;
-                builder.WebHost.ConfigureKestrel(kestrelOptions => {
-                    kestrelOptions.ConfigureHttpsDefaults(listenOptions => {
-                        listenOptions.ServerCertificateSelector = (_, hostname) => SelfSignedCertProvider.GetCert(hostname ?? defaultHostname);
-                        // For some reason this is SslProtocols.None by default in this callback
-                        listenOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
-                    });
-                });
-            }
         }
 
         builder.Services.AddLogging();
@@ -241,12 +216,6 @@ public static class VerySimpleFileHost
             var context = scope.ServiceProvider.GetRequiredService<VsfhContext>();
             Directory.CreateDirectory("data");
             await context.Database.MigrateAsync();
-
-            if(noCertificates)
-            {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<SelfSignedCertProviderLoggingTag>>();
-                logger.LogWarning("No certificates were found in appsettings or the default location, and LettuceEncrypt was not enabled. Falling back to dynamically generated self-signed certificates. Your users will encounter invalid certificate warnings!");
-            }
         }
 
         await app.RunAsync();

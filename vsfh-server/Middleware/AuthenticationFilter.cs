@@ -15,7 +15,8 @@ public enum AuthenticationFailureReasonCode
 {
     PasswordExpired,
     InvalidCredentials,
-    InvalidInviteKey
+    InvalidInviteKey,
+    SessionExpired
 }
 
 public class AuthenticationFailureDto
@@ -37,6 +38,12 @@ public class AuthenticationFailureDto
     {
         ReasonCode = AuthenticationFailureReasonCode.InvalidInviteKey,
         Reason = "Invalid or expired invite key"
+    };
+
+    public static readonly AuthenticationFailureDto SessionExpired = new()
+    {
+        ReasonCode = AuthenticationFailureReasonCode.SessionExpired,
+        Reason = "Session expired"
     };
 
     public AuthenticationFailureReasonCode? ReasonCode { get; init; }
@@ -89,7 +96,7 @@ public class AuthenticationFilter : IAsyncAuthorizationFilter
             DateTimeStyles.AssumeUniversal);
         if(cookieCreatedOn < userSecurityInfo.RejectCookiesOlderThanUtc)
         {
-            return (false, null);
+            return (false, AuthenticationFailureDto.SessionExpired);
         }
 
         if(PasswordUtils.PasswordExpired(userSecurityInfo.LastPasswordChangeUtc, config.PasswordExpiryDays))

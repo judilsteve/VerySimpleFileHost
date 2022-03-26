@@ -1,4 +1,7 @@
+import { Location, NavigateFunction } from "react-router";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
+import { routes } from "../App";
+import { LoginRouteParameters } from "../Routes/Login";
 import { passwordExpiredPromptState, sessionExpiredPromptState, unauthorisedBlockState } from "../State/sharedState";
 
 export async function printResponseError(e: Response, endpointName: string) {
@@ -7,13 +10,15 @@ export async function printResponseError(e: Response, endpointName: string) {
     console.error(await e.text());
 }
 
-async function tryHandleError(e: Response) {
+async function tryHandleError(e: Response, location: Location, navigate: NavigateFunction) {
     if(e.status === 401) {
         let responseObject: AuthenticationFailureDto;
         try {
             responseObject = await e.json();
         } catch {
-            sessionExpiredPromptState.setValue(true);
+            const then = `${location.pathname}${location.search}${location.hash}`;
+            const loginRoute = `${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
+            navigate(loginRoute);
             return true;
         }
         const reasonCode = responseObject.reasonCode;
@@ -23,7 +28,7 @@ async function tryHandleError(e: Response) {
                 message: responseObject.reason!
             });
             return true;
-        } else {
+        } else if(reasonCode === AuthenticationFailureReasonCode.SessionExpired) {
             sessionExpiredPromptState.setValue(true);
             return true;
         }
