@@ -28,6 +28,8 @@ public static class VerySimpleFileHost
 
     private static string connectionString = $"Filename=data{Path.DirectorySeparatorChar}Database.sqlite";
 
+    private const string acceptInviteRoute = "AcceptInvite";
+
     /// <summary>
     /// Very Simple File Host
     /// </summary>
@@ -83,7 +85,7 @@ public static class VerySimpleFileHost
         await context.SaveChangesAsync();
 
         var host = hostnameOverride ?? GetHost(configManager);
-        var inviteLink = new Uri(new Uri(host), $"AcceptInvite/{inviteKey}");
+        var inviteLink = new Uri(new Uri(host), $"{acceptInviteRoute}/{inviteKey}");
         await Console.Out.WriteLineAsync(
             $"Account for \"{name}\" created. Use one-time invite link below to log in:\n{inviteLink}");
     }
@@ -140,10 +142,19 @@ public static class VerySimpleFileHost
         builder.Services.Configure<KestrelServerOptions>(o => 
         {
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
-            if(configManager.GetSection("Kestrel").GetValue<bool>("UseSystemdSocketActivation"))
-                // TODO_JU Kestrel assumes the systemd file descriptor is HTTP, when we really want HTTPS (or ideally one of each with redirection)
-                // https://github.com/dotnet/aspnetcore/blob/main/src/Servers/Kestrel/Core/src/Systemd/KestrelServerOptionsSystemdExtensions.cs
-                o.UseSystemd();
+
+            // By default, all file descriptors are set up as HTTP
+            // Assume the first is HTTPS (so that we are secure by default),
+            // use raw HTTP for the rest (which will be handled by the HTTPS redirection middleware)
+            var isFirstFileDescriptor = true;
+            o.UseSystemd(fd =>
+            {
+                if(isFirstFileDescriptor)
+                {
+                    fd.UseHttps();
+                    isFirstFileDescriptor = false;
+                }
+            });
         });
 
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -168,7 +179,7 @@ public static class VerySimpleFileHost
                 };
             });
 
-        if(!builder.Environment.IsDevelopment())
+        if(!builder.Environment.IsDevelopment() || true)
             builder.Services.AddSpaStaticFiles(o => { o.RootPath = "wwwroot"; });
 
         var lettuceEncryptConfig = new LettuceEncryptConfiguration();
@@ -183,7 +194,7 @@ public static class VerySimpleFileHost
 
         var app = builder.Build();
 
-        if(!app.Environment.IsDevelopment())
+        if(!app.Environment.IsDevelopment() || true)
         {
             app.UseHttpsRedirection();
             app.UseHsts();
@@ -204,9 +215,23 @@ public static class VerySimpleFileHost
         app.UseEndpoints(e =>
             e.MapControllers().RequireAuthorization());
 
-        if(!app.Environment.IsDevelopment())
+        if(!app.Environment.IsDevelopment() || true)
         {
             app.UseSpaStaticFiles();
+            app.Use(async (ctx, next) =>
+            {
+                var loginRoute = "Login";
+                var requestPath = ctx.Request.Path;
+                var allowAnonymous = requestPath.StartsWithSegments($"/{loginRoute}")
+                    || requestPath.StartsWithSegments($"/{acceptInviteRoute}")
+                    || requestPath.StartsWithSegments("/ChangePassword");
+                if(!allowAnonymous && (!ctx.User.Identity?.IsAuthenticated ?? false))
+                {
+                    ctx.Response.Redirect($"/{loginRoute}?then={Uri.EscapeDataString(requestPath)}", permanent: false);
+                    return;
+                }
+                await next();
+            });
             app.UseSpa(o => {});
         }
 

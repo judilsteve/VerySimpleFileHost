@@ -34,9 +34,6 @@ Users can download entire directories as a tarball (with optional gzip compressi
 Media such as audio and video can be streamed, with full support for seek operations (via HTTP range requests). Administrators can configure MIME type mappings so that files automatically open in the right application.
 
 # Install and Run
-If you intend to deploy on shared infrastructure (e.g. if the machine that will be running VSFH has other duties or has access to your local network) and especially if you intend to expose VSFH to the internet, [containerised deployment](https://github.com/judilsteve/vsfh-podman) is highly recommended.
-
-Bare metal deployment instructions are provided below, but this deployment pattern is only recommended for use inside a trusted network behind a firewall, or in a well-isolated hosting environment (e.g. a cloud VPS, or a bastion host in a DMZ).
 
 ## Prerequisites
 - Node v16 and matching npm\*
@@ -86,7 +83,7 @@ cp vsfh-client/build/* vsfh-server/build/wwwroot
 ## Exposing VSFH to the Internet
 You will likely need to forward VSFH's HTTPS listen port to 443 and its HTTP listen port to 80. Instructions for this will be specific to your chosen firewall/router. Forwarding to other ports is possible, but you will lose the ability to use Let's Encrypt certificates, since Let's Encrypt's challenge schemes require VSFH to listen on ports 80 and 443.
 
-VSFH runs on the Kestrel HTTP server, which (since .NET Core 2.0) can be used as an edge server. Reverse proxying VSFH through Apache/nginx/IIS/etc not required (but you still can if you want to).
+VSFH runs on the Kestrel HTTP server, which (since .NET Core 2.0) can be used as an edge server. Reverse proxying VSFH through Apache/nginx/IIS/etc should not be required (but you still can if you want to).
 
 # Configuration
 All configuration lives in `./vsfh-server/build/VerySimpleFileHost/appsettings.json`. Use [`appsettings.Default.json`](https://github.com/judilsteve/VerySimpleFileHost/blob/main/vsfh-server/appsettings.Default.json) as a reference for building your configuration.
