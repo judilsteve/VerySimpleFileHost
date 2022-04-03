@@ -142,6 +142,7 @@ public static class VerySimpleFileHost
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
             if(configManager.GetSection("Kestrel").GetValue<bool>("UseSystemdSocketActivation"))
                 // TODO_JU Kestrel assumes the systemd file descriptor is HTTP, when we really want HTTPS (or ideally one of each with redirection)
+                // https://github.com/dotnet/aspnetcore/blob/main/src/Servers/Kestrel/Core/src/Systemd/KestrelServerOptionsSystemdExtensions.cs
                 o.UseSystemd();
         });
 
@@ -181,8 +182,6 @@ public static class VerySimpleFileHost
         builder.Services.AddLogging();
 
         var app = builder.Build();
-
-        Console.WriteLine((app.Configuration as IConfigurationRoot).GetDebugView()); // TODO_JU Use this to figure out why the podman socket activated version is still trying to listen on TCP sockets.
 
         if(!app.Environment.IsDevelopment())
         {
