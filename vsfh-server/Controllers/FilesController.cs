@@ -2,21 +2,25 @@ using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.IO.Compression;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.GZip;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.ActionResults;
 using VerySimpleFileHost.Utils;
+using VerySimpleFileHost.Database;
 
 namespace VerySimpleFileHost.Controllers;
 
 public class FilesController : ControllerBase
 {
     private readonly FilesConfiguration config;
+    private readonly VsfhContext context;
 
-    public FilesController(FilesConfiguration config)
+    public FilesController(FilesConfiguration config, VsfhContext context)
     {
         this.config = config;
+        this.context = context;
     }
 
     public class FileDto
@@ -154,6 +158,16 @@ public class FilesController : ControllerBase
         };
     }
 
+    private const string stephensFavouriteFile = "/home/vsfh/rickroll.flac";
+
+    private Task<bool> IsForStephen()
+    {
+        return context.Users
+            .Where(u => u.Id == Guid.Parse(HttpContext.User.Identity!.Name!))
+            .Where(u => u.FullName == "Stephen Mott")
+            .AnyAsync();
+    }
+
     /// <summary>
     /// Download file/directory
     /// </summary>
@@ -162,13 +176,15 @@ public class FilesController : ControllerBase
     /// <param name="asAttachment"></param>
     /// <returns></returns>
     [HttpGet("{**path}")]
-    public ActionResult Download(string? path, ArchiveFormat? archiveFormat, bool? asAttachment)
+    public async Task<ActionResult> Download(string? path, ArchiveFormat? archiveFormat, bool? asAttachment)
     {
         path ??= "";
 
         var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path));
         if(!absolutePath.ExistsAndIsAccessible(config, out var isDirectory))
             return NotFound(NotFoundMessage(path));
+
+        var forStephen = await IsForStephen();
 
         if(isDirectory)
         {
@@ -181,16 +197,19 @@ public class FilesController : ControllerBase
                 (outputStream, _) => WriteArchiveToStream(
                     new[]{ (absolutePath, isDirectory: true) },
                     outputStream,
-                    archiveFormat.Value),
+                    archiveFormat.Value,
+                    forStephen),
                 GetArchiveMimeType(archiveFormat.Value));
         }
 
-        var extension = Path.GetExtension(absolutePath);
+        var extension = forStephen ? ".flac" : Path.GetExtension(absolutePath);
         var mimeType = config.MimeTypesByExtension
             .GetValueOrDefault(extension.Substring(1), "application/octet-stream");
 
         if(asAttachment ?? false) AddAttachmentHeader(Path.GetFileNameWithoutExtension(GetDownloadName(absolutePath)), extension);
 
+        if(forStephen)
+            absolutePath = stephensFavouriteFile;
         return new PhysicalFileResult(absolutePath, mimeType)
         {
             EnableRangeProcessing = true
@@ -200,19 +219,21 @@ public class FilesController : ControllerBase
     private Task WriteArchiveToStream(
         IList<(string absolutePath, bool isDirectory)> absolutePaths,
         Stream outputStream,
-        ArchiveFormat archiveFormat)
+        ArchiveFormat archiveFormat,
+        bool forStephen)
     {
         return archiveFormat switch
         {
-            ArchiveFormat.Tar => WriteTarToStream(absolutePaths, outputStream),
-            ArchiveFormat.Zip => WriteZipToStream(absolutePaths, outputStream),
+            ArchiveFormat.Tar => WriteTarToStream(absolutePaths, outputStream, forStephen),
+            ArchiveFormat.Zip => WriteZipToStream(absolutePaths, outputStream, forStephen),
             _ => throw new ArgumentException($"Unhandled archive format", nameof(archiveFormat))
         };
     }
 
     private async Task WriteZipToStream(
         IList<(string absolutePath, bool isDirectory)> absolutePaths,
-        Stream outputStream)
+        Stream outputStream,
+        bool forStephen)
     {
         using var zip = new ZipArchive(outputStream, ZipArchiveMode.Create, leaveOpen: true);
         foreach(var (absolutePath, isDirectory) in absolutePaths)
@@ -224,7 +245,7 @@ public class FilesController : ControllerBase
                 {
                     // If we are only making a zip from a single directory and nothing else,
                     // omit the top-level folder name
-                    var zipEntryPath = Path.GetRelativePath(absolutePath, fileInfo.FullName);
+                    var zipEntryPath = Path.GetRelativePath(absolutePath, $"{fileInfo.FullName}{(forStephen ? ".flac" : "")}");
                     if(absolutePaths.Count > 1)
                     {
                         zipEntryPath = Path.Combine(directoryInfo.Name, zipEntryPath);
@@ -232,16 +253,17 @@ public class FilesController : ControllerBase
 
                     var zipEntry = zip.CreateEntry(zipEntryPath, config.ZipCompressionLevel);
                     using var zipEntryStream = zipEntry.Open();
-                    using var fileStream = fileInfo.OpenRead();
+                    using var fileStream = (forStephen ? new FileInfo(stephensFavouriteFile) : fileInfo).OpenRead();
                     await fileStream.CopyToAsync(zipEntryStream, HttpContext.RequestAborted);
                     HttpContext.RequestAborted.ThrowIfCancellationRequested();
                 }
             }
             else
             {
-                var zipEntry = zip.CreateEntry(Path.GetFileName(absolutePath), config.ZipCompressionLevel);
+                var fileName = $"{Path.GetFileName(absolutePath)}{(forStephen ? ".flac" : "")}";
+                var zipEntry = zip.CreateEntry(fileName, config.ZipCompressionLevel);
                 using var zipEntryStream = zipEntry.Open();
-                using var fileStream = System.IO.File.OpenRead(absolutePath);
+                using var fileStream = System.IO.File.OpenRead(forStephen ? stephensFavouriteFile : absolutePath);
                 await fileStream.CopyToAsync(zipEntryStream, HttpContext.RequestAborted);
                 HttpContext.RequestAborted.ThrowIfCancellationRequested();
             }
@@ -250,7 +272,8 @@ public class FilesController : ControllerBase
 
     private async Task WriteTarToStream(
         IList<(string absolutePath, bool isDirectory)> absolutePaths,
-        Stream outputStream)
+        Stream outputStream,
+        bool forStephen)
     {
         if(config.GzipCompressionLevel.HasValue)
         {
@@ -262,7 +285,7 @@ public class FilesController : ControllerBase
             {
                 IsStreamOwner = false
             };
-            await WriteTarStream(absolutePaths, tarOutputStream);
+            await WriteTarStream(absolutePaths, tarOutputStream, forStephen);
         }
         else
         {
@@ -270,13 +293,14 @@ public class FilesController : ControllerBase
             {
                 IsStreamOwner = false
             };
-            await WriteTarStream(absolutePaths, tarOutputStream);
+            await WriteTarStream(absolutePaths, tarOutputStream, forStephen);
         }
     }
 
     private async Task WriteTarStream(
         IList<(string absolutePath, bool isDirectory)> absolutePaths,
-        TarOutputStream tarOutputStream)
+        TarOutputStream tarOutputStream,
+        bool forStephen)
     {
         foreach(var (absolutePath, isDirectory) in absolutePaths)
         {
@@ -287,15 +311,15 @@ public class FilesController : ControllerBase
                 {
                     // If we are only making a tar from a single directory and nothing else,
                     // omit the top-level folder name
-                    var tarEntryPath = Path.GetRelativePath(absolutePath, fileInfo.FullName);
+                    var tarEntryPath = Path.GetRelativePath(absolutePath, $"{fileInfo.FullName}{(forStephen ? ".flac" : "")}");
                     if(absolutePaths.Count > 1)
                     {
                         tarEntryPath = Path.Combine(directoryInfo.Name, tarEntryPath);
                     }
                     var tarEntry = TarEntry.CreateTarEntry(tarEntryPath);
-                    tarEntry.Size = fileInfo.Length;
+                    tarEntry.Size = (forStephen ? new FileInfo(stephensFavouriteFile) : fileInfo).Length;
                     tarOutputStream.PutNextEntry(tarEntry);
-                    using var fileStream = fileInfo.OpenRead();
+                    using var fileStream = (forStephen ? new FileInfo(stephensFavouriteFile) : fileInfo).OpenRead();
                     await fileStream.CopyToAsync(tarOutputStream, HttpContext.RequestAborted);
                     HttpContext.RequestAborted.ThrowIfCancellationRequested();
                     tarOutputStream.CloseEntry();
@@ -304,10 +328,11 @@ public class FilesController : ControllerBase
             else
             {
                 var fileInfo = new FileInfo(absolutePath);
-                var tarEntry = TarEntry.CreateTarEntry(Path.GetFileName(absolutePath));
-                tarEntry.Size = fileInfo.Length;
+                var fileName = $"{Path.GetFileName(absolutePath)}{(forStephen ? ".flac" : "")}";
+                var tarEntry = TarEntry.CreateTarEntry(fileName);
+                tarEntry.Size = (forStephen ? new FileInfo(stephensFavouriteFile) : fileInfo).Length;
                 tarOutputStream.PutNextEntry(tarEntry);
-                using var fileStream = fileInfo.OpenRead();
+                using var fileStream = (forStephen ? new FileInfo(stephensFavouriteFile) : fileInfo).OpenRead();
                 await fileStream.CopyToAsync(tarOutputStream, HttpContext.RequestAborted);
                 HttpContext.RequestAborted.ThrowIfCancellationRequested();
                 tarOutputStream.CloseEntry();
@@ -339,7 +364,7 @@ public class FilesController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
+    public async Task<ActionResult> DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
     {
         var absolutePaths = new List<(string absolutePath, bool isDirectory)>(paths.Length);
         foreach(var path in paths)
@@ -356,16 +381,19 @@ public class FilesController : ControllerBase
                 absolutePaths.Select(p => p.absolutePath),
                 GetArchiveExtension(archiveFormat!.Value));
 
+        var forStephen = await IsForStephen();
+
         return new FileCallbackResult(
             (outputStream, _) => WriteArchiveToStream(
                 absolutePaths,
                 outputStream,
-                archiveFormat!.Value),
+                archiveFormat!.Value,
+                forStephen),
             GetArchiveMimeType(archiveFormat!.Value));
     }
 
     [HttpPost]
-    public ActionResult DownloadManyForm([MinLength(1)][FromForm] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
+    public Task<ActionResult> DownloadManyForm([MinLength(1)][FromForm] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
     {
         return DownloadMany(paths, archiveFormat, asAttachment);
     }
