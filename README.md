@@ -11,7 +11,7 @@ VerySimpleFileHost (VSFH) is an HTTP File Server with a web interface. VSFH is d
 
   - **API driven.** VSFH is a RESTful JSON API with OpenAPI/SwaggerUI integration (available in debug builds). Don't like the included web interface? Build your own! Need automated/m2m access? Use the [OpenAPI toolkit](https://github.com/OpenAPITools/openapi-generator-cli) to auto-generate a client API.
 
-  - **Secure.** VSFH allows administrators to enforce frequenty changed strong passwords. All traffic is encrypted via HTTPS (with optional certificates from Let's Encrypt). A [deployment template](https://github.com/judilsteve/vsfh-podman) is available to run VSFH in a hardened, rootless container jailed to a virtual network DMZ.
+  - **Secure.** VSFH allows administrators to enforce frequenty changed strong passwords. All traffic is encrypted via HTTPS (with optional, fully automatic certificates from Let's Encrypt).
 
 # Features
 
