@@ -151,7 +151,7 @@ public static class VerySimpleFileHost
             {
                 if(isFirstFileDescriptor)
                 {
-                    fd.UseHttps();
+                    fd.UseHttps(h => h.UseLettuceEncrypt(o.ApplicationServices));
                     isFirstFileDescriptor = false;
                 }
             });

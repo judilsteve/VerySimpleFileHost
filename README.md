@@ -38,6 +38,7 @@ Media such as audio and video can be streamed, with full support for seek operat
 ## Prerequisites
 - Node v16 and matching npm\*
 - dotnet SDK 6.0
+- libsodium
 
 \* At the time of writing, Node v17 appears to have issues with installing dependencies. Consider using [nvm](https://github.com/nvm-sh/nvm) if you need to maintain multiple Node installations.
 
