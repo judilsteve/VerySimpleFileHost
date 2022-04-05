@@ -179,7 +179,7 @@ public static class VerySimpleFileHost
                 };
             });
 
-        if(!builder.Environment.IsDevelopment() || true)
+        if(!builder.Environment.IsDevelopment())
             builder.Services.AddSpaStaticFiles(o => { o.RootPath = "wwwroot"; });
 
         var lettuceEncryptConfig = new LettuceEncryptConfiguration();
@@ -194,7 +194,7 @@ public static class VerySimpleFileHost
 
         var app = builder.Build();
 
-        if(!app.Environment.IsDevelopment() || true)
+        if(!app.Environment.IsDevelopment())
         {
             app.UseHttpsRedirection();
             app.UseHsts();
@@ -215,7 +215,7 @@ public static class VerySimpleFileHost
         app.UseEndpoints(e =>
             e.MapControllers().RequireAuthorization());
 
-        if(!app.Environment.IsDevelopment() || true)
+        if(!app.Environment.IsDevelopment())
         {
             app.UseSpaStaticFiles();
             app.Use(async (ctx, next) =>

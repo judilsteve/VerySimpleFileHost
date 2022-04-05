@@ -179,7 +179,7 @@ public class FilesController : ControllerBase
 
             return new FileCallbackResult(
                 (outputStream, _) => WriteArchiveToStream(
-                    new[]{ absolutePath },
+                    new[]{ (absolutePath, isDirectory: true) },
                     outputStream,
                     archiveFormat.Value),
                 GetArchiveMimeType(archiveFormat.Value));
@@ -198,7 +198,7 @@ public class FilesController : ControllerBase
     }
 
     private Task WriteArchiveToStream(
-        IEnumerable<string> absolutePaths,
+        IList<(string absolutePath, bool isDirectory)> absolutePaths,
         Stream outputStream,
         ArchiveFormat archiveFormat)
     {
@@ -210,26 +210,47 @@ public class FilesController : ControllerBase
         };
     }
 
-    private async Task WriteZipToStream(IEnumerable<string> absolutePaths, Stream outputStream)
+    private async Task WriteZipToStream(
+        IList<(string absolutePath, bool isDirectory)> absolutePaths,
+        Stream outputStream)
     {
         using var zip = new ZipArchive(outputStream, ZipArchiveMode.Create, leaveOpen: true);
-        foreach(var absolutePath in absolutePaths)
+        foreach(var (absolutePath, isDirectory) in absolutePaths)
         {
-            var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config, sort: false, recurseSubdirectories: true))
+            if(isDirectory)
             {
-                var zipEntry = zip.CreateEntry(
-                    Path.GetRelativePath(absolutePath, fileInfo.FullName),
-                    config.ZipCompressionLevel);
+                var directoryInfo = new DirectoryInfo(absolutePath);
+                foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config, sort: false, recurseSubdirectories: true))
+                {
+                    // If we are only making a zip from a single directory and nothing else,
+                    // omit the top-level folder name
+                    var zipEntryPath = Path.GetRelativePath(absolutePath, fileInfo.FullName);
+                    if(absolutePaths.Count > 1)
+                    {
+                        zipEntryPath = Path.Combine(directoryInfo.Name, zipEntryPath);
+                    }
+
+                    var zipEntry = zip.CreateEntry(zipEntryPath, config.ZipCompressionLevel);
+                    using var zipEntryStream = zipEntry.Open();
+                    using var fileStream = fileInfo.OpenRead();
+                    await fileStream.CopyToAsync(zipEntryStream, HttpContext.RequestAborted);
+                    HttpContext.RequestAborted.ThrowIfCancellationRequested();
+                }
+            }
+            else
+            {
+                var zipEntry = zip.CreateEntry(Path.GetFileName(absolutePath), config.ZipCompressionLevel);
                 using var zipEntryStream = zipEntry.Open();
-                using var fileStream = fileInfo.OpenRead();
+                using var fileStream = System.IO.File.OpenRead(absolutePath);
                 await fileStream.CopyToAsync(zipEntryStream, HttpContext.RequestAborted);
                 HttpContext.RequestAborted.ThrowIfCancellationRequested();
             }
         }
     }
 
-    private async Task WriteTarToStream(IEnumerable<string> absolutePaths, Stream outputStream)
+    private async Task WriteTarToStream(
+        IList<(string absolutePath, bool isDirectory)> absolutePaths,
+        Stream outputStream)
     {
         if(config.GzipCompressionLevel.HasValue)
         {
@@ -253,14 +274,37 @@ public class FilesController : ControllerBase
         }
     }
 
-    private async Task WriteTarStream(IEnumerable<string> absolutePaths, TarOutputStream tarOutputStream)
+    private async Task WriteTarStream(
+        IList<(string absolutePath, bool isDirectory)> absolutePaths,
+        TarOutputStream tarOutputStream)
     {
-        foreach(var absolutePath in absolutePaths)
+        foreach(var (absolutePath, isDirectory) in absolutePaths)
         {
-            var directoryInfo = new DirectoryInfo(absolutePath);
-            foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config, sort: false, recurseSubdirectories: true))
+            if(isDirectory)
             {
-                var tarEntry = TarEntry.CreateTarEntry(Path.GetRelativePath(absolutePath, fileInfo.FullName));
+                var directoryInfo = new DirectoryInfo(absolutePath);
+                foreach(var fileInfo in directoryInfo.EnumerateAccessibleFiles(config, sort: false, recurseSubdirectories: true))
+                {
+                    // If we are only making a tar from a single directory and nothing else,
+                    // omit the top-level folder name
+                    var tarEntryPath = Path.GetRelativePath(absolutePath, fileInfo.FullName);
+                    if(absolutePaths.Count > 1)
+                    {
+                        tarEntryPath = Path.Combine(directoryInfo.Name, tarEntryPath);
+                    }
+                    var tarEntry = TarEntry.CreateTarEntry(tarEntryPath);
+                    tarEntry.Size = fileInfo.Length;
+                    tarOutputStream.PutNextEntry(tarEntry);
+                    using var fileStream = fileInfo.OpenRead();
+                    await fileStream.CopyToAsync(tarOutputStream, HttpContext.RequestAborted);
+                    HttpContext.RequestAborted.ThrowIfCancellationRequested();
+                    tarOutputStream.CloseEntry();
+                }
+            }
+            else
+            {
+                var fileInfo = new FileInfo(absolutePath);
+                var tarEntry = TarEntry.CreateTarEntry(Path.GetFileName(absolutePath));
                 tarEntry.Size = fileInfo.Length;
                 tarOutputStream.PutNextEntry(tarEntry);
                 using var fileStream = fileInfo.OpenRead();
@@ -297,17 +341,20 @@ public class FilesController : ControllerBase
     [HttpPost]
     public ActionResult DownloadMany([MinLength(1)] string[] paths, [Required]ArchiveFormat? archiveFormat, bool? asAttachment)
     {
-        var absolutePaths = new List<string>(paths.Length);
+        var absolutePaths = new List<(string absolutePath, bool isDirectory)>(paths.Length);
         foreach(var path in paths)
         {
             // Don't ask me how, but on the form version of this endpoint (which delegates to here) it's possible to receive a null path
             var absolutePath = Path.GetFullPath(Path.Combine(config.RootSharedDirectory, path ?? ""));
             if(!absolutePath.ExistsAndIsAccessible(config, out var isDirectory))
                 return NotFound(NotFoundMessage(path ?? ""));
-            absolutePaths.Add(absolutePath);
+            absolutePaths.Add((absolutePath, isDirectory));
         }
 
-        if(asAttachment ?? false) AddAttachmentHeader(absolutePaths, GetArchiveExtension(archiveFormat!.Value));
+        if(asAttachment ?? false)
+            AddAttachmentHeader(
+                absolutePaths.Select(p => p.absolutePath),
+                GetArchiveExtension(archiveFormat!.Value));
 
         return new FileCallbackResult(
             (outputStream, _) => WriteArchiveToStream(

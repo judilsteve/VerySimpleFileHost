@@ -377,7 +377,7 @@ function ManageUsers() {
                 await printResponseError(e as Response, 'user listing');
                 setListingError(true);
             }
-        }, []));
+        }, [location, navigate]));
 
     const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
 
