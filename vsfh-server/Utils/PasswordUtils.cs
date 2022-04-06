@@ -61,9 +61,6 @@ public static class PasswordUtils
     // https://libsodium.gitbook.io/doc/password_hashing#server-relief
     public static async Task<(bool correct, bool rehashed)> PasswordIsCorrect(User user, string attemptedPassword, CancellationToken cancellationToken)
     {
-        // TODO_JU Maybe switch this to interactive? Test speed first
-        // With parameters $argon2id$v=19$m=131072,t=6,p=1 ("Moderate" preset at time of writing),
-        // a single hash takes approx 225ms to compute on an AMD 5900X and requires 128MB of RAM.
         var correct = await concurrencyLimiter.Run(() => PasswordHash.ArgonHashStringVerify(
             user.PasswordSaltedHash!,
             attemptedPassword

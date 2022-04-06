@@ -35,6 +35,7 @@ public class UsersController : ControllerBase
     [HttpGet]
     public IEnumerable<UserListingDto> ListUsers()
     {
+        // TODO_JU Response compression for this would be nice
         return context.Users
             .Select(u => new UserListingDto
             {
