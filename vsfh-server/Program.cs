@@ -1,3 +1,4 @@
+using CompressedStaticFiles;
 using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -180,7 +181,11 @@ public static class VerySimpleFileHost
             });
 
         if(!builder.Environment.IsDevelopment())
-            builder.Services.AddSpaStaticFiles(o => { o.RootPath = "wwwroot"; });
+            builder.Services.AddCompressedStaticFiles(o =>
+            {
+                o.EnableImageSubstitution = false;
+                o.EnablePrecompressedFiles = true;
+            });
 
         var lettuceEncryptConfig = new LettuceEncryptConfiguration();
         configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
@@ -217,7 +222,7 @@ public static class VerySimpleFileHost
 
         if(!app.Environment.IsDevelopment())
         {
-            app.UseSpaStaticFiles();
+            app.UseCompressedStaticFiles();
             app.Use(async (ctx, next) =>
             {
                 var loginRoute = "Login";
@@ -230,9 +235,10 @@ public static class VerySimpleFileHost
                     ctx.Response.Redirect($"/{loginRoute}?then={Uri.EscapeDataString(requestPath)}", permanent: false);
                     return;
                 }
+                ctx.Request.Path = "/index.html";
                 await next();
             });
-            app.UseSpa(o => {});
+            app.UseCompressedStaticFiles();
         }
 
         using (var scope = app.Services.CreateAsyncScope())
