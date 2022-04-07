@@ -224,7 +224,7 @@ public class LoginController : ControllerBase
         }
 
         var (passwordIsCorrect, rehashed) = await PasswordUtils.PasswordIsCorrect(
-            user, changePasswordAttempt.NewPassword, HttpContext.RequestAborted);
+            user, changePasswordAttempt.CurrentPassword, HttpContext.RequestAborted);
 
         if(!passwordIsCorrect)
         {

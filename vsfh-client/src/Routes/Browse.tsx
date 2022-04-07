@@ -218,8 +218,8 @@ function Directory(props: DirectoryProps) {
                 <Icon name={loaded || loading ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
-            <IconLink className={showOnNodeHoverClassName} name="download" href={downloadLink} />
-            <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
+            <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} />
+            <IconLink aria-label="Link" className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </div>;
     }, [displayName, isHash, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, archiveFormat]);
 
@@ -339,7 +339,7 @@ function File(props: FileProps) {
             </span>
         </SneakyLink>
         <span className={fileSizeClassName} >({humaniseBytes(sizeBytes)})&nbsp;</span>
-        <IconLink className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
+        <IconLink aria-label="Link" className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
     </List.Item>;
 }
 

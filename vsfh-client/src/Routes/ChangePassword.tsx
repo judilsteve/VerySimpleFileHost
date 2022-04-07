@@ -78,7 +78,6 @@ function ChangePassword() {
     const [rememberMe, ] = useSharedState(rememberMeState);
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
-        tabIndex: 5,
         disabled: loading
     };
 
@@ -127,7 +126,6 @@ function ChangePassword() {
         authConfig,
         passwordPlaceholder: 'New Password',
         setPasswordValid,
-        startTabIndex: 2,
         currentPassword,
         disabled: loading,
         trySubmit: () => {
@@ -152,18 +150,18 @@ function ChangePassword() {
                     icon="key" iconPosition="left"
                     placeholder="Current Password"
                     value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
-                    type="password" tabIndex={1} />
+                    type="password" />
             </Form.Field>
             <SetPassword {...setPasswordProps}/>
             <Message error header="Change Password Failed" content={error} />
             <Form.Field>
-                <RememberMe {...rememberMeProps} />
-                <Button tabIndex={4}
+                <Button
                     primary type="button"
                     floated="right" onClick={changePassword}
                     disabled={!passwordValid} loading={loading}>
                     Change Password
                 </Button>
+                <RememberMe {...rememberMeProps} />
             </Form.Field>
         </Form>
     </SkinnyForm>

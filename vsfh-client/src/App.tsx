@@ -32,7 +32,7 @@ function App() {
             </Routes>
         </BrowserRouter>
         <div style={{ width: '100%', padding: '5px', textAlign: 'right', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-            <IconLink href="https://github.com/judilsteve/VerySimpleFileHost" name="github" size="large" />
+            <IconLink aria-label="VerySimpleFileHost GitHub (Source Code)" href="https://github.com/judilsteve/VerySimpleFileHost" name="github" size="large" />
         </div>
     </div>;
 }

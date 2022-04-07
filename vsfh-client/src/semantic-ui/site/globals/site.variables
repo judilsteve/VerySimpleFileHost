@@ -2,6 +2,9 @@
      User Global Variables
 *******************************/
 
+// Serve google fonts ourselves instead of deferring to fonts.gstatic.com (slow)
+@importGoogleFonts: false;
+
 @pageBackground: #090909;
 
 @primaryColor: #c91e27;

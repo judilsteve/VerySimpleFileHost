@@ -5,12 +5,11 @@ import { rememberMeState } from "../State/sharedState";
 
 export interface RememberMeProps {
     allowRememberMe: boolean | undefined;
-    tabIndex?: number;
     disabled: boolean;
 }
 
 function RememberMe(props: RememberMeProps) {
-    const { allowRememberMe, tabIndex, disabled } = props;
+    const { allowRememberMe, disabled } = props;
 
     const [rememberMe, setRememberMe] = useSharedState(rememberMeState);
 
@@ -19,7 +18,7 @@ function RememberMe(props: RememberMeProps) {
     }, [setRememberMe, allowRememberMe]);
 
     if(allowRememberMe)
-        return <Checkbox checked={rememberMe} disabled={disabled} tabIndex={tabIndex} label="Remember me" onChange={_ => setRememberMe(!rememberMe)}/>;
+        return <Checkbox aria-label="Remember me" checked={rememberMe} disabled={disabled} label="Remember me" onChange={_ => setRememberMe(!rememberMe)}/>;
     else return <></>;
 }
 

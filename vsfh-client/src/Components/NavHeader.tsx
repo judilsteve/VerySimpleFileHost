@@ -83,7 +83,8 @@ function NavHeader(props: NavHeaderProps) {
         const iconLink = <Link to={l.route}>
             <Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" />
         </Link>;
-        return <Popup key={l.route} trigger={iconLink} content={l.name} />;
+        // Small offset prevents the popup flashing in and out when the mouse is right on the bottom edge of the icon
+        return <Popup key={l.route} trigger={iconLink} offset={[0,5]} content={l.name} />;
     });
 
     return <>

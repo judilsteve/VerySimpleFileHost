@@ -36,7 +36,6 @@ export interface SetPasswordProps {
     authConfig: AuthConfigDto | undefined;
     passwordPlaceholder: string;
     setPasswordValid: (valid: boolean) => void;
-    startTabIndex: number;
     currentPassword?: string;
     disabled: boolean;
     trySubmit: () => void;
@@ -51,7 +50,6 @@ function SetPassword(props: SetPasswordProps) {
         authConfig,
         passwordPlaceholder,
         setPasswordValid,
-        startTabIndex,
         currentPassword,
         disabled,
         trySubmit
@@ -100,7 +98,7 @@ function SetPassword(props: SetPasswordProps) {
               * Note: Passing `fluid` to the input prevents it from overflowing the
               * container on some displays when showing wide labels (e.g. "<>Adamantine")
               */}
-            <Input tabIndex={startTabIndex} disabled={disabled}
+            <Input disabled={disabled}
                 label={passwordStrengthLabel} fluid
                 labelPosition="right"
                 icon="key" iconPosition="left"
@@ -113,7 +111,6 @@ function SetPassword(props: SetPasswordProps) {
         </Form.Field>
         <Form.Field>
             <Input
-                tabIndex={startTabIndex + 1}
                 onKeyUp={submitOnEnter}
                 disabled={disabled}
                 icon="key"

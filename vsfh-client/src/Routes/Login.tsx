@@ -83,7 +83,6 @@ function Login() {
 
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
-        tabIndex: 4,
         disabled: loading
     };
 
@@ -95,12 +94,11 @@ function Login() {
         <Header as="h1">VSFH<ThemeRule /></Header>
         <Form error={!!error}>
             <Form.Field>
-                <Input disabled={loading} autoFocus tabIndex={1} icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
+                <Input disabled={loading} autoFocus icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
             </Form.Field>
             <Form.Field>
                 <Input
                     disabled={loading}
-                    tabIndex={2}
                     icon="key"
                     iconPosition="left"
                     type="password"
@@ -111,8 +109,8 @@ function Login() {
             </Form.Field>
             <Message error header="Login Failed" content={error} />
             <Form.Field>
+                <Button primary type="button" floated="right" onClick={login} disabled={!userName || !password} loading={loading}>Log In</Button>
                 <RememberMe {...rememberMeProps} />
-                <Button tabIndex={3} primary type="button" floated="right" onClick={login} disabled={!userName || !password} loading={loading}>Log In</Button>
             </Form.Field>
         </Form>
     </SkinnyForm>;

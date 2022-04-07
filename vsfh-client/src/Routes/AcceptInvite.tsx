@@ -78,7 +78,6 @@ function AcceptInvite() {
 
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
-        tabIndex: 5,
         disabled: loading
     };
 
@@ -88,7 +87,6 @@ function AcceptInvite() {
         authConfig,
         passwordPlaceholder: 'Password',
         setPasswordValid,
-        startTabIndex: 2,
         disabled: loading,
         trySubmit: () => {
             if(canActivate) activateAccount();
@@ -100,7 +98,7 @@ function AcceptInvite() {
         <p>Choose a username and password</p>
         <Form error={!!error}>
             <Form.Field>
-                <Input autoFocus tabIndex={1}
+                <Input autoFocus
                     icon="user" iconPosition="left"
                     placeholder="Username"
                     disabled={loading}
@@ -109,8 +107,8 @@ function AcceptInvite() {
             <SetPassword {...setPasswordProps} />
             <Message error header="Activation Failed" content={error} />
             <Form.Field>
+                <Button primary type="button" floated="right" onClick={activateAccount} disabled={!canActivate} loading={loading}>Activate</Button>
                 <RememberMe {...rememberMeProps} />
-                <Button tabIndex={4} primary type="button" floated="right" onClick={activateAccount} disabled={!canActivate} loading={loading}>Activate</Button>
             </Form.Field>
         </Form>
     </SkinnyForm>;

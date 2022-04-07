@@ -6,9 +6,9 @@ export interface IconLinkProps extends IconProps {
 }
 
 function IconLink(props: IconLinkProps) {
-    const { href, newTab, ...iconProps } = props;
+    const { href, newTab, 'aria-label': ariaLabel, ...iconProps } = props;
 
-    return <a className='iconlink' href={href} target={newTab ? '_blank' : undefined} rel="noreferrer">
+    return <a aria-label={ariaLabel} className='iconlink' href={href} target={newTab ? '_blank' : undefined} rel="noreferrer">
         <Icon link {...iconProps} />
     </a>;
 }

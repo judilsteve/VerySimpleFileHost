@@ -5,7 +5,7 @@ export interface ErrorTextProps {
 function ErrorText(props: ErrorTextProps) {
     const { children } = props;
 
-    return <p style={{ color: '#FF0000' }}>
+    return <p style={{ color: '#CC0000' }}>
         {children}
     </p>
 }

@@ -84,14 +84,18 @@ public static class VsfhCompressor
         await Parallel.ForEachAsync(compressibleFilePaths, async (filePath, _) =>
         {
             var originalSizeBytes = new FileInfo(filePath).Length;
-            await totalOriginalSizeBytes.Add(originalSizeBytes);
+            var countsForTotal = !filePath.EndsWith(".map");
+            if(countsForTotal) await totalOriginalSizeBytes.Add(originalSizeBytes);
 
             if(originalSizeBytes < 1024)
             {
                 await Console.Out.WriteLineAsync($"Skipping file \"{filePath}\" because it is already smaller than 1kB");
 
-                await totalGzipSizeBytes.Add(originalSizeBytes);
-                await totalBrotliSizeBytes.Add(originalSizeBytes);
+                if(countsForTotal)
+                {
+                    await totalGzipSizeBytes.Add(originalSizeBytes);
+                    await totalBrotliSizeBytes.Add(originalSizeBytes);
+                }
 
                 return;
             }
@@ -111,9 +115,9 @@ public static class VsfhCompressor
             {
                 await Console.Out.WriteLineAsync($"Skipping gzip compression of file \"{filePath}\" because the compression ratio ({gzRatio}) was poor");
                 File.Delete(fileGzPath);
-                await totalGzipSizeBytes.Add(originalSizeBytes);
+                if(countsForTotal) await totalGzipSizeBytes.Add(originalSizeBytes);
             }
-            else
+            else if(countsForTotal)
             {
                 await totalGzipSizeBytes.Add(gzSizeBytes);
             }
@@ -133,9 +137,9 @@ public static class VsfhCompressor
             {
                 await Console.Out.WriteLineAsync($"Skipping brotli compression of file \"{filePath}\" because the compression ratio ({brRatio}) was poor");
                 File.Delete(fileBrPath);
-                await totalBrotliSizeBytes.Add(originalSizeBytes);
+                if(countsForTotal) await totalBrotliSizeBytes.Add(originalSizeBytes);
             }
-            else
+            else if(countsForTotal)
             {
                 await totalBrotliSizeBytes.Add(brSizeBytes);
             }
@@ -145,6 +149,6 @@ public static class VsfhCompressor
         var gzRatio = (double)totalGzipSizeBytes.Value / (double)totalOriginalSizeBytes.Value;
         await Console.Out.WriteLineAsync($"Gzipped size: {HumaniseBytes(totalGzipSizeBytes.Value)} ({gzRatio * 100.0:F2}% of original size)");
         var brRatio = (double)totalBrotliSizeBytes.Value / (double)totalOriginalSizeBytes.Value;
-        await Console.Out.WriteLineAsync($"Brotlid size: {HumaniseBytes(totalBrotliSizeBytes.Value)} bytes ({brRatio * 100.0:F2}% of original size)");
+        await Console.Out.WriteLineAsync($"Brotlid size: {HumaniseBytes(totalBrotliSizeBytes.Value)} ({brRatio * 100.0:F2}% of original size)");
     }
 }
