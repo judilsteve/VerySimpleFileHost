@@ -1,4 +1,4 @@
-import { Location, NavigateFunction } from "react-router";
+import { NavigateFunction } from "react-router";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
 import { routes } from "../App";
 import { LoginRouteParameters } from "../Routes/Login";
@@ -10,13 +10,13 @@ export async function printResponseError(e: Response, endpointName: string) {
     console.error(await e.text());
 }
 
-async function tryHandleError(e: Response, location: Location, navigate: NavigateFunction) {
+async function tryHandleError(e: Response, navigate: NavigateFunction) {
     if(e.status === 401) {
         let responseObject: AuthenticationFailureDto;
         try {
             responseObject = await e.json();
         } catch {
-            const then = `${location.pathname}${location.search}${location.hash}`;
+            const then = `${window.location.pathname}${window.location.search}${window.location.hash}`;
             const loginRoute = `${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
             navigate(loginRoute);
             return true;

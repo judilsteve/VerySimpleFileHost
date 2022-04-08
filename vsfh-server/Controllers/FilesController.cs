@@ -58,8 +58,6 @@ public class FilesController : ControllerBase
         if(!isDirectory) return BadRequest("Only directories can be listed");
 
         var directoryInfo = new DirectoryInfo(absolutePath);
-        // TODO_JU Response compression for this would be nice
-        // https://stackoverflow.com/questions/28764394/mvc-4-gzip-compression-of-json-ajax-action-result
         return new DirectoryDto
         {
             DisplayName = rootPathName,

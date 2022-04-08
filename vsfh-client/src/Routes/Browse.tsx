@@ -107,7 +107,6 @@ function Directory(props: DirectoryProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const location = useLocation();
     const navigate = useNavigate();
     // TODO_JU Expand, collapse, and the hash-finder effect could all
     // be hoisted up into Browse, greatly simplifying this component.
@@ -119,7 +118,7 @@ function Directory(props: DirectoryProps) {
         } catch(e) {
             handleListingError(path);
             const responseError = e as Response;
-            if(!await tryHandleError(responseError, location, navigate)) {
+            if(!await tryHandleError(responseError, navigate)) {
                 await printResponseError(responseError, 'listing');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
@@ -128,9 +127,9 @@ function Directory(props: DirectoryProps) {
             if(isMounted.current) setLoading(false);
         }
         if(isMounted.current) onExpand(newTree, path);
-    }, [isMounted, onExpand, path, handleListingError, location, navigate]);
+    }, [isMounted, onExpand, path, handleListingError, navigate]);
 
-    const { hash } = location;
+    const { hash } = useLocation();
     const parsedHash = parseHash(hash);
     useEffect(() => {
         if(navigatedToHash.current) return;
