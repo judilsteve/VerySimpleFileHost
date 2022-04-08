@@ -53,6 +53,14 @@ dotnet restore
 dotnet publish -c Release -o build
 ```
 
+If you value fast server startup times (useful for deployment patterns such as systemd socket activation), you should consider publishing with the ReadyToRun flag:
+
+```bash
+dotnet publish -c Release -o build -r <rid> -p:PublishReadyToRun=true --no-self-contained
+```
+
+...where `<rid>` is the appropriate runtime identifier (RID) for your target environment (OS + CPU architecture). See [here](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog) for a list of valid RIDs.
+
 3. Build the client
 ```bash
 cd ../vsfh-client
