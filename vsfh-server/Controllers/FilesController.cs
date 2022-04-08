@@ -7,6 +7,7 @@ using ICSharpCode.SharpZipLib.GZip;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.ActionResults;
 using VerySimpleFileHost.Utils;
+using VerySimpleFileHost.Middleware;
 
 namespace VerySimpleFileHost.Controllers;
 
@@ -45,6 +46,7 @@ public class FilesController : ControllerBase
     /// <param name="depth"></param>
     /// <returns></returns>
     [HttpGet("{**path}")]
+    [CompressResponse]
     public ActionResult<DirectoryDto> Listing(string? path, [Range(1, int.MaxValue)]int? depth)
     {
         path ??= "";
