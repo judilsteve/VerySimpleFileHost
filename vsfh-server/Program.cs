@@ -213,7 +213,7 @@ public static class VerySimpleFileHost
         app.Use(async (ctx, next) =>
         {
             // Generated with https://addons.mozilla.org/en-US/firefox/addon/laboratory-by-mozilla/
-            context.Response.Headers.Add("Content-Security-Policy",
+            ctx.Response.Headers.Add("Content-Security-Policy",
                 "default-src 'none'; " +
                 "connect-src 'self'; " +
                 "font-src 'self' data:; " +
