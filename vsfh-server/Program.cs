@@ -3,6 +3,7 @@ using LettuceEncrypt;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Net.Http.Headers;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.Reflection;
@@ -206,7 +207,7 @@ public static class VerySimpleFileHost
 
         app.UseCookiePolicy(new CookiePolicyOptions
         {
-            MinimumSameSitePolicy = SameSiteMode.Strict
+            MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
         });
 
         app.UseSwagger();
@@ -221,7 +222,20 @@ public static class VerySimpleFileHost
 
         if(!app.Environment.IsDevelopment())
         {
-            app.UseCompressedStaticFiles();
+            var staticFileCachePolicy = new CacheControlHeaderValue
+            {
+                Public = true,
+                MaxAge = TimeSpan.FromDays(30)
+            };
+            var staticFileOptions = new StaticFileOptions
+            {
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.GetTypedHeaders().CacheControl = staticFileCachePolicy;
+                }
+            };
+
+            app.UseCompressedStaticFiles(staticFileOptions);
             app.Use(async (ctx, next) =>
             {
                 var loginRoute = "Login";
@@ -237,7 +251,7 @@ public static class VerySimpleFileHost
                 ctx.Request.Path = "/index.html";
                 await next();
             });
-            app.UseCompressedStaticFiles();
+            app.UseCompressedStaticFiles(staticFileOptions);
         }
 
         using (var scope = app.Services.CreateAsyncScope())
