@@ -209,6 +209,20 @@ public static class VerySimpleFileHost
         {
             MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
         });
+        
+        app.Use(async (ctx, next) =>
+        {
+            // Generated with https://addons.mozilla.org/en-US/firefox/addon/laboratory-by-mozilla/
+            context.Response.Headers.Add("Content-Security-Policy",
+                "default-src 'none'; " +
+                "connect-src 'self'; " +
+                "font-src 'self' data:; " +
+                "form-action 'self'; " +
+                "img-src 'self'; " +
+                "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is probably from semantic-ui's popup element
+                "style-src 'self' 'unsafe-inline' "
+             );
+        });
 
         app.UseSwagger();
         app.UseSwaggerUI();
