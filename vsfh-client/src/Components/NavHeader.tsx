@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback } from "react";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
-import { routes } from "../App";
+import { routes } from "../Routes";
 import useEndpointData from "../Hooks/useEndpointData";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
@@ -80,8 +80,8 @@ function NavHeader(props: NavHeaderProps) {
     , [isAdministrator, pathname]);
 
     const linkIcons = links.map(l => {
-        const iconLink = <Link to={l.route}>
-            <Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" />
+        const iconLink = <Link href={l.route}>
+            <a><Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" /></a>
         </Link>;
         // Small offset prevents the popup flashing in and out when the mouse is right on the bottom edge of the icon
         return <Popup key={l.route} trigger={iconLink} offset={[0,5]} content={l.name} />;

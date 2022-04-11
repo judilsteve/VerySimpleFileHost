@@ -1,4 +1,4 @@
-import './Browse.less';
+import styles from './Browse.module.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
 import { useLocation, useNavigate } from "react-router";

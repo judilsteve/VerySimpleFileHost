@@ -1,7 +1,7 @@
 import { useLocation } from "react-router";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Modal, Button, Icon } from "semantic-ui-react";
-import { routes } from "../App";
+import { routes } from "../Routes";
 import { useSharedState } from "../Hooks/useSharedState";
 import { ChangePasswordRouteParameters } from "../Routes/ChangePassword";
 import { LoginRouteParameters } from "../Routes/Login";
@@ -20,8 +20,8 @@ function SessionExpiredModal() {
             <p>Log in again to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <Link to={loginRoute}>
-                <Button primary ><Icon name="sign-in" />Log In</Button>
+            <Link href={loginRoute}>
+                <a><Button primary ><Icon name="sign-in" />Log In</Button></a>
             </Link>
         </Modal.Actions>
     </Modal>;
@@ -40,8 +40,8 @@ function PasswordExpiredModal() {
             <p>Change your password to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <Link to={changePasswordRoute}>
-                <Button primary ><Icon name="key" />Change Password</Button>
+            <Link href={changePasswordRoute}>
+                <a><Button primary ><Icon name="key" />Change Password</Button></a>
             </Link>
         </Modal.Actions>
     </Modal>;

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSearchParams } from "react-router-dom";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthStatusDto } from "../API";
-import { routes } from "../App";
+import { routes } from "../Routes";
 import RememberMe from "../Components/RememberMe";
 import SetPassword from "../Components/SetPassword";
 import SkinnyForm from "../Components/SkinnyForm";

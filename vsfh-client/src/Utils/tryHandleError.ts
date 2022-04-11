@@ -1,6 +1,6 @@
 import { NavigateFunction } from "react-router";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
-import { routes } from "../App";
+import { routes } from "../Routes";
 import { LoginRouteParameters } from "../Routes/Login";
 import { passwordExpiredPromptState, sessionExpiredPromptState, unauthorisedBlockState } from "../State/sharedState";
 

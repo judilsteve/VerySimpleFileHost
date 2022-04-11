@@ -4,7 +4,7 @@ import { AuthenticationFailureDto } from "../API";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import { useNavigate } from "react-router";
-import { inviteKeyParamName, routes } from "../App";
+import { inviteKeyParamName, routes } from "../Routes";
 import useEndpointData from "../Hooks/useEndpointData";
 import SetPassword from "../Components/SetPassword";
 import { useParams } from "react-router";

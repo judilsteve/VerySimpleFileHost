@@ -1,4 +1,5 @@
-// This file is only used by craco at dev time
+// This file is only used by next.js at dev time
+// TODO_JU Is this still needed?
 
 const createProxyMiddleware = require('http-proxy-middleware');
 

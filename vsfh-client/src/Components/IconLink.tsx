@@ -1,4 +1,4 @@
-import './IconLink.less';
+import styles from  './IconLink.module.less';
 import { Icon, IconProps } from "semantic-ui-react";
 
 export interface IconLinkProps extends IconProps {

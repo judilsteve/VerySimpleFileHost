@@ -35,12 +35,19 @@ Media such as audio and video can be streamed, with full support for seek operat
 
 # Install and Run
 
-## Prerequisites
+## Prerequisites for building
 - Node v16 and matching npm\*
+- yarn (recommended, less temperamental than npm)
 - dotnet SDK 6.0
-- libsodium
 
 \* At the time of writing, Node v17 appears to have issues with installing dependencies. Consider using [nvm](https://github.com/nvm-sh/nvm) if you need to maintain multiple Node installations.
+
+## Runtime dependencies
+ - dotnet runtime 6.0
+ - libsodium
+
+The dotnet runtime is not required if you publish with the `--self-contained` flag, which will bundle the dotnet runtime into the build output.
+It is recommended in most scenarios to to *not* use the `--self-contained` flag, so that you can install security updates to the dotnet runtime on your deployment environments without having to rebuild vsfh-server.
 
 ## Instructions
 
@@ -64,7 +71,15 @@ dotnet publish -c Release -o build -r <rid> -p:PublishReadyToRun=true --no-self-
 3. Build the client
 ```bash
 cd ../vsfh-client
-npm install --dev
+yarn install --dev --frozen-lockfile
+yarn run build
+```
+
+Or for npm users:
+
+```bash
+cd ../vsfh-client
+npm ci --dev
 npm run build
 ```
 
