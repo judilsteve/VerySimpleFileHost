@@ -1,5 +1,8 @@
 import '@fontsource/lato';
-import 'semantic-ui-less/semantic.less';
+import '../../semantic/dist/components/reset.min.css';
+// TODO_JU I think this imports everything, can we be more selective?
+// Would be nice to import on a per-page basis
+import '../../semantic/dist/semantic.min.css';
 import IconLink from '../Components/IconLink';
 
 interface VerySimpleFileHostProps {

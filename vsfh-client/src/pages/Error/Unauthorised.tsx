@@ -1,8 +1,8 @@
 import { Header, Icon } from "semantic-ui-react";
-import { routes } from "../App";
-import SkinnyForm from "./SkinnyForm";
-import ThemeRule from "./ThemeRule";
-import { usePageTitle } from "../Hooks/usePageTitle";
+import { routes } from "../../Routes";
+import SkinnyForm from "../../Components/SkinnyForm";
+import ThemeRule from "../../Components/ThemeRule";
+import { usePageTitle } from "../../Hooks/usePageTitle";
 import Link from "next/link"
 
 function Unauthorised() {

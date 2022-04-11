@@ -8,7 +8,7 @@ import { usePageTitle } from "../../Hooks/usePageTitle";
 import NavHeader from "../../Components/NavHeader";
 import tryHandleError, { printResponseError } from "../../Utils/tryHandleError";
 import { useIsMounted } from "../../Hooks/useIsMounted";
-import { useNavigate } from "react-router";
+import { useRouter } from "next/router";
 
 const api = new UsersApi(apiConfig);
 
@@ -32,7 +32,10 @@ function InviteLinkModal(props: InviteLinkModalProps) {
         return () => window.clearTimeout(timer);
     }, [justCopied]);
 
-    const inviteLink = `${window.location.origin}/AcceptInvite/${inviteKeyUser?.inviteKey}`;
+    const [inviteLink, setInviteLink] = useState('');
+    useEffect(() => {
+        setInviteLink(`${window.location.origin}/AcceptInvite/${inviteKeyUser?.inviteKey}`);
+    }, [inviteKeyUser?.inviteKey]);
 
     const copyButton = <Popup
         open={justCopied}
@@ -66,7 +69,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
+    const router = useRouter();
     const resetPassword = async () => {
         if(loading) return;
         setLoading(true);
@@ -83,7 +86,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
             });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse, router)) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
@@ -130,7 +133,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const [error, setError] = useState('');
     useEffect(() => { if(open) setError(''); }, [open]);
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
+    const router = useRouter();
     const deleteUser = async () => {
         if(loading) return;
         setLoading(true);
@@ -139,7 +142,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
             await api.apiUsersDeleteUserUserIdDelete({ userId: userDto?.id! });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse, router)) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
@@ -204,7 +207,7 @@ function UserCard(props: UserEditProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
+    const router = useRouter();
     const save = async () => {
         if(loading) return;
         setLoading(true);
@@ -220,7 +223,7 @@ function UserCard(props: UserEditProps) {
             });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse, router)) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
@@ -294,7 +297,7 @@ function NewUserCard(props: NewUserCardProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
+    const router = useRouter();
     const add = async () => {
         if(loading) return;
         setLoading(true);
@@ -309,7 +312,7 @@ function NewUserCard(props: NewUserCardProps) {
             });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse, router)) {
                 await printResponseError(e as Response, 'add user');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
@@ -362,17 +365,17 @@ function ManageUsers() {
     usePageTitle('Manage Users');
 
     const [listingError, setListingError] = useState(false);
-    const navigate = useNavigate();
+    const router = useRouter();
     const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.apiUsersListUsersGet(), []),
         useCallback(async e => {
             const response = e as Response;
-            if(await tryHandleError(response, navigate)) return;
+            if(await tryHandleError(response, router)) return;
             else {
                 await printResponseError(e as Response, 'user listing');
                 setListingError(true);
             }
-        }, [navigate]));
+        }, [router]));
 
     const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
 

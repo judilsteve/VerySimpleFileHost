@@ -1,10 +1,10 @@
-import { useLocation } from "react-router";
+import useLocation from "../Hooks/useLocation";
 import Link from "next/link";
 import { Modal, Button, Icon } from "semantic-ui-react";
 import { routes } from "../Routes";
 import { useSharedState } from "../Hooks/useSharedState";
-import { ChangePasswordRouteParameters } from "../Routes/ChangePassword";
-import { LoginRouteParameters } from "../Routes/Login";
+import { ChangePasswordRouteParameters } from "../pages/ChangePassword";
+import { LoginRouteParameters } from "../pages/Login";
 import { sessionExpiredPromptState, passwordExpiredPromptState } from "../State/sharedState";
 
 function SessionExpiredModal() {

@@ -3,11 +3,10 @@ import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto } from "../API";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
-import { useNavigate } from "react-router";
+import { useRouter } from "next/router";
 import { inviteKeyParamName, routes } from "../Routes";
 import useEndpointData from "../Hooks/useEndpointData";
 import SetPassword from "../Components/SetPassword";
-import { useParams } from "react-router";
 import { usePageTitle } from "../Hooks/usePageTitle";
 import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
@@ -28,8 +27,9 @@ function AcceptInvite() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const inviteKey = useParams()[inviteKeyParamName];
-    const navigate = useNavigate();
+    const router = useRouter();
+    const inviteKeys = router.query[inviteKeyParamName];
+    const inviteKey = inviteKeys instanceof Array ? inviteKeys[0] : inviteKeys;
     const isMounted = useIsMounted();
     const activateAccount = async () => {
         if(loading) return;
@@ -61,7 +61,7 @@ function AcceptInvite() {
                 setCheckPassword('');
             }
         }
-        if(isMounted.current) navigate(routes.browseFiles);
+        if(isMounted.current) router.push(routes.browseFiles);
     };
 
     const [authConfig, ] = useEndpointData(

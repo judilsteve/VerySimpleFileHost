@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { useLocation } from "react-router";
-import { useNavigate } from "react-router";
+import useLocation from "../Hooks/useLocation";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
@@ -48,7 +48,7 @@ const getAuthStatus = () => loginApi.apiLoginAuthStatusGet();
 function NavHeader(props: NavHeaderProps) {
     const { pageTitle } = props;
 
-    const navigate = useNavigate();
+    const router = useRouter();
 
     const [loggingOut, setLoggingOut] = useState(false);
 
@@ -70,7 +70,7 @@ function NavHeader(props: NavHeaderProps) {
             if(isMounted.current) setError('An unexpected error occurred');
             return;
         }
-        if(isMounted.current) navigate(routes.login);
+        if(isMounted.current) router.push(routes.login); // TODO_JU Check that this doesn't cause re-renders
     };
 
     const { pathname } = useLocation();

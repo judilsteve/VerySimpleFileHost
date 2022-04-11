@@ -1,7 +1,7 @@
-import { NavigateFunction } from "react-router";
+import { NextRouter } from "next/router";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
 import { routes } from "../Routes";
-import { LoginRouteParameters } from "../Routes/Login";
+import { LoginRouteParameters } from "../pages/Login";
 import { passwordExpiredPromptState, sessionExpiredPromptState, unauthorisedBlockState } from "../State/sharedState";
 
 export async function printResponseError(e: Response, endpointName: string) {
@@ -10,7 +10,7 @@ export async function printResponseError(e: Response, endpointName: string) {
     console.error(await e.text());
 }
 
-async function tryHandleError(e: Response, navigate: NavigateFunction) {
+async function tryHandleError(e: Response, router: NextRouter) {
     if(e.status === 401) {
         let responseObject: AuthenticationFailureDto;
         try {
@@ -18,7 +18,7 @@ async function tryHandleError(e: Response, navigate: NavigateFunction) {
         } catch {
             const then = `${window.location.pathname}${window.location.search}${window.location.hash}`;
             const loginRoute = `${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
-            navigate(loginRoute);
+            router.push(loginRoute);
             return true;
         }
         const reasonCode = responseObject.reasonCode;

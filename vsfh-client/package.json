@@ -12,14 +12,8 @@
   },
   "scripts": {
     "start": "next dev",
-    "build": "next build",
+    "build": "next build && next export",
     "generate-api-client": "SET JAVA_OPTS=-Dio.swagger.v3.parser.util.RemoteUrl.trustAll=true && openapi-generator-cli generate -i https://localhost:7270/swagger/v1/swagger.json  -g typescript-fetch --additional-properties=withoutRuntimeChecks=true -o ./src/API"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [
@@ -39,13 +33,10 @@
     "@types/react": "^17.0.37",
     "@types/react-dom": "^17.0.11",
     "@types/zxcvbn": "^4.4.1",
-    "http-proxy-middleware": "^0.19.1",
-    "less": "^4.1.2",
-    "less-loader": "^10.2.0",
+    "eslint": "^8.13.0",
+    "eslint-config-next": "12.1.4",
+    "fomantic-ui": "^2.8.8",
     "next": "^12.1.4",
-    "next-with-less": "^2.0.5",
-    "semantic-ui-less": "^2.4.1",
-    "typescript": "^4.6.3",
-    "url-loader": "^4.1.1"
+    "typescript": "^4.6.3"
   }
 }

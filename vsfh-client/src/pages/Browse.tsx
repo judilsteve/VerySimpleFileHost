@@ -1,7 +1,8 @@
-import styles from './Browse.module.less';
+import styles from './Browse.module.css';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
-import { useLocation, useNavigate } from "react-router";
+import useLocation from "../Hooks/useLocation";
+import { useRouter } from "next/router";
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Message, Modal, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
 import { apiConfig } from "../apiInstances";
@@ -107,7 +108,7 @@ function Directory(props: DirectoryProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
+    const router = useRouter();
     // TODO_JU Expand, collapse, and the hash-finder effect could all
     // be hoisted up into Browse, greatly simplifying this component.
     const expand = useCallback(async () => {
@@ -118,7 +119,7 @@ function Directory(props: DirectoryProps) {
         } catch(e) {
             handleListingError(path);
             const responseError = e as Response;
-            if(!await tryHandleError(responseError, navigate)) {
+            if(!await tryHandleError(responseError, router)) {
                 await printResponseError(responseError, 'listing');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
@@ -127,7 +128,7 @@ function Directory(props: DirectoryProps) {
             if(isMounted.current) setLoading(false);
         }
         if(isMounted.current) onExpand(newTree, path);
-    }, [isMounted, onExpand, path, handleListingError, navigate]);
+    }, [isMounted, onExpand, path, handleListingError, router]);
 
     const { hash } = useLocation();
     const parsedHash = parseHash(hash);
@@ -373,7 +374,7 @@ function CouldNotFindHashModal(props: CouldNotFindHashModalProps) {
     return <Modal size="tiny" open={open} onClose={close}>
         <Modal.Header>Path Not Found</Modal.Header>
         <Modal.Content>
-            <p>Either the path "{parsedHash}" did not exist, or an error occurred</p>
+            <p>Either the path &quot;{parsedHash}&quot; did not exist, or an error occurred</p>
         </Modal.Content>
         <Modal.Actions>
             <Button primary onClick={close}>Resume Browsing</Button>

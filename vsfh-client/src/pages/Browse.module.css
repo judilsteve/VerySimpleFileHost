@@ -1,0 +1,113 @@
+.tree-node {
+    /* Ensures that hover zone spans entire container width */
+    display: block;
+}
+
+/* TODO_JU This much "!important" cannot be good */
+.show-on-node-hover {
+    transition: opacity 100ms ease !important;
+    opacity: 0 !important;
+}
+
+.tree-node:hover > div > .show-on-node-hover {
+    opacity: 0.8 !important;
+}
+
+.tree-node:hover > a > .show-on-node-hover {
+    opacity: 0.8 !important;
+}
+
+.tree-node:hover > div > .show-on-node-hover:hover {
+    opacity: 1 !important;
+}
+
+.tree-node:hover > a > .show-on-node-hover:hover {
+    opacity: 1 !important;
+}
+
+.stuck-container .grid {
+    /* Prevents tree nodes showing through the sticky filter box and archive buttons */
+    background: #090909;
+}
+
+.path {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.path:hover {
+    white-space: pre-wrap;
+}
+
+.small.checkbox {
+    display: inline-block;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 100ms ease;
+    min-height: 1em;
+    line-height: 1em;
+    vertical-align: -1px;
+}
+
+.small.checkbox.checked {
+    opacity: 1;
+}
+
+.tree-node:hover > .small.checkbox {
+    opacity: 1;
+}
+
+.small.checkbox label::before {
+    height: 1em;
+    width: 1em;
+}
+
+.small.checkbox label::after {
+    height: 1em;
+    width: 14px;
+    font-size: 0.85em;
+}
+
+.file-size {
+    opacity: 0.7;
+    font-size: 0.85em;
+}
+
+.directory-node {
+    cursor: pointer;
+}
+
+/*
+ * Browsers scroll the hash anchor to the top of the page,
+ * causing them to get hidden under the sticky header.
+ * We use an invisible hash anchor offset a little from the actual
+ * desired scroll location.
+ * This way, the anchor clears the sticky header *and* the user
+ * gets a little context from the files/folders directly above it.
+ */
+.hash-anchor {
+    display: inline;
+    visibility: hidden;
+    position: relative;
+    top: -15vh;
+}
+
+.hash-anchor-node {
+    font-weight: bold;
+}
+
+.hash-anchor-node.icon {
+    color: #c91e27;
+}
+
+.empty-list-placeholder {
+    display: block;
+    padding-left: 2.5em !important;
+    opacity: 0.7;
+}
+
+.under-directory {
+    display: block;
+    margin-left: 1.5em !important;
+}

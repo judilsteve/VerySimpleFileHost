@@ -24,7 +24,7 @@ export class SharedState<T> {
 
 export class SharedPersistedState<T> extends SharedState<T> {
     constructor(localStorageKey: string, initialValue: T) {
-        const persistedJson = window.localStorage.getItem(localStorageKey);
+        const persistedJson = typeof window === 'undefined' ? null : window.localStorage.getItem(localStorageKey);
         const persistedData = persistedJson === null ? initialValue : JSON.parse(persistedJson);
         super(persistedData);
         // https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem#exceptions
@@ -38,9 +38,11 @@ export class SharedPersistedState<T> extends SharedState<T> {
         });
         // Handle local storage updates from other tabs. Mozilla states that this event only fires if the update
         // comes from another tab: https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event
-        window.onstorage = e => {
-            if(e.storageArea !== window.localStorage || e.key !== localStorageKey) return;
-            this.setValue(e.newValue === null ? e.newValue : JSON.parse(e.newValue));
+        if(typeof window !== 'undefined') {
+            window.onstorage = e => {
+                if(e.storageArea !== window.localStorage || e.key !== localStorageKey) return;
+                this.setValue(e.newValue === null ? e.newValue : JSON.parse(e.newValue));
+            }
         }
     }
 }

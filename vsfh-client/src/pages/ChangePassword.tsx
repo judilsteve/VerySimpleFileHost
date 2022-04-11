@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import { useSearchParams } from "react-router-dom";
+import { useRouter } from "next/router";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthStatusDto } from "../API";
 import { routes } from "../Routes";
@@ -27,7 +26,7 @@ function ChangePassword() {
 
     const [userName, setUserName] = useState('');
 
-    const navigate = useNavigate();
+    const router = useRouter();
     useEffect(() => {
         if(passwordExpiredPrompt?.userName) {
             setUserName(passwordExpiredPrompt?.userName);
@@ -44,7 +43,7 @@ function ChangePassword() {
                     const location = window.location;
                     const then = `${location.pathname}${location.search}${location.hash}`;
                     if(cancel) return;
-                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
+                    router.push(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
                 } else {
                     await printResponseError(e as Response, 'auth status');
                     if(cancel) return;
@@ -55,7 +54,7 @@ function ChangePassword() {
             if(!cancel) setUserName(authStatus.userName!);
         })();
         return () => { cancel = true; };
-    }, [passwordExpiredPrompt, navigate]);
+    }, [passwordExpiredPrompt, router]);
 
     const message = passwordExpiredPrompt?.message ?? '';
 
@@ -81,7 +80,8 @@ function ChangePassword() {
         disabled: loading
     };
 
-    const then = useSearchParams()[0].get(ChangePasswordRouteParameters.then);
+    const thens = useRouter().query[ChangePasswordRouteParameters.then];
+    const then = thens instanceof Array ? thens[0] : thens;
     const isMounted = useIsMounted();
     const changePassword = async () => {
         if(loading) return;
@@ -114,7 +114,7 @@ function ChangePassword() {
         }
         if(isMounted.current) {
             setPasswordExpiredPrompt(null);
-            navigate(then ?? routes.browseFiles)
+            router.push(then ?? routes.browseFiles)
         };
     };
 

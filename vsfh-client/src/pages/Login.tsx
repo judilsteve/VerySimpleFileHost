@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
-import { useNavigate } from "react-router";
-import { useSearchParams } from "react-router-dom";
+import { useRouter } from "next/router";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
 import { routes } from "../Routes";
@@ -30,8 +29,9 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const navigate = useNavigate();
-    const then = useSearchParams()[0].get(LoginRouteParameters.then);
+    const router = useRouter();
+    const thens = router.query[LoginRouteParameters.then];
+    const then = thens instanceof Array ? thens[0] : thens;
     const isMounted = useIsMounted();
     const login = async () => {
         if(loading) return;
@@ -59,7 +59,7 @@ function Login() {
                     });
                     let destination = routes.changePassword;
                     if(then) destination += `?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
-                    navigate(destination);
+                    router.push(destination);
                 }
                 else setError(responseObject.reason ?? 'Unknown authentication error');
             }
@@ -71,7 +71,7 @@ function Login() {
             }
         }
         sessionExpiredPromptState.setValue(false);
-        if(isMounted.current) navigate(then ?? routes.browseFiles);
+        if(isMounted.current) router.push(then ?? routes.browseFiles);
     };
 
     const [authConfig, ] = useEndpointData(
