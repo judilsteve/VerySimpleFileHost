@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Header, Icon } from "semantic-ui-react";
-import { routes } from "../../App";
+import { routes } from "../../routes";
 import SkinnyForm from "../../Components/SkinnyForm";
 import ThemeRule from "../../Components/ThemeRule";
 import { usePageTitle } from "../../Hooks/usePageTitle";
@@ -11,9 +11,9 @@ function NotFound() {
     return <SkinnyForm>
         <Header as="h1">Wrong Turn<ThemeRule /></Header>
         <p>The requested page could not be found</p>
-        <Link to={routes.browseFiles}>
+        <a href={routes.browseFiles.url}>
             <Icon link name="home" size="large" style={{float: 'right'}} />
-        </Link>
+        </a>
     </SkinnyForm>;
 }
 

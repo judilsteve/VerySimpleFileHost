@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSearchParams } from "react-router-dom";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
-import { routes } from "../App";
+import { routes } from "../routes";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
@@ -57,7 +57,7 @@ function Login() {
                         message: responseObject.reason!,
                         userName: userName
                     });
-                    let destination = routes.changePassword;
+                    let destination = routes.changePassword.url;
                     if(then) destination += `?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
                     navigate(destination);
                 }
@@ -71,7 +71,7 @@ function Login() {
             }
         }
         sessionExpiredPromptState.setValue(false);
-        if(isMounted.current) navigate(then ?? routes.browseFiles);
+        if(isMounted.current) navigate(then ?? routes.browseFiles.url);
     };
 
     const [authConfig, ] = useEndpointData(

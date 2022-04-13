@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
-import { routes } from "../App";
+import { routes } from "../routes";
 import useEndpointData from "../Hooks/useEndpointData";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
@@ -24,19 +24,19 @@ interface RouteLink {
 
 const routeLinks: RouteLink[] = [
     {
-        route: routes.browseFiles,
+        route: routes.browseFiles.url,
         icon: 'folder open',
         name: 'Browse',
         adminOnly: false
     },
     {
-        route: routes.manageUsers,
+        route: routes.manageUsers.url,
         icon: 'users',
         name: 'Manage Users',
         adminOnly: true
     },
     {
-        route: routes.changePassword,
+        route: routes.changePassword.url,
         icon: 'key',
         name: 'Change Password',
         adminOnly: false

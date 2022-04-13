@@ -4,10 +4,9 @@ import { AuthenticationFailureDto } from "../API";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import { useNavigate } from "react-router";
-import { inviteKeyParamName, routes } from "../App";
+import { routes } from "../routes";
 import useEndpointData from "../Hooks/useEndpointData";
 import SetPassword from "../Components/SetPassword";
-import { useParams } from "react-router";
 import { usePageTitle } from "../Hooks/usePageTitle";
 import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
@@ -15,6 +14,7 @@ import { rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
+import { useSearchParams } from "react-router-dom";
 
 function AcceptInvite() {
     usePageTitle('Accept Invite');
@@ -28,7 +28,7 @@ function AcceptInvite() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const inviteKey = useParams()[inviteKeyParamName];
+    const inviteKey = useSearchParams()['key'];
     const navigate = useNavigate();
     const isMounted = useIsMounted();
     const activateAccount = async () => {
@@ -61,7 +61,7 @@ function AcceptInvite() {
                 setCheckPassword('');
             }
         }
-        if(isMounted.current) navigate(routes.browseFiles);
+        if(isMounted.current) navigate(routes.browseFiles.url);
     };
 
     const [authConfig, ] = useEndpointData(

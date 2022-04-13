@@ -9,6 +9,7 @@ import NavHeader from "../../Components/NavHeader";
 import tryHandleError, { printResponseError } from "../../Utils/tryHandleError";
 import { useIsMounted } from "../../Hooks/useIsMounted";
 import { useNavigate } from "react-router";
+import safeWindow from "../../Utils/safeWindow";
 
 const api = new UsersApi(apiConfig);
 
@@ -32,7 +33,7 @@ function InviteLinkModal(props: InviteLinkModalProps) {
         return () => window.clearTimeout(timer);
     }, [justCopied]);
 
-    const inviteLink = `${window.location.origin}/AcceptInvite/${inviteKeyUser?.inviteKey}`;
+    const inviteLink = `${safeWindow?.location.origin}/AcceptInvite/${inviteKeyUser?.inviteKey}`;
 
     const copyButton = <Popup
         open={justCopied}

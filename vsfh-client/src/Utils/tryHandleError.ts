@@ -1,6 +1,6 @@
 import { NavigateFunction } from "react-router";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
-import { routes } from "../App";
+import { routes } from "../routes";
 import { LoginRouteParameters } from "../Routes/Login";
 import { passwordExpiredPromptState, sessionExpiredPromptState, unauthorisedBlockState } from "../State/sharedState";
 
@@ -17,7 +17,7 @@ async function tryHandleError(e: Response, navigate: NavigateFunction) {
             responseObject = await e.json();
         } catch {
             const then = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-            const loginRoute = `${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
+            const loginRoute = `${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
             navigate(loginRoute);
             return true;
         }

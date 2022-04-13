@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSearchParams } from "react-router-dom";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthStatusDto } from "../API";
-import { routes } from "../App";
+import { routes } from "../routes";
 import RememberMe from "../Components/RememberMe";
 import SetPassword from "../Components/SetPassword";
 import SkinnyForm from "../Components/SkinnyForm";
@@ -44,7 +44,7 @@ function ChangePassword() {
                     const location = window.location;
                     const then = `${location.pathname}${location.search}${location.hash}`;
                     if(cancel) return;
-                    navigate(`${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
+                    navigate(`${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
                 } else {
                     await printResponseError(e as Response, 'auth status');
                     if(cancel) return;
@@ -114,7 +114,7 @@ function ChangePassword() {
         }
         if(isMounted.current) {
             setPasswordExpiredPrompt(null);
-            navigate(then ?? routes.browseFiles)
+            navigate(then ?? routes.browseFiles.url)
         };
     };
 

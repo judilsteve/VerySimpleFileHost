@@ -1,7 +1,7 @@
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { Modal, Button, Icon } from "semantic-ui-react";
-import { routes } from "../App";
+import { routes } from "../routes";
 import { useSharedState } from "../Hooks/useSharedState";
 import { ChangePasswordRouteParameters } from "../Routes/ChangePassword";
 import { LoginRouteParameters } from "../Routes/Login";
@@ -12,7 +12,7 @@ function SessionExpiredModal() {
     const [sessionExpiredPrompt, setSessionExpiredPrompt] = useSharedState(sessionExpiredPromptState);
 
     const then = `${location.pathname}${location.search}${location.hash}`;
-    const loginRoute = `${routes.login}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
+    const loginRoute = `${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={sessionExpiredPrompt} onClose={() => setSessionExpiredPrompt(false)}>
         <Modal.Header>Session Expired</Modal.Header>
@@ -32,7 +32,7 @@ function PasswordExpiredModal() {
     const [passwordExpiredPrompt, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
     const then = `${location.pathname}${location.search}${location.hash}`;
-    const changePasswordRoute = `${routes.changePassword}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
+    const changePasswordRoute = `${routes.changePassword.url}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={!!passwordExpiredPrompt} onClose={() => setPasswordExpiredPrompt(null)}>
         <Modal.Header>Password Expired</Modal.Header>
