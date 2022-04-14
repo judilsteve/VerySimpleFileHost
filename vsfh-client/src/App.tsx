@@ -1,28 +1,33 @@
 import '@fontsource/lato';
-import 'semantic-ui-less/semantic.less'; // TODO_JU Upgrade to fomantic
+import 'semantic-ui-less/semantic.less'; // TODO_JU Upgrade to fomantic, split into only required pieces
 
-// TODO_JU How to dynamically choose StaticRouter, set location, and bypass SuspensefulComponent for pre-rendering?
-import { BrowserRouter, Routes, Navigate, Route } from 'react-router-dom';
-import { StaticRouter } from 'react-router-dom/server';
+import { useCallback } from 'preact/hooks';
+
+// Make a custom hook that listens on hashchange event for useLocation().hash
+import Router from 'preact-router';
 import IconLink from './Components/IconLink';
-import SuspensefulComponent from './Routing/SuspensefulComponent';
+import SuspensefulComponent from './Routing/SuspensefulRoute';
 
 import { routes } from './routes';
 
-function App(props) {
+import Redirect from './Routing/Redirect';
+
+function App() {
+    const handleRouteChange = useCallback(() => {
+        // TODO_JU Wire router onChange to a sharedState and then make a hook for it to mimic useLocation().pathname
+    }, []);
+
     return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {JSON.stringify(props)}
-        <StaticRouter location="TODO_JU">
-            <Routes>
-                <Route path="/" element={<Navigate to={routes.browseFiles.url}/>}/>
-                <Route path={routes.login.url} element={<SuspensefulComponent importFunc={() => import('./Routes/Login')}/>}/>
-                <Route path={routes.acceptInvite.url} element={<SuspensefulComponent importFunc={() => import('./Routes/AcceptInvite')}/>}/>
-                <Route path={routes.changePassword.url} element={<SuspensefulComponent importFunc={() => import('./Routes/ChangePassword')}/>}/>
-                <Route path={routes.manageUsers.url} element={<SuspensefulComponent importFunc={() => import('./Routes/Admin/ManageUsers')}/>}/>
-                <Route path={routes.browseFiles.url} element={<SuspensefulComponent importFunc={() => import('./Routes/Browse')}/>}/>
-                <Route path="*" element={<SuspensefulComponent importFunc={() => import('./Routes/Error/NotFound')}/>}/>
-            </Routes>
-        </StaticRouter>
+        <Router onChange={handleRouteChange}>
+            <Redirect path="/" to={routes.browseFiles.url}/>
+            <SuspensefulComponent path={routes.login.url} importFunc={() => import('./Routes/Login')}/>
+            <SuspensefulComponent path={routes.acceptInvite.url} importFunc={() => import('./Routes/AcceptInvite')}/>
+            <SuspensefulComponent path={routes.changePassword.url} importFunc={() => import('./Routes/ChangePassword')}/>
+            <SuspensefulComponent path={routes.manageUsers.url} importFunc={() => import('./Routes/Admin/ManageUsers')}/>
+            <SuspensefulComponent path={routes.browseFiles.url} importFunc={() => import('./Routes/Browse')}/>
+            <SuspensefulComponent default importFunc={() => import('./Routes/Error/NotFound')}/>
+            <SuspensefulComponent path={routes.unauthorised.url} importFunc={() => import('./Routes/Error/Unauthorised')}/>{/* Only here so it can be pre-rendered */}
+        </Router>
         <div style={{ width: '100%', padding: '5px', textAlign: 'right', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
             <IconLink aria-label="VerySimpleFileHost GitHub (Source Code)" href="https://github.com/judilsteve/VerySimpleFileHost" name="github" size="large" />
         </div>

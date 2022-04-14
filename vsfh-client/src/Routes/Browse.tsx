@@ -1,7 +1,7 @@
 import './Browse.less';
 
-import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useCallback, useEffect, useMemo, useState, useRef } from "preact/hooks";
+import { RefObject } from "preact";
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Message, Modal, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
 import { apiConfig } from "../apiInstances";
@@ -107,7 +107,6 @@ function Directory(props: DirectoryProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
     // TODO_JU Expand, collapse, and the hash-finder effect could all
     // be hoisted up into Browse, greatly simplifying this component.
     const expand = useCallback(async () => {
@@ -118,7 +117,7 @@ function Directory(props: DirectoryProps) {
         } catch(e) {
             handleListingError(path);
             const responseError = e as Response;
-            if(!await tryHandleError(responseError, navigate)) {
+            if(!await tryHandleError(responseError)) {
                 await printResponseError(responseError, 'listing');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
@@ -127,7 +126,7 @@ function Directory(props: DirectoryProps) {
             if(isMounted.current) setLoading(false);
         }
         if(isMounted.current) onExpand(newTree, path);
-    }, [isMounted, onExpand, path, handleListingError, navigate]);
+    }, [isMounted, onExpand, path, handleListingError]);
 
     const { hash } = useLocation();
     const parsedHash = parseHash(hash);
@@ -248,7 +247,7 @@ function Directory(props: DirectoryProps) {
 interface SneakyLinkProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
     regularClickHref: string;
     altClickHref: string;
-    children?: ReactNode;
+    children?: preact.ComponentChildren;
 }
 
 function SneakyLink(props: SneakyLinkProps) {

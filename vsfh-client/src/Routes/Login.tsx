@@ -1,6 +1,4 @@
-import { useCallback, useState } from "react";
-import { useNavigate } from "react-router";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useState } from "preact/hooks";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
 import { routes } from "../routes";
@@ -15,6 +13,8 @@ import { passwordExpiredPromptState, rememberMeState, sessionExpiredPromptState 
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
+import { route } from "preact-router";
+import { getSearchParam } from "../Utils/safeWindow";
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -30,8 +30,7 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const navigate = useNavigate();
-    const then = useSearchParams()[0].get(LoginRouteParameters.then);
+    const then = getSearchParam(LoginRouteParameters.then);
     const isMounted = useIsMounted();
     const login = async () => {
         if(loading) return;
@@ -59,7 +58,7 @@ function Login() {
                     });
                     let destination = routes.changePassword.url;
                     if(then) destination += `?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
-                    navigate(destination);
+                    route(destination);
                 }
                 else setError(responseObject.reason ?? 'Unknown authentication error');
             }
@@ -71,7 +70,7 @@ function Login() {
             }
         }
         sessionExpiredPromptState.setValue(false);
-        if(isMounted.current) navigate(then ?? routes.browseFiles.url);
+        if(isMounted.current) route(then ?? routes.browseFiles.url);
     };
 
     const [authConfig, ] = useEndpointData(

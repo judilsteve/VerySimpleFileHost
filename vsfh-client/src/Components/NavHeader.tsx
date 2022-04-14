@@ -1,7 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
-import { useLocation } from "react-router";
-import { useNavigate } from "react-router";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useCallback } from "preact/hooks";
 import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../routes";
@@ -10,6 +7,7 @@ import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
 import StandardModals from "./StandardModals";
 import ThemeRule from "./ThemeRule";
+import { route } from "preact-router";
 
 export interface NavHeaderProps {
     pageTitle: string;
@@ -48,8 +46,6 @@ const getAuthStatus = () => loginApi.apiLoginAuthStatusGet();
 function NavHeader(props: NavHeaderProps) {
     const { pageTitle } = props;
 
-    const navigate = useNavigate();
-
     const [loggingOut, setLoggingOut] = useState(false);
 
     const [authStatus, , ] = useEndpointData(getAuthStatus, useCallback(async e => printResponseError(e, 'auth status'), []));
@@ -70,7 +66,7 @@ function NavHeader(props: NavHeaderProps) {
             if(isMounted.current) setError('An unexpected error occurred');
             return;
         }
-        if(isMounted.current) navigate(routes.login);
+        if(isMounted.current) route(routes.login);
     };
 
     const { pathname } = useLocation();
@@ -80,9 +76,9 @@ function NavHeader(props: NavHeaderProps) {
     , [isAdministrator, pathname]);
 
     const linkIcons = links.map(l => {
-        const iconLink = <Link to={l.route}>
+        const iconLink = <a to={l.route}>
             <Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" />
-        </Link>;
+        </a>;
         // Small offset prevents the popup flashing in and out when the mouse is right on the bottom edge of the icon
         return <Popup key={l.route} trigger={iconLink} offset={[0,5]} content={l.name} />;
     });

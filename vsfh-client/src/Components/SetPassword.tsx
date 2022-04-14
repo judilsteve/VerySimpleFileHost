@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "preact/hooks";
 import { Form, Input, LabelProps } from "semantic-ui-react";
 import { ZXCVBNResult } from "zxcvbn";
 import { AuthConfigDto } from "../API";

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { Button, Card, Checkbox, Container, Form, Grid, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
 import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
@@ -8,8 +8,8 @@ import { usePageTitle } from "../../Hooks/usePageTitle";
 import NavHeader from "../../Components/NavHeader";
 import tryHandleError, { printResponseError } from "../../Utils/tryHandleError";
 import { useIsMounted } from "../../Hooks/useIsMounted";
-import { useNavigate } from "react-router";
 import safeWindow from "../../Utils/safeWindow";
+import AdminRoute from "../../Routing/AdminRoute";
 
 const api = new UsersApi(apiConfig);
 
@@ -67,7 +67,6 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
     const resetPassword = async () => {
         if(loading) return;
         setLoading(true);
@@ -84,7 +83,7 @@ function ConfirmResetPasswordModal(props: ConfirmResetPasswordModalProps) {
             });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse)) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
@@ -131,7 +130,6 @@ function DeleteUserModal(props: DeleteUserModalProps) {
     const [error, setError] = useState('');
     useEffect(() => { if(open) setError(''); }, [open]);
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
     const deleteUser = async () => {
         if(loading) return;
         setLoading(true);
@@ -140,7 +138,7 @@ function DeleteUserModal(props: DeleteUserModalProps) {
             await api.apiUsersDeleteUserUserIdDelete({ userId: userDto?.id! });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse)) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
@@ -205,7 +203,6 @@ function UserCard(props: UserEditProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
     const save = async () => {
         if(loading) return;
         setLoading(true);
@@ -221,7 +218,7 @@ function UserCard(props: UserEditProps) {
             });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse)) {
                 let newError;
                 if (errorResponse.status === 404) newError = 'User does not exist';
                 else {
@@ -295,7 +292,6 @@ function NewUserCard(props: NewUserCardProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const isMounted = useIsMounted();
-    const navigate = useNavigate();
     const add = async () => {
         if(loading) return;
         setLoading(true);
@@ -310,7 +306,7 @@ function NewUserCard(props: NewUserCardProps) {
             });
         } catch(e) {
             const errorResponse = e as Response;
-            if(!await tryHandleError(errorResponse, navigate)) {
+            if(!await tryHandleError(errorResponse)) {
                 await printResponseError(e as Response, 'add user');
                 if(isMounted.current) setError('An unexpected error occurred');
             }
@@ -363,17 +359,16 @@ function ManageUsers() {
     usePageTitle('Manage Users');
 
     const [listingError, setListingError] = useState(false);
-    const navigate = useNavigate();
     const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.apiUsersListUsersGet(), []),
         useCallback(async e => {
             const response = e as Response;
-            if(await tryHandleError(response, navigate)) return;
+            if(await tryHandleError(response)) return;
             else {
                 await printResponseError(e as Response, 'user listing');
                 setListingError(true);
             }
-        }, [navigate]));
+        }, []));
 
     const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserListingDto | null>(null);
 
@@ -420,7 +415,7 @@ function ManageUsers() {
             <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         </Card.Group>;
 
-    return <Container>
+    return <AdminRoute><Container>
         <NavHeader pageTitle="Manage Users" />
         <Grid stackable columns={3}>
             <Grid.Column>
@@ -454,7 +449,7 @@ function ManageUsers() {
             userDto={confirmDeleteUser}
             cancel={() => setConfirmDeleteUser(null)}
             afterDeleteUser={() => { setConfirmDeleteUser(null); reloadUsers(); }} />
-    </Container>;
+    </Container></AdminRoute>;
 }
 
 export default ManageUsers;

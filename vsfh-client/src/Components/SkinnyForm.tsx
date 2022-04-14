@@ -1,8 +1,6 @@
-import React from "react";
-
 export interface SkinnyFormProps {
     width?: number;
-    children: React.ReactNode;
+    children: preact.ComponentChildren;
 }
 
 function SkinnyForm(props: SkinnyFormProps) {

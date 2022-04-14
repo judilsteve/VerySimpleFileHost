@@ -1,5 +1,5 @@
 export interface ErrorTextProps {
-    children: React.ReactNode;
+    children: preact.ComponentChildren;
 };
 
 function ErrorText(props: ErrorTextProps) {

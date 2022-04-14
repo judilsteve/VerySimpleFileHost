@@ -1,9 +1,8 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState } from "preact/hooks";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto } from "../API";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
-import { useNavigate } from "react-router";
 import { routes } from "../routes";
 import useEndpointData from "../Hooks/useEndpointData";
 import SetPassword from "../Components/SetPassword";
@@ -14,7 +13,8 @@ import { rememberMeState } from "../State/sharedState";
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
-import { useSearchParams } from "react-router-dom";
+import { route } from "preact-router";
+import { getSearchParam } from "../Utils/safeWindow";
 
 function AcceptInvite() {
     usePageTitle('Accept Invite');
@@ -28,8 +28,7 @@ function AcceptInvite() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const inviteKey = useSearchParams()['key'];
-    const navigate = useNavigate();
+    const inviteKey = getSearchParam('key');
     const isMounted = useIsMounted();
     const activateAccount = async () => {
         if(loading) return;
@@ -61,7 +60,7 @@ function AcceptInvite() {
                 setCheckPassword('');
             }
         }
-        if(isMounted.current) navigate(routes.browseFiles.url);
+        if(isMounted.current) route(routes.browseFiles.url);
     };
 
     const [authConfig, ] = useEndpointData(

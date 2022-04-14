@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Header, Icon } from "semantic-ui-react";
 import { routes } from "../../routes";
 import SkinnyForm from "../../Components/SkinnyForm";

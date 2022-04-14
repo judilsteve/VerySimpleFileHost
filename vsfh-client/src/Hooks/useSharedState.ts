@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import safeWindow from '../Utils/safeWindow';
 
 export class SharedState<T> {

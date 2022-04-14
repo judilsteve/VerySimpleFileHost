@@ -1,17 +1,16 @@
-import { useLocation } from "react-router";
-import { Link } from "react-router-dom";
 import { Modal, Button, Icon } from "semantic-ui-react";
 import { routes } from "../routes";
 import { useSharedState } from "../Hooks/useSharedState";
 import { ChangePasswordRouteParameters } from "../Routes/ChangePassword";
 import { LoginRouteParameters } from "../Routes/Login";
 import { sessionExpiredPromptState, passwordExpiredPromptState } from "../State/sharedState";
+import safeWindow from "../Utils/safeWindow";
 
 function SessionExpiredModal() {
-    const location = useLocation();
     const [sessionExpiredPrompt, setSessionExpiredPrompt] = useSharedState(sessionExpiredPromptState);
 
-    const then = `${location.pathname}${location.search}${location.hash}`;
+    const location = safeWindow?.location;
+    const then = location ? `${location.pathname}${location.search}${location.hash}` : '';
     const loginRoute = `${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={sessionExpiredPrompt} onClose={() => setSessionExpiredPrompt(false)}>
@@ -20,18 +19,18 @@ function SessionExpiredModal() {
             <p>Log in again to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <Link to={loginRoute}>
+            <a to={loginRoute}>
                 <Button primary ><Icon name="sign-in" />Log In</Button>
-            </Link>
+            </a>
         </Modal.Actions>
     </Modal>;
 }
 
 function PasswordExpiredModal() {
-    const location = useLocation();
     const [passwordExpiredPrompt, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
-    const then = `${location.pathname}${location.search}${location.hash}`;
+    const location = safeWindow?.location;
+    const then = location ? `${location.pathname}${location.search}${location.hash}` : '';
     const changePasswordRoute = `${routes.changePassword.url}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={!!passwordExpiredPrompt} onClose={() => setPasswordExpiredPrompt(null)}>
@@ -40,9 +39,9 @@ function PasswordExpiredModal() {
             <p>Change your password to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <Link to={changePasswordRoute}>
+            <a to={changePasswordRoute}>
                 <Button primary ><Icon name="key" />Change Password</Button>
-            </Link>
+            </a>
         </Modal.Actions>
     </Modal>;
 }

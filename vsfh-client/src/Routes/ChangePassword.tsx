@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthStatusDto } from "../API";
 import { routes } from "../routes";
@@ -17,6 +15,8 @@ import { useIsMounted } from "../Hooks/useIsMounted";
 import { LoginRouteParameters } from "./Login";
 import CenteredSpinner from "../Components/CenteredSpinner";
 import { printResponseError } from "../Utils/tryHandleError";
+import { route } from "preact-router";
+import { getSearchParam } from "../Utils/safeWindow";
 
 export enum ChangePasswordRouteParameters {
     then = 'then'
@@ -27,7 +27,6 @@ function ChangePassword() {
 
     const [userName, setUserName] = useState('');
 
-    const navigate = useNavigate();
     useEffect(() => {
         if(passwordExpiredPrompt?.userName) {
             setUserName(passwordExpiredPrompt?.userName);
@@ -44,7 +43,7 @@ function ChangePassword() {
                     const location = window.location;
                     const then = `${location.pathname}${location.search}${location.hash}`;
                     if(cancel) return;
-                    navigate(`${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
+                    route(`${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
                 } else {
                     await printResponseError(e as Response, 'auth status');
                     if(cancel) return;
@@ -55,7 +54,7 @@ function ChangePassword() {
             if(!cancel) setUserName(authStatus.userName!);
         })();
         return () => { cancel = true; };
-    }, [passwordExpiredPrompt, navigate]);
+    }, [passwordExpiredPrompt]);
 
     const message = passwordExpiredPrompt?.message ?? '';
 
@@ -81,7 +80,7 @@ function ChangePassword() {
         disabled: loading
     };
 
-    const then = useSearchParams()[0].get(ChangePasswordRouteParameters.then);
+    const then = getSearchParam(ChangePasswordRouteParameters.then);
     const isMounted = useIsMounted();
     const changePassword = async () => {
         if(loading) return;
@@ -114,7 +113,7 @@ function ChangePassword() {
         }
         if(isMounted.current) {
             setPasswordExpiredPrompt(null);
-            navigate(then ?? routes.browseFiles.url)
+            route(then ?? routes.browseFiles.url)
         };
     };
 

@@ -1,12 +1,12 @@
 export interface GlobalSidebarProps {
     open: boolean;
-    children: React.ReactNode;
+    children: preact.ComponentChildren;
 }
 
 function GlobalSidebar(props: GlobalSidebarProps) {
     const { open, children } = props;
 
-    const style: React.CSSProperties = {
+    const style = {
         position: 'fixed',
         right: 0,
         height: '100vh',

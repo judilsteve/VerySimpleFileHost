@@ -1,4 +1,5 @@
-import { RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { RefObject } from "preact";
 
 export interface SelectedPath {
     isDirectory: boolean;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { useIsMounted } from "./useIsMounted";
 
 // TODO_JU Remove or improve this, it's all sorts of janky
