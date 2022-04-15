@@ -139,6 +139,9 @@ public static class VerySimpleFileHost
             .UseSqlite(connectionString)
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
+        var lettuceEncryptConfig = new LettuceEncryptConfiguration();
+        configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
+        var useLettuceEncrypt = !string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false);
         builder.Services.Configure<KestrelServerOptions>(o => 
         {
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
@@ -151,7 +154,10 @@ public static class VerySimpleFileHost
             {
                 if(isFirstFileDescriptor)
                 {
-                    fd.UseHttps(h => h.UseLettuceEncrypt(o.ApplicationServices));
+                    fd.UseHttps(h => 
+                    {
+                        if(useLettuceEncrypt) h.UseLettuceEncrypt(o.ApplicationServices);
+                    });
                     isFirstFileDescriptor = false;
                 }
             });
@@ -186,9 +192,7 @@ public static class VerySimpleFileHost
                 o.EnablePrecompressedFiles = true;
             });
 
-        var lettuceEncryptConfig = new LettuceEncryptConfiguration();
-        configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
-        if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
+        if(useLettuceEncrypt)
         {
             builder.Services.AddLettuceEncrypt()
                 .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? $"data{Path.DirectorySeparatorChar}LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
@@ -220,7 +224,8 @@ public static class VerySimpleFileHost
                 "img-src 'self'; " +
                 "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is probably from semantic-ui's popup element
                 "style-src 'self' 'unsafe-inline'; " +
-                "manifest-src 'self' "
+                "manifest-src 'self'; " +
+                "media-src 'self' "
             );
             await next();
         });
