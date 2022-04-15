@@ -417,6 +417,7 @@ function ManageUsers() {
     const cards = listingError ? <Message error header="Loading Users Failed" content='An unexpected error occurred' />
         : loadingUsers ? <CenteredSpinner />
         : <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
+            <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         {
             filteredUsers!.map(u => <UserCard
                 key={u.id!}
@@ -426,7 +427,6 @@ function ManageUsers() {
                 resetPassword={() => setResetPasswordUser(u)}
                 />)
         }
-            <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         </Card.Group>;
 
     return <Container>
