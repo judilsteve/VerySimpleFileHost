@@ -22,7 +22,7 @@ public static class VerySimpleFileHost
     {
         var configManager = new ConfigurationManager();
         configManager.AddCommandLine(args);
-        configManager.AddJsonFile("appsettings.Default.json");
+        configManager.AddJsonFile("appsettings.Default.json"); // TODO_JU Don't like this pattern, remove it
         configManager.AddJsonFile("appsettings.json", optional: true);
         configManager.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
         return configManager;
@@ -220,8 +220,10 @@ public static class VerySimpleFileHost
                 "form-action 'self'; " +
                 "img-src 'self'; " +
                 "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is probably from semantic-ui's popup element
-                "style-src 'self' 'unsafe-inline' "
-             );
+                "style-src 'self' 'unsafe-inline'; " +
+                "manifest-src 'self' "
+            );
+            await next();
         });
 
         app.UseSwagger();

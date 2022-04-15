@@ -1,4 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import 'semantic-ui-less/definitions/elements/button.less';
+import 'semantic-ui-less/definitions/views/card.less';
+import 'semantic-ui-less/definitions/modules/checkbox.less';
+import 'semantic-ui-less/definitions/elements/container.less';
+import 'semantic-ui-less/definitions/collections/form.less';
+import 'semantic-ui-less/definitions/collections/grid.less';
+import 'semantic-ui-less/definitions/elements/input.less';
+import 'semantic-ui-less/definitions/collections/message.less';
+import 'semantic-ui-less/definitions/modules/modal.less';
+import 'semantic-ui-less/definitions/modules/popup.less';
 import { Button, Card, Checkbox, Container, Form, Grid, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
 import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";

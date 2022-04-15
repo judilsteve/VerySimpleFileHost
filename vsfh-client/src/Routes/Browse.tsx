@@ -2,6 +2,18 @@ import './Browse.less';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState, MouseEvent, useRef, RefObject } from "react";
 import { useLocation, useNavigate } from "react-router";
+import 'semantic-ui-less/definitions/elements/button.less';
+import 'semantic-ui-less/definitions/modules/checkbox.less';
+import 'semantic-ui-less/definitions/elements/container.less';
+import 'semantic-ui-less/definitions/collections/grid.less';
+import 'semantic-ui-less/definitions/elements/header.less';
+import 'semantic-ui-less/definitions/elements/icon.less';
+import 'semantic-ui-less/definitions/elements/input.less';
+import 'semantic-ui-less/definitions/elements/list.less';
+import 'semantic-ui-less/definitions/elements/loader.less';
+import 'semantic-ui-less/definitions/collections/message.less';
+import 'semantic-ui-less/definitions/modules/modal.less';
+import 'semantic-ui-less/definitions/modules/sticky.less';
 import { Button, Checkbox, Container, Grid, Header, Icon, Input, List, Loader, Message, Modal, Sticky } from "semantic-ui-react";
 import { ArchiveFormat, DirectoryDto } from "../API";
 import { apiConfig } from "../apiInstances";

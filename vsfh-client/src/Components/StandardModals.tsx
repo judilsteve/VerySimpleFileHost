@@ -1,5 +1,8 @@
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
+import 'semantic-ui-less/definitions/modules/modal.less';
+import 'semantic-ui-less/definitions/elements/button.less';
+import 'semantic-ui-less/definitions/elements/icon.less';
 import { Modal, Button, Icon } from "semantic-ui-react";
 import { routes } from "../App";
 import { useSharedState } from "../Hooks/useSharedState";

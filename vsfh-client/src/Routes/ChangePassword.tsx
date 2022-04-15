@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useSearchParams } from "react-router-dom";
+import 'semantic-ui-less/definitions/elements/button.less';
+import 'semantic-ui-less/definitions/collections/form.less';
+import 'semantic-ui-less/definitions/elements/header.less';
+import 'semantic-ui-less/definitions/elements/input.less';
+import 'semantic-ui-less/definitions/collections/message.less';
 import { Button, Form, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthStatusDto } from "../API";
 import { routes } from "../App";
