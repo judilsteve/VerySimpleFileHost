@@ -57,8 +57,9 @@ public static class PasswordUtils
         return untrimmed.TrimEnd('\0');
     }
 
-    // TODO_JU Investigate client-side hashing for server relief
+    // TODO_JU Client-side hashing would be nice to remove this function as a potential DDoS vector
     // https://libsodium.gitbook.io/doc/password_hashing#server-relief
+    // https://github.com/jedisct1/libsodium.js/
     public static async Task<(bool correct, bool rehashed)> PasswordIsCorrect(User user, string attemptedPassword, CancellationToken cancellationToken)
     {
         var correct = await concurrencyLimiter.Run(() => PasswordHash.ArgonHashStringVerify(

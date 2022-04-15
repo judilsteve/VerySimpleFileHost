@@ -81,7 +81,7 @@ mkdir vsfh-server/build/wwwroot
 cp vsfh-client/build/* vsfh-server/build/wwwroot
 ```
 
-6. Create an `appsettings.json` file with your desired [configuration](#Configuration) in `vsfh-server/build`
+6. Adjust `appsettings.json` as desired in `vsfh-server/build`
 
 7. Create an administrator account
 ```bash
@@ -101,7 +101,7 @@ You will likely need to forward VSFH's HTTPS listen port to 443 and its HTTP lis
 VSFH runs on the Kestrel HTTP server, which (since .NET Core 2.0) can be used as an edge server. Reverse proxying VSFH through Apache/nginx/IIS/etc should not be required (but you still can if you want to).
 
 # Configuration
-All configuration lives in `./vsfh-server/build/VerySimpleFileHost/appsettings.json`. Use [`appsettings.Default.json`](https://github.com/judilsteve/VerySimpleFileHost/blob/main/vsfh-server/appsettings.Default.json) as a reference for building your configuration.
+Adjust `./vsfh-server/build/VerySimpleFileHost/appsettings.json` as required. Comments are provided in the [default configuration](https://github.com/judilsteve/VerySimpleFileHost/blob/main/vsfh-server/appsettings.Default.json) for your reference.
 
 # Disclaimer
 Although all care has been taken to make VSFH as secure as possible, it has not been independently audited for vulnerabilities. You run VSFH (and expose it to the internet) at your own risk.

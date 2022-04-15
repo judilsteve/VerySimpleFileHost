@@ -22,8 +22,7 @@ public static class VerySimpleFileHost
     {
         var configManager = new ConfigurationManager();
         configManager.AddCommandLine(args);
-        configManager.AddJsonFile("appsettings.Default.json"); // TODO_JU Don't like this pattern, remove it
-        configManager.AddJsonFile("appsettings.json", optional: true);
+        configManager.AddJsonFile("appsettings.json");
         configManager.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
         return configManager;
     }
