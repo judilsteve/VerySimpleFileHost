@@ -21,7 +21,7 @@ public static class PasswordUtils
     /// In the event of a DDoS attack, the response time of endpoints that
     /// verify password hashes will  still be extremely degraded.
     /// </summary>
-    private static readonly ConcurrencyLimiter concurrencyLimiter = new(4, TimeSpan.FromSeconds(10));
+    private static readonly ConcurrencyLimiter concurrencyLimiter = new(Environment.ProcessorCount / 2, TimeSpan.FromSeconds(10));
 
     private const PasswordHash.StrengthArgon hashStrength = PasswordHash.StrengthArgon.Moderate;
 
