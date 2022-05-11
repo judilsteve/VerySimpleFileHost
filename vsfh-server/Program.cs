@@ -123,6 +123,7 @@ public static class VerySimpleFileHost
             })
             // TODO_JU Migrate to source generation once it supports deserialisation of init-only properties
             // https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-source-generation?pivots=dotnet-6-0
+            // https://github.com/dotnet/runtime/issues/58770#issuecomment-923118142 <-- Planned for 7.0
             .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         builder.Services.AddEndpointsApiExplorer();
