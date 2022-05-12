@@ -19,7 +19,7 @@ function SessionExpiredModal() {
             <p>Log in again to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <a to={loginRoute}>
+            <a href={loginRoute}>
                 <Button primary ><Icon name="sign-in" />Log In</Button>
             </a>
         </Modal.Actions>
@@ -39,7 +39,7 @@ function PasswordExpiredModal() {
             <p>Change your password to continue</p>
         </Modal.Content>
         <Modal.Actions>
-            <a to={changePasswordRoute}>
+            <a href={changePasswordRoute}>
                 <Button primary ><Icon name="key" />Change Password</Button>
             </a>
         </Modal.Actions>

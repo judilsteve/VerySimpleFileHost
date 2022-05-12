@@ -3,7 +3,7 @@
   "name": "vsfh-client",
   "version": "0.1.0",
   "scripts": {
-    "build": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json",
+    "build": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json --preload",
     "start": "preact watch",
     "lint": "eslint src",
     "generate-api-client": "SET JAVA_OPTS=-Dio.swagger.v3.parser.util.RemoteUrl.trustAll=true && openapi-generator-cli generate -i https://localhost:7270/swagger/v1/swagger.json  -g typescript-fetch --additional-properties=withoutRuntimeChecks=true -o ./src/API"

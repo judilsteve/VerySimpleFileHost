@@ -11,10 +11,11 @@ import SuspensefulComponent from './Routing/SuspensefulRoute';
 import { routes } from './routes';
 
 import Redirect from './Routing/Redirect';
+import { pathnameState } from './State/sharedState';
 
 function App() {
     const handleRouteChange = useCallback(() => {
-        // TODO_JU Wire router onChange to a sharedState and then make a hook for it to mimic useLocation().pathname
+        pathnameState.setValue(window.location.pathname);
     }, []);
 
     return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

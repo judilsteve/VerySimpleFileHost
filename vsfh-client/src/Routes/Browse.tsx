@@ -11,11 +11,12 @@ import NavHeader from "../Components/NavHeader";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { usePageTitle } from "../Hooks/usePageTitle";
 import { useSharedState } from "../Hooks/useSharedState";
-import { archiveFormatState } from "../State/sharedState";
+import { archiveFormatState, hashState } from "../State/sharedState";
 import tryHandleError, { printResponseError } from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
 import { SelectedPaths, useSharedSelection, useSharedSelectionSource } from '../Hooks/useSharedSelection';
 import CenteredSpinner from '../Components/CenteredSpinner';
+import React from 'react';
 
 const api = new FilesApi(apiConfig);
 
@@ -128,7 +129,7 @@ function Directory(props: DirectoryProps) {
         if(isMounted.current) onExpand(newTree, path);
     }, [isMounted, onExpand, path, handleListingError]);
 
-    const { hash } = useLocation();
+    const [hash, _] = useSharedState(hashState);
     const parsedHash = parseHash(hash);
     useEffect(() => {
         if(navigatedToHash.current) return;
@@ -263,11 +264,11 @@ function SneakyLink(props: SneakyLinkProps) {
         window.setTimeout(() => ref.current!.href = regularClickHref, 0);
     }, [altClickHref, regularClickHref])
 
-    const onClick = useCallback((e: MouseEvent) => {
+    const onClick = useCallback((e: React.MouseEvent) => {
         if(e.ctrlKey) overrideHref(e);
     }, [overrideHref]);
 
-    const onMouseUp = useCallback((e: MouseEvent) => {
+    const onMouseUp = useCallback((e: React.MouseEvent) => {
         if(e.button === 1) overrideHref(e);
     }, [overrideHref])
 
@@ -309,7 +310,7 @@ function File(props: FileProps) {
 
     const href = `/api/Files/Download/${sanitisePath(path)}`;
 
-    const { hash } = useLocation();
+    const [hash, _] = useSharedState(hashState);
     const isHash = hash && decodeURIComponent(hash).substring(1) === path;
     useEffect(() => {
         if(navigatedToHash.current) return;

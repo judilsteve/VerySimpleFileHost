@@ -8,6 +8,8 @@ import { printResponseError } from "../Utils/tryHandleError";
 import StandardModals from "./StandardModals";
 import ThemeRule from "./ThemeRule";
 import { route } from "preact-router";
+import { useSharedState } from "../Hooks/useSharedState";
+import { pathnameState } from "../State/sharedState";
 
 export interface NavHeaderProps {
     pageTitle: string;
@@ -69,14 +71,14 @@ function NavHeader(props: NavHeaderProps) {
         if(isMounted.current) route(routes.login);
     };
 
-    const { pathname } = useLocation();
+    const [pathname, _] = useSharedState(pathnameState);
     const links = useMemo(() => routeLinks
         .filter(r => r.route !== pathname)
         .filter(r => isAdministrator || !r.adminOnly)
     , [isAdministrator, pathname]);
 
     const linkIcons = links.map(l => {
-        const iconLink = <a to={l.route}>
+        const iconLink = <a href={l.route}>
             <Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" />
         </a>;
         // Small offset prevents the popup flashing in and out when the mouse is right on the bottom edge of the icon

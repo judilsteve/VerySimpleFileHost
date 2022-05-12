@@ -6,7 +6,7 @@ export interface GlobalSidebarProps {
 function GlobalSidebar(props: GlobalSidebarProps) {
     const { open, children } = props;
 
-    const style = {
+    const style: React.CSSProperties = {
         position: 'fixed',
         right: 0,
         height: '100vh',
