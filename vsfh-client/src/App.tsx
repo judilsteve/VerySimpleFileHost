@@ -2,13 +2,21 @@ import { h } from 'preact';
 import { useCallback } from 'preact/hooks';
 
 // Make a custom hook that listens on hashchange event for useLocation().hash
-import { Router } from 'preact-router';
+import { Route, Router } from 'preact-router';
 import IconLink from './Components/IconLink';
 import SuspensefulComponent from './Routing/SuspensefulRoute';
 import Redirect from './Routing/Redirect';
 import { pathnameState } from './State/sharedState';
 import { routes } from './routes';
 import safeWindow from './Utils/safeWindow';
+import ManageUsers from './Routes/Admin/ManageUsers';
+import Browse from './Routes/Browse';
+
+// TODO_JU Current bundle size hogs:
+// 1. fontawesome SVGs by a mile (check that these actually get used, maybe there's a way to disable emitting them?)
+// 2. zxcvbn but there's no real way to make that smaller
+// 3. semantic-ui-react Popup (replace with plain alt-text?)
+// 4. semantic-ui-react Form (don't need any of the form plumbing, just the UI parts)
 
 function App() {
     const handleRouteChange = useCallback(() => {
@@ -21,8 +29,9 @@ function App() {
             <SuspensefulComponent path={routes.login.url} importFunc={() => import('./Routes/Login')}/>
             <SuspensefulComponent path={routes.acceptInvite.url} importFunc={() => import('./Routes/AcceptInvite')}/>
             <SuspensefulComponent path={routes.changePassword.url} importFunc={() => import('./Routes/ChangePassword')}/>
-            <SuspensefulComponent path={routes.manageUsers.url} importFunc={() => import('./Routes/Admin/ManageUsers')}/>
-            <SuspensefulComponent path={routes.browseFiles.url} importFunc={() => import('./Routes/Browse')}/>
+            {/* TODO_JU These two routes don't like being pre-rendered as SuspensefulComponent */}
+            <Route path={routes.manageUsers.url} component={ManageUsers}/>
+            <Route path={routes.browseFiles.url} component={Browse}/>
             <SuspensefulComponent default importFunc={() => import('./Routes/Error/NotFound')}/>
             <SuspensefulComponent path={routes.unauthorised.url} importFunc={() => import('./Routes/Error/Unauthorised')}/>{/* Only here so it can be pre-rendered */}
         </Router>

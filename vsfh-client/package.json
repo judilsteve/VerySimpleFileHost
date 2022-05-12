@@ -6,6 +6,7 @@
     "build": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json --preload",
     "start": "preact watch",
     "lint": "eslint src",
+    "analyse": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json --preload --analyze",
     "generate-api-client": "SET JAVA_OPTS=-Dio.swagger.v3.parser.util.RemoteUrl.trustAll=true && openapi-generator-cli generate -i https://localhost:7270/swagger/v1/swagger.json  -g typescript-fetch --additional-properties=withoutRuntimeChecks=true -o ./src/API"
   },
   "eslintConfig": {

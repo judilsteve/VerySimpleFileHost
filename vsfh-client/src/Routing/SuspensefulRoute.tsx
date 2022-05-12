@@ -1,4 +1,4 @@
-import { JSX } from "preact";
+import { h, JSX } from "preact";
 import CenteredSpinner from "../Components/CenteredSpinner";
 
 import AsyncRoute from 'preact-async-route';
