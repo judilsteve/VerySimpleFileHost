@@ -1,3 +1,5 @@
+import 'semantic-ui-less/definitions/elements/loader.less';
+import 'semantic-ui-less/definitions/modules/dimmer.less';
 import { Dimmer, Loader } from 'semantic-ui-react'
 
 export interface CenteredSpinnerProps {

@@ -1,4 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
+import 'semantic-ui-less/definitions/collections/form.less';
+import 'semantic-ui-less/definitions/elements/input.less';
+import 'semantic-ui-less/definitions/elements/label.less';
 import { Form, Input, LabelProps } from "semantic-ui-react";
 import { ZXCVBNResult } from "zxcvbn";
 import { AuthConfigDto } from "../API";

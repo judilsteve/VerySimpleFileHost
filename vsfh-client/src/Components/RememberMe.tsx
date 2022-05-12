@@ -1,4 +1,5 @@
 import { useEffect } from "preact/hooks";
+import 'semantic-ui-less/definitions/modules/checkbox.less';
 import { Checkbox } from "semantic-ui-react";
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";

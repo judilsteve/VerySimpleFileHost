@@ -13,7 +13,7 @@ function AdminRoute(props: AdminRouteProps) {
     const [unauthorisedBlock, ] = useSharedState(unauthorisedBlockState);
 
     if(unauthorisedBlock) return <Unauthorised />;
-    else return children;
+    else return <>{children}</>;
 }
 
 export default AdminRoute;

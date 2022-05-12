@@ -294,6 +294,8 @@ public class FilesController : ControllerBase
                     {
                         tarEntryPath = Path.Combine(directoryInfo.Name, tarEntryPath);
                     }
+                    // TODO_JU Migrate to System.Formats.Tar when 7.0 goes GA
+                    // https://devblogs.microsoft.com/dotnet/announcing-dotnet-7-preview-4/#added-new-tar-apis
                     var tarEntry = TarEntry.CreateTarEntry(tarEntryPath);
                     tarEntry.Size = fileInfo.Length;
                     tarOutputStream.PutNextEntry(tarEntry);

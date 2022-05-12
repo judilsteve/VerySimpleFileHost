@@ -1,17 +1,12 @@
-import '@fontsource/lato';
-import 'semantic-ui-less/semantic.less'; // TODO_JU Upgrade to fomantic, split into only required pieces
-
 import { useCallback } from 'preact/hooks';
 
 // Make a custom hook that listens on hashchange event for useLocation().hash
 import Router from 'preact-router';
 import IconLink from './Components/IconLink';
 import SuspensefulComponent from './Routing/SuspensefulRoute';
-
-import { routes } from './routes';
-
 import Redirect from './Routing/Redirect';
 import { pathnameState } from './State/sharedState';
+import { routes } from './routes';
 
 function App() {
     const handleRouteChange = useCallback(() => {

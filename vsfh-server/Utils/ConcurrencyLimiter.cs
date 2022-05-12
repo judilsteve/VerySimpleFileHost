@@ -4,6 +4,9 @@ public class ConcurrencyLimitReachedException : Exception
 {
 }
 
+/// <summary>
+/// TODO_JU Migrate to https://devblogs.microsoft.com/dotnet/asp-net-core-updates-in-dotnet-7-preview-4/#rate-limiting-middleware ?
+/// </summary>
 public class ConcurrencyLimiter
 {
     private readonly SemaphoreSlim semaphore;

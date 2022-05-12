@@ -1,4 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import 'semantic-ui-less/definitions/elements/button.less';
+import 'semantic-ui-less/definitions/views/card.less';
+import 'semantic-ui-less/definitions/modules/checkbox.less';
+import 'semantic-ui-less/definitions/elements/container.less';
+import 'semantic-ui-less/definitions/collections/form.less';
+import 'semantic-ui-less/definitions/collections/grid.less';
+import 'semantic-ui-less/definitions/elements/input.less';
+import 'semantic-ui-less/definitions/collections/message.less';
+import 'semantic-ui-less/definitions/modules/modal.less';
+import 'semantic-ui-less/definitions/modules/popup.less';
 import { Button, Card, Checkbox, Container, Form, Grid, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
 import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
@@ -403,6 +413,7 @@ function ManageUsers() {
     const cards = listingError ? <Message error header="Loading Users Failed" content='An unexpected error occurred' />
         : loadingUsers ? <CenteredSpinner />
         : <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
+            <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         {
             filteredUsers!.map(u => <UserCard
                 key={u.id!}
@@ -412,7 +423,6 @@ function ManageUsers() {
                 resetPassword={() => setResetPasswordUser(u)}
                 />)
         }
-            <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         </Card.Group>;
 
     return <AdminRoute><Container>

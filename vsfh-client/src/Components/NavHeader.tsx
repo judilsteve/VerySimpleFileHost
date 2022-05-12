@@ -1,4 +1,10 @@
 import { useState, useMemo, useCallback } from "preact/hooks";
+import 'semantic-ui-less/definitions/elements/button.less';
+import 'semantic-ui-less/definitions/elements/header.less';
+import 'semantic-ui-less/definitions/elements/icon.less';
+import 'semantic-ui-less/definitions/collections/message.less';
+import 'semantic-ui-less/definitions/modules/modal.less';
+import 'semantic-ui-less/definitions/modules/popup.less';
 import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../routes";
@@ -67,6 +73,8 @@ function NavHeader(props: NavHeaderProps) {
             await printResponseError(e as Response, 'logout');
             if(isMounted.current) setError('An unexpected error occurred');
             return;
+        } finally {
+            if(isMounted.current) setLoading(false);
         }
         if(isMounted.current) route(routes.login);
     };

@@ -22,8 +22,7 @@ public static class VerySimpleFileHost
     {
         var configManager = new ConfigurationManager();
         configManager.AddCommandLine(args);
-        configManager.AddJsonFile("appsettings.Default.json");
-        configManager.AddJsonFile("appsettings.json", optional: true);
+        configManager.AddJsonFile("appsettings.json");
         configManager.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
         return configManager;
     }
@@ -124,6 +123,7 @@ public static class VerySimpleFileHost
             })
             // TODO_JU Migrate to source generation once it supports deserialisation of init-only properties
             // https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-source-generation?pivots=dotnet-6-0
+            // https://github.com/dotnet/runtime/issues/58770#issuecomment-923118142 <-- Planned for 7.0
             .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         builder.Services.AddEndpointsApiExplorer();
@@ -140,6 +140,9 @@ public static class VerySimpleFileHost
             .UseSqlite(connectionString)
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
+        var lettuceEncryptConfig = new LettuceEncryptConfiguration();
+        configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
+        var useLettuceEncrypt = !string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false);
         builder.Services.Configure<KestrelServerOptions>(o => 
         {
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
@@ -152,7 +155,10 @@ public static class VerySimpleFileHost
             {
                 if(isFirstFileDescriptor)
                 {
-                    fd.UseHttps(h => h.UseLettuceEncrypt(o.ApplicationServices));
+                    fd.UseHttps(h => 
+                    {
+                        if(useLettuceEncrypt) h.UseLettuceEncrypt(o.ApplicationServices);
+                    });
                     isFirstFileDescriptor = false;
                 }
             });
@@ -187,9 +193,7 @@ public static class VerySimpleFileHost
                 o.EnablePrecompressedFiles = true;
             });
 
-        var lettuceEncryptConfig = new LettuceEncryptConfiguration();
-        configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
-        if(!string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false))
+        if(useLettuceEncrypt)
         {
             builder.Services.AddLettuceEncrypt()
                 .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? $"data{Path.DirectorySeparatorChar}LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
@@ -220,8 +224,11 @@ public static class VerySimpleFileHost
                 "form-action 'self'; " +
                 "img-src 'self'; " +
                 "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is probably from semantic-ui's popup element
-                "style-src 'self' 'unsafe-inline' "
-             );
+                "style-src 'self' 'unsafe-inline'; " +
+                "manifest-src 'self'; " +
+                "media-src 'self' "
+            );
+            await next();
         });
 
         app.UseSwagger();

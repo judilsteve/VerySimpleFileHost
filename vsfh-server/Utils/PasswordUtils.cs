@@ -21,7 +21,7 @@ public static class PasswordUtils
     /// In the event of a DDoS attack, the response time of endpoints that
     /// verify password hashes will  still be extremely degraded.
     /// </summary>
-    private static readonly ConcurrencyLimiter concurrencyLimiter = new(4, TimeSpan.FromSeconds(10));
+    private static readonly ConcurrencyLimiter concurrencyLimiter = new(Environment.ProcessorCount / 2, TimeSpan.FromSeconds(10));
 
     private const PasswordHash.StrengthArgon hashStrength = PasswordHash.StrengthArgon.Moderate;
 
@@ -57,8 +57,9 @@ public static class PasswordUtils
         return untrimmed.TrimEnd('\0');
     }
 
-    // TODO_JU Investigate client-side hashing for server relief
+    // TODO_JU Client-side hashing would be nice to remove this function as a potential DDoS vector
     // https://libsodium.gitbook.io/doc/password_hashing#server-relief
+    // https://github.com/jedisct1/libsodium.js/
     public static async Task<(bool correct, bool rehashed)> PasswordIsCorrect(User user, string attemptedPassword, CancellationToken cancellationToken)
     {
         var correct = await concurrencyLimiter.Run(() => PasswordHash.ArgonHashStringVerify(
