@@ -86,7 +86,7 @@ public static class VerySimpleFileHost
         await context.SaveChangesAsync();
 
         var host = hostnameOverride ?? GetHost(configManager);
-        var inviteLink = new Uri(new Uri(host), $"{acceptInviteRoute}/{inviteKey}");
+        var inviteLink = new Uri(new Uri(host), $"{acceptInviteRoute}?key={inviteKey}");
         await Console.Out.WriteLineAsync(
             $"Account for \"{name}\" created. Use one-time invite link below to log in:\n{inviteLink}");
     }

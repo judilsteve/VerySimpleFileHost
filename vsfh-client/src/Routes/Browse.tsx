@@ -236,6 +236,7 @@ function Directory(props: DirectoryProps) {
     return <List.Item>
         { thisNode }
         {
+            // TODO_JU If listing fails, you cannot close the node
             (!loaded && !loading) ? (error && <Message className={underDirectoryClassName} compact error header="Listing Failed" content={error} />) : <List.List>
                 {loading ? <Loader className={underDirectoryClassName} indeterminate active inline size="tiny" /> : <>
                     {directoryNodes}

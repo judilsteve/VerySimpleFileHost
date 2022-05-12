@@ -20,6 +20,7 @@ import tryHandleError, { printResponseError } from "../../Utils/tryHandleError";
 import { useIsMounted } from "../../Hooks/useIsMounted";
 import safeWindow from "../../Utils/safeWindow";
 import AdminRoute from "../../Routing/AdminRoute";
+import { inviteKeyParamName } from "../AcceptInvite";
 
 const api = new UsersApi(apiConfig);
 
@@ -43,7 +44,7 @@ function InviteLinkModal(props: InviteLinkModalProps) {
         return () => window.clearTimeout(timer);
     }, [justCopied]);
 
-    const inviteLink = `${safeWindow?.location.origin}/AcceptInvite/${inviteKeyUser?.inviteKey}`;
+    const inviteLink = `${safeWindow?.location.origin}/AcceptInvite?${inviteKeyParamName}=${inviteKeyUser?.inviteKey}`;
 
     const copyButton = <Popup
         open={justCopied}

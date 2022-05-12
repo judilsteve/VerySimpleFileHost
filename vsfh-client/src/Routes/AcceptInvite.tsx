@@ -21,6 +21,8 @@ import { printResponseError } from "../Utils/tryHandleError";
 import { route } from "preact-router";
 import { getSearchParam } from "../Utils/safeWindow";
 
+export const inviteKeyParamName = 'key';
+
 function AcceptInvite() {
     usePageTitle('Accept Invite');
 
@@ -33,7 +35,7 @@ function AcceptInvite() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const inviteKey = getSearchParam('key');
+    const inviteKey = getSearchParam(inviteKeyParamName);
     const isMounted = useIsMounted();
     const activateAccount = async () => {
         if(loading) return;
