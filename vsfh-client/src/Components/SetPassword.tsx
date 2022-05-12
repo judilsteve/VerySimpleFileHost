@@ -1,3 +1,4 @@
+import { h, Fragment } from 'preact';
 import { useEffect, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/collections/form.less';
 import 'semantic-ui-less/definitions/elements/input.less';

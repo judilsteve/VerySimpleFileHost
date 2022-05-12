@@ -1,3 +1,5 @@
+import { h, Fragment } from 'preact';
+
 import { useEffect } from "preact/hooks";
 import 'semantic-ui-less/definitions/modules/checkbox.less';
 import { Checkbox } from "semantic-ui-react";

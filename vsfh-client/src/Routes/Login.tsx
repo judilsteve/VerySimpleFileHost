@@ -1,3 +1,4 @@
+import { h } from 'preact';
 import { useCallback, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/elements/button.less';
 import 'semantic-ui-less/definitions/collections/form.less';
@@ -10,7 +11,6 @@ import { routes } from "../routes";
 import RememberMe from "../Components/RememberMe";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
-import { usePageTitle } from "../Hooks/usePageTitle";
 import { ChangePasswordRouteParameters } from "./ChangePassword";
 import { loginApi as api } from "../apiInstances";
 import { useSharedState } from "../Hooks/useSharedState";
@@ -26,8 +26,6 @@ export enum LoginRouteParameters {
 };
 
 function Login() {
-    usePageTitle('Log In');
-
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, ] = useSharedState(rememberMeState);

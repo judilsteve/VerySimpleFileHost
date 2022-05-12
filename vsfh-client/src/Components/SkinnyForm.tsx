@@ -1,3 +1,5 @@
+import { h } from 'preact';
+
 export interface SkinnyFormProps {
     width?: number;
     children: preact.ComponentChildren;

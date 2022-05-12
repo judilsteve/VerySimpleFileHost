@@ -1,3 +1,4 @@
+import { h, Fragment } from 'preact';
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/elements/button.less';
 import 'semantic-ui-less/definitions/views/card.less';
@@ -14,7 +15,6 @@ import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
 import CenteredSpinner from "../../Components/CenteredSpinner";
 import useEndpointData from "../../Hooks/useEndpointData";
-import { usePageTitle } from "../../Hooks/usePageTitle";
 import NavHeader from "../../Components/NavHeader";
 import tryHandleError, { printResponseError } from "../../Utils/tryHandleError";
 import { useIsMounted } from "../../Hooks/useIsMounted";
@@ -367,8 +367,6 @@ interface InviteKeyUserInfo {
 }
 
 function ManageUsers() {
-    usePageTitle('Manage Users');
-
     const [listingError, setListingError] = useState(false);
     const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.apiUsersListUsersGet(), []),

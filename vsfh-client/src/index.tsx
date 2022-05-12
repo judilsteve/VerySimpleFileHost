@@ -1,3 +1,5 @@
+
+import { h } from 'preact';
 import '@fontsource/lato';
 // TODO_JU Upgrade to fomantic, use some of its new features (e.g. coloured loading spinner, dynamic less compilation)
 import 'semantic-ui-less/definitions/globals/reset.less';

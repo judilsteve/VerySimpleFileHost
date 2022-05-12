@@ -1,3 +1,5 @@
+import { h, Fragment } from 'preact';
+
 import { useEffect } from 'preact/hooks';
 import { route } from 'preact-router';
 

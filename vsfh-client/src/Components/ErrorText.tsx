@@ -1,3 +1,5 @@
+import { h } from 'preact';
+
 export interface ErrorTextProps {
     children: preact.ComponentChildren;
 };

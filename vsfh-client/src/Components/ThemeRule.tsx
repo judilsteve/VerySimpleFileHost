@@ -1,3 +1,5 @@
+import { h } from 'preact';
+
 function ThemeRule() {
     return <hr style={{
         marginTop: '2px',

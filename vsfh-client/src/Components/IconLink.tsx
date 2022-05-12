@@ -1,3 +1,4 @@
+import { h } from 'preact';
 import './IconLink.less';
 import 'semantic-ui-less/definitions/elements/icon.less';
 import { Icon, IconProps } from "semantic-ui-react";

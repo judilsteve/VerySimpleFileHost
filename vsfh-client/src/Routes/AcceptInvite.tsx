@@ -1,3 +1,4 @@
+import { h } from 'preact';
 import { useCallback, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/elements/button.less';
 import 'semantic-ui-less/definitions/collections/form.less';
@@ -11,7 +12,6 @@ import SkinnyForm from "../Components/SkinnyForm";
 import { routes } from "../routes";
 import useEndpointData from "../Hooks/useEndpointData";
 import SetPassword from "../Components/SetPassword";
-import { usePageTitle } from "../Hooks/usePageTitle";
 import { loginApi as api } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
 import { rememberMeState } from "../State/sharedState";
@@ -24,8 +24,6 @@ import { getSearchParam } from "../Utils/safeWindow";
 export const inviteKeyParamName = 'key';
 
 function AcceptInvite() {
-    usePageTitle('Accept Invite');
-
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [checkPassword, setCheckPassword] = useState('');

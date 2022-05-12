@@ -1,3 +1,5 @@
+import { h, Fragment } from 'preact';
+
 import 'semantic-ui-less/definitions/modules/modal.less';
 import 'semantic-ui-less/definitions/elements/button.less';
 import 'semantic-ui-less/definitions/elements/icon.less';

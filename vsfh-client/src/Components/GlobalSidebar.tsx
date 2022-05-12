@@ -1,3 +1,5 @@
+import { h, JSX } from 'preact';
+
 export interface GlobalSidebarProps {
     open: boolean;
     children: preact.ComponentChildren;
@@ -6,7 +8,7 @@ export interface GlobalSidebarProps {
 function GlobalSidebar(props: GlobalSidebarProps) {
     const { open, children } = props;
 
-    const style: React.CSSProperties = {
+    const style: JSX.CSSProperties = {
         position: 'fixed',
         right: 0,
         height: '100vh',

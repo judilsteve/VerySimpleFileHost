@@ -1,3 +1,4 @@
+import { h } from 'preact';
 import { useCallback, useEffect, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/elements/button.less';
 import 'semantic-ui-less/definitions/collections/form.less';
@@ -11,7 +12,6 @@ import RememberMe from "../Components/RememberMe";
 import SetPassword from "../Components/SetPassword";
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
-import { usePageTitle } from "../Hooks/usePageTitle";
 import { loginApi as api, loginApi } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
 import { passwordExpiredPromptState, rememberMeState } from "../State/sharedState";
@@ -62,8 +62,6 @@ function ChangePassword() {
     }, [passwordExpiredPrompt]);
 
     const message = passwordExpiredPrompt?.message ?? '';
-
-    usePageTitle('Change Password');
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');

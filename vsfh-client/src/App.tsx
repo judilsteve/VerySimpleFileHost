@@ -1,16 +1,18 @@
+import { h } from 'preact';
 import { useCallback } from 'preact/hooks';
 
 // Make a custom hook that listens on hashchange event for useLocation().hash
-import Router from 'preact-router';
+import { Router } from 'preact-router';
 import IconLink from './Components/IconLink';
 import SuspensefulComponent from './Routing/SuspensefulRoute';
 import Redirect from './Routing/Redirect';
 import { pathnameState } from './State/sharedState';
 import { routes } from './routes';
+import safeWindow from './Utils/safeWindow';
 
 function App() {
     const handleRouteChange = useCallback(() => {
-        pathnameState.setValue(window.location.pathname);
+        pathnameState.setValue(safeWindow?.location.pathname ?? '');
     }, []);
 
     return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

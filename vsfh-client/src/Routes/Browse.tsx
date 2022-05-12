@@ -1,3 +1,5 @@
+import { h, Fragment } from 'preact';
+
 import './Browse.less';
 import { useCallback, useEffect, useMemo, useState, useRef } from "preact/hooks";
 import { RefObject } from "preact";
@@ -20,14 +22,12 @@ import FilesApi from "../ApiOverrides/FilesApi";
 import IconLink from "../Components/IconLink";
 import NavHeader from "../Components/NavHeader";
 import { useIsMounted } from "../Hooks/useIsMounted";
-import { usePageTitle } from "../Hooks/usePageTitle";
 import { useSharedState } from "../Hooks/useSharedState";
 import { archiveFormatState, hashState } from "../State/sharedState";
 import tryHandleError, { printResponseError } from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
 import { SelectedPaths, useSharedSelection, useSharedSelectionSource } from '../Hooks/useSharedSelection';
 import CenteredSpinner from '../Components/CenteredSpinner';
-import React from 'react';
 
 const api = new FilesApi(apiConfig);
 
@@ -257,14 +257,14 @@ function Directory(props: DirectoryProps) {
     </List.Item>;
 }
 
-interface SneakyLinkProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
+interface SneakyLinkProps {
     regularClickHref: string;
     altClickHref: string;
     children?: preact.ComponentChildren;
 }
 
 function SneakyLink(props: SneakyLinkProps) {
-    const { regularClickHref, altClickHref, children, ...rest } = props;
+    const { regularClickHref, altClickHref, children } = props;
 
     const ref = useRef<HTMLAnchorElement>(null);
 
@@ -276,15 +276,15 @@ function SneakyLink(props: SneakyLinkProps) {
         window.setTimeout(() => ref.current!.href = regularClickHref, 0);
     }, [altClickHref, regularClickHref])
 
-    const onClick = useCallback((e: React.MouseEvent) => {
+    const onClick = useCallback((e: MouseEvent) => {
         if(e.ctrlKey) overrideHref(e);
     }, [overrideHref]);
 
-    const onMouseUp = useCallback((e: React.MouseEvent) => {
+    const onMouseUp = useCallback((e: MouseEvent) => {
         if(e.button === 1) overrideHref(e);
     }, [overrideHref])
 
-    return <a {...rest} ref={ref} href={regularClickHref} onClick={onClick} onMouseUp={onMouseUp}>
+    return <a ref={ref} href={regularClickHref} onClick={onClick} onMouseUp={onMouseUp}>
         { children }
     </a>
 }
@@ -394,8 +394,6 @@ function CouldNotFindHashModal(props: CouldNotFindHashModalProps) {
 }
 
 function Browse() {
-    usePageTitle('Browse');
-
     const [navigatedToHash, setNavigatedToHash] = useState(true);
     const navigatedToHashRef = useRef(true);
     useEffect(() => {
