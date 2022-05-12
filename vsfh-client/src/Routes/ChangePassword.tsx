@@ -135,7 +135,7 @@ function ChangePassword() {
         }
     };
 
-    if(!userName) return <CenteredSpinner />;
+    if(!userName) return <CenteredSpinner />; // TODO_JU This is blocking pre-rendering, just grey out the button instead
 
     return <SkinnyForm width={350}>
         <Header as="h1" style={{ marginBottom: 0 }}>Change Password<ThemeRule /></Header>
