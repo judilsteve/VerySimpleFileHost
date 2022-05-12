@@ -5,8 +5,8 @@
 const path = require('path');
 
 export default (config, env, helpers) => {
-  let { rule } = helpers.getLoadersByName(config, 'babel-loader')[0];
-  let babelConfig = rule.options;
+  const { rule } = helpers.getLoadersByName(config, 'babel-loader')[0];
+  const babelConfig = rule.options;
 
   // These should work by default with preact-cli but the browserslist config breaks them somehow
   babelConfig.plugins.push(require.resolve("@babel/plugin-proposal-nullish-coalescing-operator"));
