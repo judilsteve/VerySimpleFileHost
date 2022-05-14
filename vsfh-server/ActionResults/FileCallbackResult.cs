@@ -33,6 +33,7 @@ public class FileCallbackResult : FileResult
         public Task ExecuteAsync(ActionContext context, FileCallbackResult result)
         {
             SetHeadersAndLog(context, result, null, enableRangeProcessing: false);
+            // TODO_JU Use pipelines? https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/request-response?view=aspnetcore-6.0
             return result.callback(context.HttpContext.Response.Body, context);
         }
     }

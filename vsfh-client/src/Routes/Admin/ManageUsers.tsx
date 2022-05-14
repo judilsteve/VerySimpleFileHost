@@ -1,7 +1,7 @@
 import { h, Fragment } from 'preact';
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/elements/button.less';
-import 'semantic-ui-less/definitions/views/card.less';
+//import 'semantic-ui-less/definitions/views/card.less';
 import 'semantic-ui-less/definitions/modules/checkbox.less';
 import 'semantic-ui-less/definitions/elements/container.less';
 import 'semantic-ui-less/definitions/collections/form.less';

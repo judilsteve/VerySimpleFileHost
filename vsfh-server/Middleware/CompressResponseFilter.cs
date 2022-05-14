@@ -79,6 +79,7 @@ public class CompressResponseAttribute : ActionFilterAttribute
         }
 
         var response = filterContext.HttpContext.Response;
+        // TODO_JU Use pipelines? https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/request-response?view=aspnetcore-6.0
         if (preferredEncoding == Encoding.Brotli)
         {
             response.Headers.Add("Content-Encoding", brotli);

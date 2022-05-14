@@ -9,7 +9,6 @@ import Redirect from './Routing/Redirect';
 import { pathnameState } from './State/sharedState';
 import { routes } from './routes';
 import safeWindow from './Utils/safeWindow';
-import ManageUsers from './Routes/Admin/ManageUsers';
 import Browse from './Routes/Browse';
 
 // TODO_JU Current bundle size hogs:
@@ -30,7 +29,7 @@ function App() {
             <SuspensefulComponent path={routes.acceptInvite.url} importFunc={() => import('./Routes/AcceptInvite')}/>
             <SuspensefulComponent path={routes.changePassword.url} importFunc={() => import('./Routes/ChangePassword')}/>
             {/* TODO_JU These two routes don't like being pre-rendered as SuspensefulComponent */}
-            <Route path={routes.manageUsers.url} component={ManageUsers}/>
+            <SuspensefulComponent path={routes.manageUsers.url} importFunc={() => import('./Routes/Admin/ManageUsers')}/>
             <Route path={routes.browseFiles.url} component={Browse}/>
             <SuspensefulComponent default importFunc={() => import('./Routes/Error/NotFound')}/>
             <SuspensefulComponent path={routes.unauthorised.url} importFunc={() => import('./Routes/Error/Unauthorised')}/>{/* Only here so it can be pre-rendered */}

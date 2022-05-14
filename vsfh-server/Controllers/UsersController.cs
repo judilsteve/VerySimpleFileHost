@@ -34,7 +34,7 @@ public class UsersController : ControllerBase
 
     [HttpGet]
     [CompressResponse]
-    public IEnumerable<UserListingDto> ListUsers()
+    public IAsyncEnumerable<UserListingDto> ListUsers()
     {
         return context.Users
             .Select(u => new UserListingDto
@@ -44,7 +44,8 @@ public class UsersController : ControllerBase
                 LoginName = u.LoginName,
                 IsAdministrator = u.IsAdministrator,
                 Activated = u.PasswordSaltedHash != null
-            });
+            })
+            .AsAsyncEnumerable();
     }
 
     public class UserAddRequestDto

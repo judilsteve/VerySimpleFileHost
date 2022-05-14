@@ -61,7 +61,7 @@ dotnet publish -c Release -o build -r <rid> -p:PublishReadyToRun=true --no-self-
 
 ...where `<rid>` is the appropriate runtime identifier (RID) for your target environment (OS + CPU architecture). See [here](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog) for a list of valid RIDs.
 
-3. Build the client
+3. Build the client TODO_JU Update for yarn
 ```bash
 cd ../vsfh-client
 npm install --dev
