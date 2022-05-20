@@ -6,7 +6,7 @@ import 'semantic-ui-less/definitions/elements/icon.less';
 import 'semantic-ui-less/definitions/collections/message.less';
 import 'semantic-ui-less/definitions/modules/modal.less';
 import 'semantic-ui-less/definitions/modules/popup.less';
-import { Button, Header, Icon, Message, Modal, Popup, SemanticICONS } from "semantic-ui-react";
+import { Button, Header, Icon, Message, Modal, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../routes";
 import useEndpointData from "../Hooks/useEndpointData";
@@ -86,20 +86,18 @@ function NavHeader(props: NavHeaderProps) {
         .filter(r => isAdministrator || !r.adminOnly)
     , [isAdministrator, pathname]);
 
-    const linkIcons = links.map(l => {
-        const iconLink = <a href={l.route}>
+    const linkIcons = links.map(l => (
+        <a key={l.route} href={l.route} data-tooltip={l.name} data-position="bottom left">
             <Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" />
-        </a>;
-        // Small offset prevents the popup flashing in and out when the mouse is right on the bottom edge of the icon
-        return <Popup key={l.route} trigger={iconLink} offset={[0,5]} content={l.name} />;
-    });
+        </a>
+    ));
 
     return <>
         <div style={{ paddingTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
             <Header as="h1" style={{ marginBottom: 0 }}>{pageTitle}</Header>
             <div>
                 { linkIcons }
-                <Popup trigger={<Icon link name="sign-out" size="large" onClick={() => setLoggingOut(true)} />} content="Log Out" />
+                <span data-tooltip="Log Out" data-position="bottom left"><Icon link name="sign-out" size="large" onClick={() => setLoggingOut(true)} /></span>
             </div>
         </div>
         <ThemeRule />

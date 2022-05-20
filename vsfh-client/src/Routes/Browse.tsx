@@ -1,8 +1,4 @@
 import { h, Fragment } from 'preact';
-
-export default function Browse() { return <div></div>; } // This is causing "ERROR ReferenceError: document is not defined", I have no fucking idea how
-
-/*
 import './Browse.less';
 import { useCallback, useEffect, useMemo, useState, useRef } from "preact/hooks";
 import { RefObject } from "preact";
@@ -541,7 +537,7 @@ function Browse() {
                 </List.Item>)}
             </List>
             <form action={`/api/Files/DownloadManyForm?archiveFormat=${archiveFormat}&asAttachment=true`} method="post">
-                {/* Putting these input elements inside the List.Items was messing with their flow in weird ways /}
+                {/* Putting these input elements inside the List.Items was messing with their flow in weird ways */}
                 {selectedPathsArray.map(p => <input key={p} type='hidden' name='paths' value={p} />)}
                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', rowGap: '0.25em' }}>
                     <Button primary type="submit"><Icon name='download' />Download</Button>
@@ -564,7 +560,7 @@ function Browse() {
                                 they see the new characters appear in the text box. the onChange handler
                                 is wrapped in a setTimeout just to stop react from complaining about
                                 "setting components from controlled to uncontrolled" in the console.
-                            /}
+                            */}
                             <Input autoFocus fluid icon="filter" iconPosition="left" placeholder="Filter"
                                 onChange={e => window.setTimeout(() => setTextFilter(e.target.value), 0)} />
                         </Grid.Column>
@@ -584,4 +580,4 @@ function Browse() {
     </>;
 }
 
-export default Browse;*/
+export default Browse;

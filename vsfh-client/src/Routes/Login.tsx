@@ -5,10 +5,11 @@ import 'semantic-ui-less/definitions/collections/form.less';
 import 'semantic-ui-less/definitions/elements/header.less';
 import 'semantic-ui-less/definitions/elements/input.less';
 import 'semantic-ui-less/definitions/collections/message.less';
-import { Button, Form, Header, Input, Message } from "semantic-ui-react";
+import { Button, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthenticationFailureReasonCode } from "../API";
 import { routes } from "../routes";
 import RememberMe from "../Components/RememberMe";
+import { Form, FormField } from '../Components/SemanticForm';
 import SkinnyForm from "../Components/SkinnyForm";
 import useEndpointData from "../Hooks/useEndpointData";
 import { ChangePasswordRouteParameters } from "./ChangePassword";
@@ -95,10 +96,10 @@ function Login() {
     return <SkinnyForm>
         <Header as="h1">VSFH<ThemeRule /></Header>
         <Form error={!!error}>
-            <Form.Field>
+            <FormField>
                 <Input disabled={loading} autoFocus icon="user" iconPosition="left" placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} />
-            </Form.Field>
-            <Form.Field>
+            </FormField>
+            <FormField>
                 <Input
                     disabled={loading}
                     icon="key"
@@ -108,12 +109,12 @@ function Login() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     onKeyDown={submitOnEnter} />
-            </Form.Field>
+            </FormField>
             <Message error header="Login Failed" content={error} />
-            <Form.Field>
+            <FormField>
                 <Button primary type="button" floated="right" onClick={login} disabled={!userName || !password} loading={loading}>Log In</Button>
                 <RememberMe {...rememberMeProps} />
-            </Form.Field>
+            </FormField>
         </Form>
     </SkinnyForm>;
 }

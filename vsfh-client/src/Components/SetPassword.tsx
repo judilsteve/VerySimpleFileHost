@@ -3,10 +3,11 @@ import { useEffect, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/collections/form.less';
 import 'semantic-ui-less/definitions/elements/input.less';
 import 'semantic-ui-less/definitions/elements/label.less';
-import { Form, Input, LabelProps } from "semantic-ui-react";
+import { Input, LabelProps } from "semantic-ui-react";
 import { ZXCVBNResult } from "zxcvbn";
 import { AuthConfigDto } from "../API";
 import ErrorText from "./ErrorText";
+import { FormField } from "../Components/SemanticForm";
 
 const zxcvbnScores: LabelProps[] = [
     {
@@ -97,7 +98,7 @@ function SetPassword(props: SetPasswordProps) {
         : null;
 
     return <>
-        <Form.Field>
+        <FormField>
             {/*
               * Note: Passing `fluid` to the input prevents it from overflowing the
               * container on some displays when showing wide labels (e.g. "<>Adamantine")
@@ -112,8 +113,8 @@ function SetPassword(props: SetPasswordProps) {
             {passwordTooWeak && <ErrorText>{`Password strength must be at least '${zxcvbnScores[authConfig.minimumPasswordScore!].content}'`}</ErrorText>}
             {passwordStrength?.feedback.warning && <p><em>{passwordStrength.feedback.warning}</em></p>}
             {passwordStrength?.feedback.suggestions && passwordStrength.feedback.suggestions.map(s => <p key={s}><em>{s}</em></p>)}
-        </Form.Field>
-        <Form.Field>
+        </FormField>
+        <FormField>
             <Input
                 onKeyUp={submitOnEnter}
                 disabled={disabled}
@@ -124,7 +125,7 @@ function SetPassword(props: SetPasswordProps) {
                 value={checkPassword}
                 onChange={e => setCheckPassword(e.target.value)} />
             {checkPassword && !passwordsMatch && <ErrorText>Passwords do not match</ErrorText>}
-        </Form.Field>
+        </FormField>
     </>;
 }
 

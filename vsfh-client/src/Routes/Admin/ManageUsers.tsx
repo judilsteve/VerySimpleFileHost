@@ -1,7 +1,7 @@
 import { h, Fragment } from 'preact';
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import 'semantic-ui-less/definitions/elements/button.less';
-//import 'semantic-ui-less/definitions/views/card.less';
+import 'semantic-ui-less/definitions/views/card.less';
 import 'semantic-ui-less/definitions/modules/checkbox.less';
 import 'semantic-ui-less/definitions/elements/container.less';
 import 'semantic-ui-less/definitions/collections/form.less';
@@ -10,10 +10,11 @@ import 'semantic-ui-less/definitions/elements/input.less';
 import 'semantic-ui-less/definitions/collections/message.less';
 import 'semantic-ui-less/definitions/modules/modal.less';
 import 'semantic-ui-less/definitions/modules/popup.less';
-import { Button, Card, Checkbox, Container, Form, Grid, Icon, Input, Message, Modal, Popup } from "semantic-ui-react";
+import { Button, Card, Checkbox, Container, Grid, Icon, Input, Message, Modal } from "semantic-ui-react";
 import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
 import CenteredSpinner from "../../Components/CenteredSpinner";
+import { Form, FormField } from "../../Components/SemanticForm";
 import useEndpointData from "../../Hooks/useEndpointData";
 import NavHeader from "../../Components/NavHeader";
 import tryHandleError, { printResponseError } from "../../Utils/tryHandleError";
@@ -46,11 +47,6 @@ function InviteLinkModal(props: InviteLinkModalProps) {
 
     const inviteLink = `${safeWindow?.location.origin}/AcceptInvite?${inviteKeyParamName}=${inviteKeyUser?.inviteKey}`;
 
-    const copyButton = <Popup
-        open={justCopied}
-        content="Copied to clipboard"
-        trigger={<Button icon="copy" primary onClick={copyLink} />} />
-
     return <Modal size="small" open={!!inviteKeyUser}>
         <Modal.Header>Invite link for {inviteKeyUser?.userName ?? '<unnamed>'} ({inviteKeyUser?.fullName})</Modal.Header>
         <Modal.Content>
@@ -58,7 +54,7 @@ function InviteLinkModal(props: InviteLinkModalProps) {
             <p>Once you close this modal, you will not be able to view the link again</p>
             <Input fluid
                 value={inviteLink}
-                action={copyButton} />
+                action={<Button icon={justCopied ? "check" : "copy"} primary onClick={copyLink} />} />
         </Modal.Content>
         <Modal.Actions>
             <Button onClick={close} secondary><Icon name="check" />Done</Button>
@@ -254,7 +250,7 @@ function UserCard(props: UserEditProps) {
             <Card.Header>
                 {activated
                     ? <Icon name="user" />
-                    : <Popup trigger={<Icon name="lock" />} content={`'${loginName ?? '<unnamed>'}' is locked out pending password reset`} />
+                    : <span data-tooltip={`'${loginName ?? '<unnamed>'}' is locked out pending password reset`}><Icon name="lock" /></span>
                 }
                 {loginName ?? '<unnamed>'}
             </Card.Header>
@@ -262,12 +258,10 @@ function UserCard(props: UserEditProps) {
             {
                 editMode && <>
                     <Form error={!!error} style={{ paddingTop: '1.5rem' }}>
-                        <Form.Field>
-                            <Form.Input onKeyDown={submitOnEnter} placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
-                        </Form.Field>
-                        <Form.Field>
+                        <Input onKeyDown={submitOnEnter} placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
+                        <FormField>
                             <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={_ => setNewIsAdministrator(!newIsAdministrator)} />
-                        </Form.Field>
+                        </FormField>
                         <Message error header="Edit Failed" content={error} />
                     </Form>
                 </>
@@ -277,14 +271,14 @@ function UserCard(props: UserEditProps) {
             <div style={{float: 'right'}}>
                 {
                     editMode ? <>
-                        <Popup trigger={<Button size="small" icon="check" positive disabled={!newFullName} onClick={save} loading={loading ? true : undefined} />} content="Save" />
-                        <Popup trigger={<Button size="small" icon="close" secondary disabled={loading} onClick={() => setEditMode(false)} />} content="Discard" />
+                        <Button data-tooltip="Save" size="small" icon="check" positive disabled={!newFullName} onClick={save} loading={loading ? true : undefined} />
+                        <Button data-tooltip="Discard" size="small" icon="close" secondary disabled={loading} onClick={() => setEditMode(false)} />
                     </> : <>
-                        <Popup trigger={<Button size="small" icon="write" primary onClick={startEditing} />} content="Edit" />
+                        <Button data-tooltip="Edit" size="small" icon="write" primary onClick={startEditing} />
                     </>
                 }
-                <Popup trigger={<Button size="small" icon="unlock" onClick={resetPassword} color="teal" />} content="Reset Password" />
-                <Popup trigger={<Button size="small" icon="remove user" onClick={setConfirmDeleteUser} color="orange" />} content="Delete" />
+                <Button data-tooltip="Reset Password" size="small" icon="unlock" onClick={resetPassword} color="teal" />
+                <Button data-tooltip="Delete" size="small" icon="remove user" onClick={setConfirmDeleteUser} color="orange" />
             </div>
         </Card.Content>
     </Card>;
@@ -343,18 +337,18 @@ function NewUserCard(props: NewUserCardProps) {
                 New User
             </Card.Header>
             <Form error={!!error} style={{ paddingTop: '1.5rem' }}>
-                <Form.Field>
-                    <Form.Input onKeyDown={submitOnEnter} disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
-                </Form.Field>
-                <Form.Field>
+                <FormField>
+                    <Input onKeyDown={submitOnEnter} disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
+                </FormField>
+                <FormField>
                     <Checkbox disabled={loading} label="Admin" checked={newUserIsAdmin} onChange={_ => setNewUserIsAdmin(!newUserIsAdmin)}/>
-                </Form.Field>
+                </FormField>
                 <Message error header="Add Failed" content={error} />
             </Form>
         </Card.Content>
         <Card.Content extra>
             <div style={{float: 'right'}}>
-                <Popup trigger={<Button onClick={add} disabled={!newUserFullName} loading={loading} positive size="small" icon="check" />} content="Add" />
+                <Button data-tooltip="Add" onClick={add} disabled={!newUserFullName} loading={loading} positive size="small" icon="check" />
             </div>
         </Card.Content>
     </Card>;

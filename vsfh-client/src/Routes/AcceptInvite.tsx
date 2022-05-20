@@ -5,9 +5,10 @@ import 'semantic-ui-less/definitions/collections/form.less';
 import 'semantic-ui-less/definitions/elements/header.less';
 import 'semantic-ui-less/definitions/elements/input.less';
 import 'semantic-ui-less/definitions/collections/message.less';
-import { Button, Form, Header, Input, Message } from "semantic-ui-react";
+import { Button, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto } from "../API";
 import RememberMe from "../Components/RememberMe";
+import { Form, FormField } from '../Components/SemanticForm';
 import SkinnyForm from "../Components/SkinnyForm";
 import { routes } from "../routes";
 import useEndpointData from "../Hooks/useEndpointData";
@@ -101,19 +102,19 @@ function AcceptInvite() {
         <Header as="h1" style={{ marginBottom: 0 }}>Welcome<ThemeRule /></Header>
         <p>Choose a username and password</p>
         <Form error={!!error}>
-            <Form.Field>
+            <FormField>
                 <Input autoFocus
                     icon="user" iconPosition="left"
                     placeholder="Username"
                     disabled={loading}
                     value={userName} onChange={e => setUserName(e.target.value)} />
-            </Form.Field>
+            </FormField>
             <SetPassword {...setPasswordProps} />
             <Message error header="Activation Failed" content={error} />
-            <Form.Field>
+            <FormField>
                 <Button primary type="button" floated="right" onClick={activateAccount} disabled={!canActivate} loading={loading}>Activate</Button>
                 <RememberMe {...rememberMeProps} />
-            </Form.Field>
+            </FormField>
         </Form>
     </SkinnyForm>;
 }

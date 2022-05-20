@@ -41,6 +41,7 @@
   "dependencies": {
     "@fontsource/lato": "^4.5.5",
     "@types/zxcvbn": "^4.4.1",
+    "fontmin-webpack": "^4.0.0",
     "preact": "^10.1.0",
     "preact-async-route": "^2.2.1",
     "preact-render-to-string": "^5.1.2",

@@ -5,12 +5,13 @@ import 'semantic-ui-less/definitions/collections/form.less';
 import 'semantic-ui-less/definitions/elements/header.less';
 import 'semantic-ui-less/definitions/elements/input.less';
 import 'semantic-ui-less/definitions/collections/message.less';
-import { Button, Form, Header, Input, Message } from "semantic-ui-react";
+import { Button, Header, Input, Message } from "semantic-ui-react";
 import { AuthenticationFailureDto, AuthStatusDto } from "../API";
 import { routes } from "../routes";
 import RememberMe from "../Components/RememberMe";
 import SetPassword from "../Components/SetPassword";
 import SkinnyForm from "../Components/SkinnyForm";
+import { Form, FormField } from "../Components/SemanticForm";
 import useEndpointData from "../Hooks/useEndpointData";
 import { loginApi as api, loginApi } from '../apiInstances';
 import { useSharedState } from "../Hooks/useSharedState";
@@ -88,6 +89,7 @@ function ChangePassword() {
     const changePassword = async () => {
         if(loading) return;
         setLoading(true);
+        setError('');
         try {
             const changePasswordAttemptDto = {
                 userName,
@@ -135,7 +137,7 @@ function ChangePassword() {
         }
     };
 
-    if(!userName) return <CenteredSpinner />;
+    if(!userName) return <CenteredSpinner />; // TODO_JU This is bad UI, and breaks pre-rendering
 
     return <SkinnyForm width={350}>
         <Header as="h1" style={{ marginBottom: 0 }}>Change Password<ThemeRule /></Header>
@@ -143,20 +145,20 @@ function ChangePassword() {
             message && <p><em>{message}</em></p>
         }
         <Form error={!!error}>
-            <Form.Field>
+            <FormField>
                 <Input icon="user" iconPosition="left" placeholder="Username"
                     value={userName} disabled={true} />
-            </Form.Field>
-            <Form.Field>
+            </FormField>
+            <FormField>
                 <Input autoFocus disabled={loading}
                     icon="key" iconPosition="left"
                     placeholder="Current Password"
                     value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
                     type="password" />
-            </Form.Field>
+            </FormField>
             <SetPassword {...setPasswordProps}/>
             <Message error header="Change Password Failed" content={error} />
-            <Form.Field>
+            <FormField>
                 <Button
                     primary type="button"
                     floated="right" onClick={changePassword}
@@ -164,7 +166,7 @@ function ChangePassword() {
                     Change Password
                 </Button>
                 <RememberMe {...rememberMeProps} />
-            </Form.Field>
+            </FormField>
         </Form>
     </SkinnyForm>
 }
