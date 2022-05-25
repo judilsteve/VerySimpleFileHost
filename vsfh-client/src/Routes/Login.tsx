@@ -105,6 +105,9 @@ function Login() {
                     icon="key"
                     iconPosition="left"
                     type="password"
+                    // TODO_JU Placeholder text is rendering too light in Chrome
+                    // solution is to set the colour properly for Chrome and add a ::-moz-placeholder { opacity: 1 !important; } rule to the reset
+                    // https://stackoverflow.com/questions/15497550/change-input-placeholder-color-darker
                     placeholder="Password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}

@@ -1,5 +1,8 @@
 // TODO_JU Audit pre-rendering output
 // TODO_JU Do I need the ssr-build folder? I want to get rid of it. Same with push-manifest.json and preact_prerender_data.json
+// TODO_JU Hot-reload is broken
+// TODO_JU robots.txt is no longer going to the correct place
+// Given all the above, I wonder if it's even worth continuing to use preact-cli or if I should build my own webpack config
 
 const path = require('path');
 const FontminPlugin = require('fontmin-webpack');

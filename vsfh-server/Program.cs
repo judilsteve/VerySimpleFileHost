@@ -186,7 +186,7 @@ public static class VerySimpleFileHost
                 };
             });
 
-        if(!builder.Environment.IsDevelopment())
+        if(!builder.Environment.IsDevelopment() || true)
             builder.Services.AddCompressedStaticFiles(o =>
             {
                 o.EnableImageSubstitution = false;
@@ -241,7 +241,7 @@ public static class VerySimpleFileHost
         app.UseEndpoints(e =>
             e.MapControllers().RequireAuthorization());
 
-        if(!app.Environment.IsDevelopment())
+        if(!app.Environment.IsDevelopment() || true)
         {
             var staticFileCachePolicy = new CacheControlHeaderValue
             {
@@ -256,20 +256,33 @@ public static class VerySimpleFileHost
                 }
             };
 
+            app.UseDefaultFiles(); // Transforms, e.g., "/Login" into "/Login/index.html"
+            app.Use(async (ctx, next) => {
+                if(ctx.User.Identity?.IsAuthenticated ?? false)
+                {
+                    // TODO_JU Redirect / to Browse
+                    // TODO_JU Check /Admin routes and redirect to 403 if user is not an admin
+                }
+                else
+                {
+                    var loginRoute = "/Login";
+                    var requestPath = ctx.Request.Path;
+                    var allowAnonymous = requestPath.StartsWithSegments(loginRoute)
+                        || requestPath.StartsWithSegments($"/{acceptInviteRoute}")
+                        || requestPath.StartsWithSegments("/ChangePassword");
+                    if(!allowAnonymous)
+                    {
+                        // TODO_JU This breaks bundle/css serving
+                        // ctx.Response.Redirect($"{loginRoute}?then={Uri.EscapeDataString(requestPath)}", permanent: false);
+                        // return;
+                    }
+                }
+                await next();
+            });
             app.UseCompressedStaticFiles(staticFileOptions);
             app.Use(async (ctx, next) =>
             {
-                var loginRoute = "Login";
-                var requestPath = ctx.Request.Path;
-                var allowAnonymous = requestPath.StartsWithSegments($"/{loginRoute}")
-                    || requestPath.StartsWithSegments($"/{acceptInviteRoute}")
-                    || requestPath.StartsWithSegments("/ChangePassword");
-                if(!allowAnonymous && (!ctx.User.Identity?.IsAuthenticated ?? false))
-                {
-                    ctx.Response.Redirect($"/{loginRoute}?then={Uri.EscapeDataString(requestPath)}", permanent: false);
-                    return;
-                }
-                ctx.Request.Path = "/index.html";
+                ctx.Request.Path = "/404";
                 await next();
             });
             app.UseCompressedStaticFiles(staticFileOptions);
