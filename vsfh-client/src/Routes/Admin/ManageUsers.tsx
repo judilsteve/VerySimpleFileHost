@@ -258,7 +258,9 @@ function UserCard(props: UserEditProps) {
             {
                 editMode && <>
                     <Form error={!!error} style={{ paddingTop: '1.5rem' }}>
-                        <Input onKeyDown={submitOnEnter} placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
+                        <FormField>
+                            <Input onKeyDown={submitOnEnter} placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
+                        </FormField>
                         <FormField>
                             <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={_ => setNewIsAdministrator(!newIsAdministrator)} />
                         </FormField>
@@ -404,7 +406,7 @@ function ManageUsers() {
     const [inviteKeyUser, setInviteKeyUser] = useState<InviteKeyUserInfo | null>(null);
 
     const cards = listingError ? <Message error header="Loading Users Failed" content='An unexpected error occurred' />
-        : loadingUsers ? <CenteredSpinner />
+        : loadingUsers ? <CenteredSpinner /> // TODO_JU Don't know if I like CenteredSpinner here
         : <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
             <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         {

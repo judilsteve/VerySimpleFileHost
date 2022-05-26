@@ -33,7 +33,7 @@ const routeLinks: RouteLink[] = [
     {
         route: routes.browseFiles.url,
         icon: 'folder open',
-        name: 'Browse',
+        name: 'Browse', // TODO_JU This shows in the pre-render
         adminOnly: false
     },
     {

@@ -1,7 +1,6 @@
 // TODO_JU Audit pre-rendering output
 // TODO_JU Do I need the ssr-build folder? I want to get rid of it. Same with push-manifest.json and preact_prerender_data.json
-// TODO_JU Hot-reload is broken
-// TODO_JU robots.txt is no longer going to the correct place
+// TODO_JU robots.txt and rest of assets are no longer going to the correct place
 // Given all the above, I wonder if it's even worth continuing to use preact-cli or if I should build my own webpack config
 
 const path = require('path');
@@ -15,19 +14,8 @@ export default (config, env, helpers) => {
   babelConfig.plugins.push(require.resolve("@babel/plugin-proposal-nullish-coalescing-operator"));
   babelConfig.plugins.push(require.resolve("@babel/plugin-proposal-optional-chaining"));
 
-  //throw new Error(util.inspect(config.plugins.slice(0, 5)));
-
   // TODO_JU Patch this plugin somehow: https://github.com/patrickhulce/fontmin-webpack/pull/62/commits/005314cbd5da8b3e2a4442cd54a6206ee2b1301e
-  // TODO_JU Audit icons to make sure they still show
-  config.plugins.push(new FontminPlugin({
-    autodetect: false, // Does not work with this build pipeline
-    glyphs: [ // https://fontawesome.com/v5/cheatsheet/free/brands
-      '\uf09b', // github
-    ],
-    allowedFilesRegex: new RegExp('brand-icons')
-  }));
-
-  config.plugins.push(new FontminPlugin({
+  config.plugins.unshift(new FontminPlugin({
     autodetect: false, // Does not work with this build pipeline
     glyphs: [ // https://fontawesome.com/v5/cheatsheet/free/solid
       '\uf07c', // folder-open
@@ -47,6 +35,11 @@ export default (config, env, helpers) => {
       '\uf023', // lock
       '\uf234', // add-user
       '\uf015', // home
+      '\uf2f5', // sign-out-alt
+      '\uf0b0', // filter
+      '\uf303', // pencil-alt
+      '\uf0c5', // copy
+      '\uf09b', // github
     ],
     allowedFilesRegex: new RegExp('icons')
   }));

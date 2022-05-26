@@ -1,9 +1,9 @@
 import { h, Fragment } from 'preact';
-import './Browse.less';
 import { useCallback, useEffect, useMemo, useState, useRef } from "preact/hooks";
 import { RefObject } from "preact";
 import 'semantic-ui-less/definitions/elements/button.less';
 import 'semantic-ui-less/definitions/modules/checkbox.less';
+import './Browse.less'; // Must go *after* checkbox.less to enable style rules to apply correctly
 import 'semantic-ui-less/definitions/elements/container.less';
 import 'semantic-ui-less/definitions/collections/grid.less';
 import 'semantic-ui-less/definitions/elements/header.less';
@@ -209,7 +209,8 @@ function Directory(props: DirectoryProps) {
         }
 
         const tryCollapse = () => {
-            onCollapse(path);
+            if(error) setError('');
+            else onCollapse(path);
         };
 
         const hashLink = `#${path}`;
@@ -223,8 +224,8 @@ function Directory(props: DirectoryProps) {
                 onChange={toggleSelect} />
             <div className={hashAnchorClassName} id={path}></div>
             {isHash && <Icon className={hashAnchorNodeClassName} name="angle double right" />}
-            <span className={`${directoryNodeClassName}${isHash ? ' ' + hashAnchorNodeClassName : ''}`} onClick={loaded ? tryCollapse : tryExpand}>
-                <Icon name={loaded || loading ? 'folder open' : 'folder'} />
+            <span className={`${directoryNodeClassName}${isHash ? ' ' + hashAnchorNodeClassName : ''}`} onClick={loaded || error ? tryCollapse : tryExpand}>
+                <Icon name={loaded || loading || error ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
             <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} />
@@ -235,7 +236,6 @@ function Directory(props: DirectoryProps) {
     return <List.Item>
         { thisNode }
         {
-            // TODO_JU If listing fails, you cannot close the node
             (!loaded && !loading) ? (error && <Message className={underDirectoryClassName} compact error header="Listing Failed" content={error} />) : <List.List>
                 {loading ? <Loader className={underDirectoryClassName} indeterminate active inline size="tiny" /> : <>
                     {directoryNodes}
