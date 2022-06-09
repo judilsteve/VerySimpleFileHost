@@ -14,9 +14,10 @@ import Login from './Routes/Login';
 import AcceptInvite from './Routes/AcceptInvite';
 import ChangePassword from './Routes/ChangePassword';
 
-function App() {
+function App(props: { url?: string }) {
     const handleRouteChange = useCallback(() => {
-        pathnameState.setValue(safeWindow?.location.pathname ?? '');
+        // Hack to inject pathname at pre-render time (preact helpfully passes it as a prop)
+        pathnameState.setValue(safeWindow?.location.pathname ?? props.url);
     }, []);
 
     return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

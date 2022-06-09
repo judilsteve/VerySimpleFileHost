@@ -15,6 +15,7 @@ export default (config, env, helpers) => {
   babelConfig.plugins.push(require.resolve("@babel/plugin-proposal-optional-chaining"));
 
   // TODO_JU Patch this plugin somehow: https://github.com/patrickhulce/fontmin-webpack/pull/62/commits/005314cbd5da8b3e2a4442cd54a6206ee2b1301e
+  // https://www.npmjs.com/package/patch-package
   config.plugins.unshift(new FontminPlugin({
     autodetect: false, // Does not work with this build pipeline
     glyphs: [ // https://fontawesome.com/v5/cheatsheet/free/solid
