@@ -3,6 +3,7 @@
   "name": "vsfh-client",
   "version": "0.1.0",
   "scripts": {
+    "postinstall": "patch-package",
     "build": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json --preload",
     "start": "preact watch",
     "lint": "eslint src",
@@ -35,6 +36,8 @@
     "@types/react": "^17.0.45",
     "eslint": "^7.17.0",
     "eslint-config-preact": "^1.1.3",
+    "patch-package": "^6.4.7",
+    "postinstall-postinstall": "^2.1.0",
     "preact-cli": "^3.0.0",
     "sirv-cli": "^1.0.3"
   },

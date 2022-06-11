@@ -1,0 +1,13 @@
+diff --git a/node_modules/fontmin-webpack/lib/index.js b/node_modules/fontmin-webpack/lib/index.js
+index fc8337e..ee0095d 100644
+--- a/node_modules/fontmin-webpack/lib/index.js
++++ b/node_modules/fontmin-webpack/lib/index.js
+@@ -88,7 +88,7 @@ class FontminPlugin {
+       .map(filename => {
+         return {
+           filename,
+-          stats: fs.statSync(filename),
++          stats: fs.statSync(path.join(compilation.options.context, filename)),
+         }
+       })
+       .value()

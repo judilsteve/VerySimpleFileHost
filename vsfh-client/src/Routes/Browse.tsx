@@ -521,7 +521,7 @@ function Browse() {
     ]);
 
     return <>
-        <CenteredSpinner active={!navigatedToHash} />
+        <CenteredSpinner active={!navigatedToHash} />{/* TODO_JU Not sure I like CenteredSpinner here */}
         <GlobalSidebar open={!!selectedPathsArray.length}>
             <Header as="h2">{selectedPathsArray.length} Item{selectedPathsArray.length > 1 ? 's' : ''} Selected</Header>
             <List>

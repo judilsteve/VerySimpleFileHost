@@ -19,7 +19,6 @@ import { passwordExpiredPromptState, rememberMeState } from "../State/sharedStat
 import ThemeRule from "../Components/ThemeRule";
 import { useIsMounted } from "../Hooks/useIsMounted";
 import { LoginRouteParameters } from "./Login";
-import CenteredSpinner from "../Components/CenteredSpinner";
 import { printResponseError } from "../Utils/tryHandleError";
 import { route } from "preact-router";
 import { getSearchParam } from "../Utils/safeWindow";
@@ -32,12 +31,15 @@ function ChangePassword() {
     const [passwordExpiredPrompt, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
     const [userName, setUserName] = useState('');
+    const [loadingUserName, setLoadingUserName] = useState(false);
+    const [changingPassword, setChangingPassword] = useState(false);
 
     useEffect(() => {
         if(passwordExpiredPrompt?.userName) {
             setUserName(passwordExpiredPrompt?.userName);
             return;
         }
+        setLoadingUserName(true);
         let cancel = false;
         (async () => {
             let authStatus: AuthStatusDto;
@@ -56,6 +58,8 @@ function ChangePassword() {
                     setError('An unexpected error occurred');
                 }
                 return;
+            } finally {
+                setLoadingUserName(false);
             }
             if(!cancel) setUserName(authStatus.userName!);
         })();
@@ -76,19 +80,17 @@ function ChangePassword() {
             setError('An unexpected error occurred');
     }, []));
 
-    const [loading, setLoading] = useState(false);
-
     const [rememberMe, ] = useSharedState(rememberMeState);
     const rememberMeProps = {
         allowRememberMe: authConfig?.allowRememberMe,
-        disabled: loading
+        disabled: loadingUserName || changingPassword
     };
 
     const then = getSearchParam(ChangePasswordRouteParameters.then);
     const isMounted = useIsMounted();
     const changePassword = async () => {
-        if(loading) return;
-        setLoading(true);
+        if(changingPassword) return;
+        setChangingPassword(true);
         setError('');
         try {
             const changePasswordAttemptDto = {
@@ -110,7 +112,7 @@ function ChangePassword() {
             return;
         } finally {
             if(isMounted.current) {
-                setLoading(false);
+                setChangingPassword(false);
                 setCurrentPassword('');
                 setNewPassword('');
                 setCheckPassword('');
@@ -131,13 +133,11 @@ function ChangePassword() {
         passwordPlaceholder: 'New Password',
         setPasswordValid,
         currentPassword,
-        disabled: loading,
+        disabled: changingPassword || loadingUserName,
         trySubmit: () => {
             if(passwordValid) changePassword();
         }
     };
-
-    if(!userName) return <CenteredSpinner />; // TODO_JU This is bad UI, and breaks pre-rendering
 
     return <SkinnyForm width={350}>
         <Header as="h1" style={{ marginBottom: 0 }}>Change Password<ThemeRule /></Header>
@@ -146,11 +146,11 @@ function ChangePassword() {
         }
         <Form error={!!error}>
             <FormField>
-                <Input icon="user" iconPosition="left" placeholder="Username"
-                    value={userName} disabled={true} />
+                <Input icon="user" iconPosition="left" placeholder="Username" onChange={e => setUserName(e.target.value)}
+                    value={userName} disabled={changingPassword || loadingUserName} />
             </FormField>
             <FormField>
-                <Input autoFocus disabled={loading}
+                <Input autoFocus disabled={changingPassword || loadingUserName}
                     icon="key" iconPosition="left"
                     placeholder="Current Password"
                     value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
@@ -162,7 +162,7 @@ function ChangePassword() {
                 <Button
                     primary type="button"
                     floated="right" onClick={changePassword}
-                    disabled={!passwordValid} loading={loading}>
+                    disabled={!userName || !passwordValid} loading={changingPassword || loadingUserName}>
                     Change Password
                 </Button>
                 <RememberMe {...rememberMeProps} />

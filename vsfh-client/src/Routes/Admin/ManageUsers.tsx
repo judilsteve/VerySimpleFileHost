@@ -10,10 +10,9 @@ import 'semantic-ui-less/definitions/elements/input.less';
 import 'semantic-ui-less/definitions/collections/message.less';
 import 'semantic-ui-less/definitions/modules/modal.less';
 import 'semantic-ui-less/definitions/modules/popup.less';
-import { Button, Card, Checkbox, Container, Grid, Icon, Input, Message, Modal } from "semantic-ui-react";
+import { Button, Card, Checkbox, Container, Grid, Icon, Input, Loader, Message, Modal } from "semantic-ui-react";
 import { UserListingDto, UserResponseDto, UsersApi } from "../../API";
 import { apiConfig } from "../../apiInstances";
-import CenteredSpinner from "../../Components/CenteredSpinner";
 import { Form, FormField } from "../../Components/SemanticForm";
 import useEndpointData from "../../Hooks/useEndpointData";
 import NavHeader from "../../Components/NavHeader";
@@ -406,7 +405,7 @@ function ManageUsers() {
     const [inviteKeyUser, setInviteKeyUser] = useState<InviteKeyUserInfo | null>(null);
 
     const cards = listingError ? <Message error header="Loading Users Failed" content='An unexpected error occurred' />
-        : loadingUsers ? <CenteredSpinner /> // TODO_JU Don't know if I like CenteredSpinner here
+        : loadingUsers ? <div style={{ paddingTop: "1em" }}><Loader active inline indeterminate /></div>
         : <Card.Group doubling stackable itemsPerRow={4} style={{ marginTop: "1rem" }}>
             <NewUserCard afterAddUser={inviteKeyUser => { setInviteKeyUser(inviteKeyUser); reloadUsers(); }} />
         {
