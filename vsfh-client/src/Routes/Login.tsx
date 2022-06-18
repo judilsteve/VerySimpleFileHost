@@ -60,7 +60,7 @@ function Login() {
                         message: responseObject.reason!,
                         userName: userName
                     });
-                    let destination = routes.changePassword.url;
+                    let destination = routes.changePassword.pathname;
                     if(then) destination += `?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
                     route(destination);
                 }
@@ -74,7 +74,7 @@ function Login() {
             }
         }
         sessionExpiredPromptState.setValue(false);
-        if(isMounted.current) route(then ?? routes.browseFiles.url);
+        if(isMounted.current) route(then ?? routes.browseFiles.pathname);
     };
 
     const [authConfig, ] = useEndpointData(

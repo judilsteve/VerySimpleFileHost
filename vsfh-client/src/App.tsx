@@ -14,22 +14,22 @@ import Login from './Routes/Login';
 import AcceptInvite from './Routes/AcceptInvite';
 import ChangePassword from './Routes/ChangePassword';
 
-function App(props: { url?: string }) {
+function App(props: { pathname?: string }) {
     const handleRouteChange = useCallback(() => {
         // Hack to inject pathname at pre-render time (preact helpfully passes it as a prop)
-        pathnameState.setValue(safeWindow?.location.pathname ?? props.url);
+        pathnameState.setValue(safeWindow?.location.pathname ?? props.pathname);
     }, []);
 
     return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Router onChange={handleRouteChange}>
-            <Redirect path="/" to={routes.browseFiles.url} />
-            <Route path={routes.login.url} component={Login} />
-            <Route path={routes.acceptInvite.url} component={AcceptInvite} />
-            <Route path={routes.changePassword.url} component={ChangePassword} />
-            <Route path={routes.manageUsers.url} component={ManageUsers} />
-            <Route path={routes.browseFiles.url} component={Browse} />
+        <Router url={props.pathname} onChange={handleRouteChange}>{/* Override pathname during pre-rendering */}
+            <Redirect path="/" to={routes.browseFiles.pathname} />
+            <Route path={routes.login.pathname} component={Login} />
+            <Route path={routes.acceptInvite.pathname} component={AcceptInvite} />
+            <Route path={routes.changePassword.pathname} component={ChangePassword} />
+            <Route path={routes.manageUsers.pathname} component={ManageUsers} />
+            <Route path={routes.browseFiles.pathname} component={Browse} />
             <Route default component={NotFound} />
-            <Route path={routes.unauthorised.url} component={Unauthorised} />{/* Only here so it can be pre-rendered */}
+            <Route path={routes.unauthorised.pathname} component={Unauthorised} />{/* Only here so it can be pre-rendered */}
         </Router>
         <div style={{ width: '100%', padding: '5px', textAlign: 'right', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
             <IconLink aria-label="VerySimpleFileHost GitHub (Source Code)" href="https://github.com/judilsteve/VerySimpleFileHost" name="github" size="large" />

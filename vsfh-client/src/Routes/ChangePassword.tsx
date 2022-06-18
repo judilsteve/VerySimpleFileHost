@@ -51,7 +51,7 @@ function ChangePassword() {
                     const location = window.location;
                     const then = `${location.pathname}${location.search}${location.hash}`;
                     if(cancel) return;
-                    route(`${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
+                    route(`${routes.login.pathname}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`)
                 } else {
                     await printResponseError(e as Response, 'auth status');
                     if(cancel) return;
@@ -120,7 +120,7 @@ function ChangePassword() {
         }
         if(isMounted.current) {
             setPasswordExpiredPrompt(null);
-            route(then ?? routes.browseFiles.url)
+            route(then ?? routes.browseFiles.pathname)
         };
     };
 

@@ -17,7 +17,7 @@ async function tryHandleError(e: Response) {
             responseObject = await e.json();
         } catch {
             const then = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-            const loginRoute = `${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
+            const loginRoute = `${routes.login.pathname}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
             route(loginRoute);
             return true;
         }

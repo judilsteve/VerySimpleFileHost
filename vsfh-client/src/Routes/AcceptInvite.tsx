@@ -66,7 +66,7 @@ function AcceptInvite() {
                 setCheckPassword('');
             }
         }
-        if(isMounted.current) route(routes.browseFiles.url);
+        if(isMounted.current) route(routes.browseFiles.pathname);
     };
 
     const [authConfig, ] = useEndpointData(

@@ -36,7 +36,7 @@ function PasswordExpiredModal() {
 
     const location = safeWindow?.location;
     const then = location ? `${location.pathname}${location.search}${location.hash}` : '';
-    const changePasswordRoute = `${routes.changePassword.url}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
+    const changePasswordRoute = `${routes.changePassword.pathname}?${ChangePasswordRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={!!passwordExpiredPrompt} onClose={() => setPasswordExpiredPrompt(null)}>
         <Modal.Header>Password Expired</Modal.Header>

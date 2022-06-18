@@ -31,19 +31,19 @@ interface RouteLink {
 
 const routeLinks: RouteLink[] = [
     {
-        route: routes.browseFiles.url,
+        route: routes.browseFiles.pathname,
         icon: 'folder open',
         name: 'Browse',
         adminOnly: false
     },
     {
-        route: routes.manageUsers.url,
+        route: routes.manageUsers.pathname,
         icon: 'users',
         name: 'Manage Users',
         adminOnly: true
     },
     {
-        route: routes.changePassword.url,
+        route: routes.changePassword.pathname,
         icon: 'key',
         name: 'Change Password',
         adminOnly: false
@@ -77,7 +77,7 @@ function NavHeader(props: NavHeaderProps) {
         } finally {
             if(isMounted.current) setLoading(false);
         }
-        if(isMounted.current) route(routes.login);
+        if(isMounted.current) route(routes.login.pathname);
     };
 
     const [pathname, _] = useSharedState(pathnameState);

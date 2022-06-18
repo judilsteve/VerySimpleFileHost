@@ -7,6 +7,6 @@ import 'semantic-ui-less/definitions/globals/site.less';
 
 import App from './App';
 
-export default function VerySimpleFileHost(props: { url?: string }) {
-    return <App url={props.url}/>;
+export default function VerySimpleFileHost(props: { pathname?: string }) {
+    return <App pathname={props.pathname}/>;
 }
