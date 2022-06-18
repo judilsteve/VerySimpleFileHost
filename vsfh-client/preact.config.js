@@ -1,13 +1,11 @@
 // TODO_JU Audit pre-rendering output
 // TODO_JU The content of the ssr-build folder is used to generate the build-time static HTML. Add a post-processing step to remove it.
 // https://www.npmjs.com/package/remove-files-webpack-plugin
-// TODO_JU assets should go to the root of the build folder
 
 const path = require('path');
 const FontminPlugin = require('fontmin-webpack');
 const PushManifestPlugin = require('preact-cli/lib/lib/webpack/push-manifest');
-
-// const util = require('util'); TODO_JU Remove debugging
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 export default (config, env, helpers) => {
   const { rule } = helpers.getLoadersByName(config, 'babel-loader')[0];
@@ -21,7 +19,13 @@ export default (config, env, helpers) => {
     // Disable generation of push-manifest.json and preact_prerender_data.json files
     !(p instanceof PushManifestPlugin) && !(p.constructor.name === 'PrerenderDataExtractPlugin'));
 
-  //throw new Error(util.inspect(config)); TODO_JU Remove debugging
+  // Copy assets to root of build output instead of the `assets` folder (preact-cli's default)
+  // Required to get robots.txt and favicons to work
+  const copyPlugin = config.plugins.find(p => p instanceof CopyWebpackPlugin);
+  if(copyPlugin) { // We make multiple passes through this file, and the copy plugin isn't always here
+    const assetsPattern = copyPlugin.patterns.find(p => p.from === 'assets');
+    assetsPattern.to = '.';
+  }
 
   config.plugins.unshift(new FontminPlugin({
     autodetect: false, // Does not work with this build pipeline
