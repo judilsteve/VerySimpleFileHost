@@ -1,7 +1,4 @@
 // TODO_JU Audit pre-rendering output
-// TODO_JU The content of the ssr-build folder is used to generate the build-time static HTML. Add a post-processing step to remove it.
-// https://www.npmjs.com/package/remove-files-webpack-plugin
-// TODO_JU Remove the __PREACT_CLI_DATA__ script from pre-rendered HTML
 
 const path = require('path');
 const FontminPlugin = require('fontmin-webpack');

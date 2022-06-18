@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "postinstall": "patch-package",
-    "build": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json --preload",
+    "build": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json --preload && rimraf build/ssr-build",
     "start": "preact watch",
     "lint": "eslint src",
     "analyse": "preact build --no-esm --no-sw --prerenderUrls ./prerender-urls.js --no-json --preload --analyze",
@@ -49,6 +49,7 @@
     "preact-async-route": "^2.2.1",
     "preact-render-to-string": "^5.1.2",
     "preact-router": "^3.2.1",
+    "rimraf": "^3.0.2",
     "semantic-ui-less": "^2.4.1",
     "semantic-ui-react": "^2.0.4",
     "zxcvbn": "^4.4.2"
