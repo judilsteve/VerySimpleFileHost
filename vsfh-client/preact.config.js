@@ -1,5 +1,3 @@
-// TODO_JU Audit pre-rendering output
-
 const path = require('path');
 const FontminPlugin = require('fontmin-webpack');
 const PushManifestPlugin = require('preact-cli/lib/lib/webpack/push-manifest');
