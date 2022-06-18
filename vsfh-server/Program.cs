@@ -256,7 +256,6 @@ public static class VerySimpleFileHost
                 }
             };
 
-            app.UseDefaultFiles(); // Transforms, e.g., "/Login" into "/Login/index.html"
             app.Use(async (ctx, next) => {
                 if(ctx.User.Identity?.IsAuthenticated ?? false)
                 {
