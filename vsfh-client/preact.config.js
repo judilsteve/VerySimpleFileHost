@@ -1,10 +1,14 @@
 // TODO_JU Audit pre-rendering output
-// TODO_JU Do I need the ssr-build folder? I want to get rid of it. Same with push-manifest.json and preact_prerender_data.json
-// TODO_JU robots.txt and rest of assets are no longer going to the correct place
-// Given all the above, I wonder if it's even worth continuing to use preact-cli or if I should build my own webpack config
+// TODO_JU The content of the ssr-build folder is used to generate the build-time static HTML. Add a post-processing step to remove it.
+// https://www.npmjs.com/package/remove-files-webpack-plugin
+// TODO_JU assets should go to the root of the build folder
+// TODO_JU prerender HTML should go to the root of the build folder
 
 const path = require('path');
 const FontminPlugin = require('fontmin-webpack');
+const PushManifestPlugin = require('preact-cli/lib/lib/webpack/push-manifest');
+
+// const util = require('util'); TODO_JU Remove debugging
 
 export default (config, env, helpers) => {
   const { rule } = helpers.getLoadersByName(config, 'babel-loader')[0];
@@ -13,6 +17,12 @@ export default (config, env, helpers) => {
   // These should work by default with preact-cli but the browserslist config breaks them somehow
   babelConfig.plugins.push(require.resolve("@babel/plugin-proposal-nullish-coalescing-operator"));
   babelConfig.plugins.push(require.resolve("@babel/plugin-proposal-optional-chaining"));
+
+  config.plugins = config.plugins.filter(p =>
+    // Disable generation of push-manifest.json and preact_prerender_data.json files
+    !(p instanceof PushManifestPlugin) && !(p.constructor.name === 'PrerenderDataExtractPlugin'));
+
+  //throw new Error(util.inspect(config)); TODO_JU Remove debugging
 
   config.plugins.unshift(new FontminPlugin({
     autodetect: false, // Does not work with this build pipeline
