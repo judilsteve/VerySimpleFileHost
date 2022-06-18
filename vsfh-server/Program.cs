@@ -186,7 +186,7 @@ public static class VerySimpleFileHost
                 };
             });
 
-        if(!builder.Environment.IsDevelopment() || true)
+        if(!builder.Environment.IsDevelopment() || true) // TODO_JU Remove debugging
             builder.Services.AddCompressedStaticFiles(o =>
             {
                 o.EnableImageSubstitution = false;
@@ -241,7 +241,7 @@ public static class VerySimpleFileHost
         app.UseEndpoints(e =>
             e.MapControllers().RequireAuthorization());
 
-        if(!app.Environment.IsDevelopment() || true)
+        if(!app.Environment.IsDevelopment() || true) // TODO_JU Remove debugging
         {
             var staticFileCachePolicy = new CacheControlHeaderValue
             {
@@ -256,24 +256,28 @@ public static class VerySimpleFileHost
                 }
             };
 
+            // TODO_JU test this
             app.Use(async (ctx, next) => {
-                if(ctx.User.Identity?.IsAuthenticated ?? false)
+                var browse = "/Browse";
+                var adminPrefix = "/Admin/";
+                if(ctx.Request.Path == "/") ctx.Request.Path = "/Browse";
+                var isAdminPageRequest = ctx.Request.Path.StartsWithSegments(adminPrefix, StringComparison.InvariantCultureIgnoreCase);
+                if(ctx.Request.Path.Equals(browse, StringComparison.InvariantCultureIgnoreCase) || isAdminPageRequest)
                 {
-                    // TODO_JU Redirect / to Browse
-                    // TODO_JU Check /Admin routes and redirect to 403 if user is not an admin
-                }
-                else
-                {
-                    var loginRoute = "/Login";
-                    var requestPath = ctx.Request.Path;
-                    var allowAnonymous = requestPath.StartsWithSegments(loginRoute)
-                        || requestPath.StartsWithSegments($"/{acceptInviteRoute}")
-                        || requestPath.StartsWithSegments("/ChangePassword");
-                    if(!allowAnonymous)
+                    if(ctx.User.Identity?.IsAuthenticated ?? false)
                     {
-                        // TODO_JU This breaks bundle/css serving
-                        // ctx.Response.Redirect($"{loginRoute}?then={Uri.EscapeDataString(requestPath)}", permanent: false);
-                        // return;
+                        ctx.Response.Redirect($"/Login?then={Uri.EscapeDataString(ctx.Request.Path)}", permanent: false);
+                        return;
+                    }
+                    if(isAdminPageRequest)
+                    {
+                        // TODO_JU Plumb dbContext and check for admin
+                        var userIsAdmin = true;
+                        if(!userIsAdmin)
+                        {
+                            ctx.Response.Redirect($"/403", permanent: false);
+                            return;
+                        }
                     }
                 }
                 await next();
