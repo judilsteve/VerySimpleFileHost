@@ -8,3 +8,5 @@
 
 @inputBackground: #515151;
 @inputAutoFillBorder: 1px solid #a9a47e;
+
+@placeholderColor: #aeaeae;

@@ -1,3 +1,5 @@
 /*******************************
          Site Overrides
 *******************************/
+
+::-moz-placeholder { opacity: 1 !important; }
