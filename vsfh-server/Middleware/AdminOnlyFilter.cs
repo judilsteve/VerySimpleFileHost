@@ -15,6 +15,21 @@ public class AdminOnlyAttribute : Attribute
 
 public class AdminOnlyFilter : IAsyncAuthorizationFilter
 {
+    public static async Task<bool> UserIsAdmin(HttpContext httpContext, VsfhContext dbContext)
+    {
+        var isAdmin = false;
+        var userIdString = httpContext.User.Identity?.Name;
+        if(userIdString is not null)
+        {
+            isAdmin = await dbContext.Users
+                .Where(u => u.Id == Guid.Parse(userIdString))
+                .Select(u => (bool?)u.IsAdministrator)
+                .SingleOrDefaultAsync()
+                ?? false;
+        }
+        return isAdmin;
+    }
+
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var actionDescriptor = (context.ActionDescriptor as ControllerActionDescriptor);
@@ -29,18 +44,7 @@ public class AdminOnlyFilter : IAsyncAuthorizationFilter
         var services = context.HttpContext.RequestServices;
         var dbContext = services.GetRequiredService<VsfhContext>();
 
-        var isAdmin = false;
-        var userIdString = context.HttpContext.User.Identity?.Name;
-        if(userIdString is not null)
-        {
-            isAdmin = await dbContext.Users
-                .Where(u => u.Id == Guid.Parse(userIdString))
-                .Select(u => (bool?)u.IsAdministrator)
-                .SingleOrDefaultAsync()
-                ?? false;
-        }
-
-        if(!isAdmin)
+        if(!(await UserIsAdmin(context.HttpContext, dbContext)))
         {
             await TaskUtils.RandomWait();
             context.Result = new ForbidResult();

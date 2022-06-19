@@ -256,32 +256,7 @@ public static class VerySimpleFileHost
                 }
             };
 
-            // TODO_JU test this
-            app.Use(async (ctx, next) => {
-                var browse = "/Browse";
-                var adminPrefix = "/Admin/";
-                if(ctx.Request.Path == "/") ctx.Request.Path = "/Browse";
-                var isAdminPageRequest = ctx.Request.Path.StartsWithSegments(adminPrefix, StringComparison.InvariantCultureIgnoreCase);
-                if(ctx.Request.Path.Equals(browse, StringComparison.InvariantCultureIgnoreCase) || isAdminPageRequest)
-                {
-                    if(ctx.User.Identity?.IsAuthenticated ?? false)
-                    {
-                        ctx.Response.Redirect($"/Login?then={Uri.EscapeDataString(ctx.Request.Path)}", permanent: false);
-                        return;
-                    }
-                    if(isAdminPageRequest)
-                    {
-                        // TODO_JU Plumb dbContext and check for admin
-                        var userIsAdmin = true;
-                        if(!userIsAdmin)
-                        {
-                            ctx.Response.Redirect($"/403", permanent: false);
-                            return;
-                        }
-                    }
-                }
-                await next();
-            });
+            app.UseMiddleware<FrontendRoutingMiddleware>();
             app.UseCompressedStaticFiles(staticFileOptions);
             app.Use(async (ctx, next) =>
             {
