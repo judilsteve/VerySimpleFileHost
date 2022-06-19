@@ -36,7 +36,8 @@ Media such as audio and video can be streamed, with full support for seek operat
 # Install and Run
 
 ## Prerequisites
-- Node v16 and matching npm\*
+- Node v16\*
+- Yarn
 - dotnet SDK 6.0
 - libsodium
 
@@ -61,11 +62,11 @@ dotnet publish -c Release -o build -r <rid> -p:PublishReadyToRun=true --no-self-
 
 ...where `<rid>` is the appropriate runtime identifier (RID) for your target environment (OS + CPU architecture). See [here](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog) for a list of valid RIDs.
 
-3. Build the client TODO_JU Update for yarn
+3. Build the client
 ```bash
 cd ../vsfh-client
-npm install --dev
-npm run build
+yarn install --frozen-lockfile
+yarn run build
 ```
 
 4. (Optional) Compress the static client files, for faster page loads

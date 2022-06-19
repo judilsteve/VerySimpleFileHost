@@ -21,7 +21,6 @@ public class FrontendRoutingMiddleware
 
     public async Task InvokeAsync(HttpContext httpContext, VsfhContext dbContext)
     {
-        // TODO_JU Test this
         if(httpContext.Request.Path == "/") httpContext.Request.Path = browse;
         var isAdminPageRequest = httpContext.Request.Path.StartsWithSegments("/Admin", StringComparison.InvariantCultureIgnoreCase);
         if(httpContext.Request.Path.Equals(browse, StringComparison.InvariantCultureIgnoreCase) || isAdminPageRequest)
