@@ -228,7 +228,7 @@ function Directory(props: DirectoryProps) {
                 <Icon name={loaded || loading || error ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
-            <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} />
+            <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} native />
             <IconLink aria-label="Link" className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </div>;
     }, [displayName, isHash, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, archiveFormat]);
@@ -283,7 +283,7 @@ function SneakyLink(props: SneakyLinkProps) {
         if(e.button === 1) overrideHref(e);
     }, [overrideHref])
 
-    return <a ref={ref} href={regularClickHref} onClick={onClick} onMouseUp={onMouseUp}>
+    return <a ref={ref} href={regularClickHref} onClick={onClick} onMouseUp={onMouseUp} native>
         { children }
     </a>
 }

@@ -156,6 +156,8 @@ public class FilesController : ControllerBase
         };
     }
 
+    private const string defaultMimeType = "application/octet-stream";
+
     /// <summary>
     /// Download file/directory
     /// </summary>
@@ -188,8 +190,8 @@ public class FilesController : ControllerBase
         }
 
         var extension = Path.GetExtension(absolutePath);
-        var mimeType = config.MimeTypesByExtension
-            .GetValueOrDefault(extension.Substring(1), "application/octet-stream");
+        var mimeType = string.IsNullOrEmpty(extension) ? defaultMimeType : config.MimeTypesByExtension
+            .GetValueOrDefault(extension.Substring(1), defaultMimeType);
 
         if(asAttachment ?? false) AddAttachmentHeader(Path.GetFileNameWithoutExtension(GetDownloadName(absolutePath)), extension);
 

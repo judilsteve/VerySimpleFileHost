@@ -48,6 +48,7 @@ export default (config, env, helpers) => {
       '\uf303', // pencil-alt
       '\uf0c5', // copy
       '\uf09b', // github
+      '\uf3a5', // gem
     ],
     allowedFilesRegex: new RegExp('icons')
   }));

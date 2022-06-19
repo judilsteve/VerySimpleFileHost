@@ -17,26 +17,25 @@ public class FrontendRoutingMiddleware
         this.next = next;
     }
 
-    private const string browse = "/Browse";
-    private const string adminPrefix = "/Admin/";
+    private const string browse = "/Browse/";
 
     public async Task InvokeAsync(HttpContext httpContext, VsfhContext dbContext)
     {
         // TODO_JU Test this
-        if(httpContext.Request.Path == "/") httpContext.Request.Path = "/Browse";
-        var isAdminPageRequest = httpContext.Request.Path.StartsWithSegments(adminPrefix, StringComparison.InvariantCultureIgnoreCase);
+        if(httpContext.Request.Path == "/") httpContext.Request.Path = browse;
+        var isAdminPageRequest = httpContext.Request.Path.StartsWithSegments("/Admin", StringComparison.InvariantCultureIgnoreCase);
         if(httpContext.Request.Path.Equals(browse, StringComparison.InvariantCultureIgnoreCase) || isAdminPageRequest)
         {
             if(!(httpContext.User.Identity?.IsAuthenticated ?? false))
             {
-                httpContext.Response.Redirect($"/Login?then={Uri.EscapeDataString(httpContext.Request.Path)}", permanent: false);
+                httpContext.Response.Redirect($"/Login/?then={Uri.EscapeDataString(httpContext.Request.Path)}", permanent: false);
                 return;
             }
             if(isAdminPageRequest)
             {
                 if(!(await AdminOnlyFilter.UserIsAdmin(httpContext, dbContext)))
                 {
-                    httpContext.Response.Redirect($"/403", permanent: false);
+                    httpContext.Response.Redirect($"/Error/Unauthorised/", permanent: false);
                     return;
                 }
             }

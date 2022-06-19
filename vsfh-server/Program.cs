@@ -186,7 +186,7 @@ public static class VerySimpleFileHost
                 };
             });
 
-        if(!builder.Environment.IsDevelopment() || true) // TODO_JU Remove debugging
+        if(!builder.Environment.IsDevelopment())
             builder.Services.AddCompressedStaticFiles(o =>
             {
                 o.EnableImageSubstitution = false;
@@ -241,7 +241,7 @@ public static class VerySimpleFileHost
         app.UseEndpoints(e =>
             e.MapControllers().RequireAuthorization());
 
-        if(!app.Environment.IsDevelopment() || true) // TODO_JU Remove debugging
+        if(!app.Environment.IsDevelopment())
         {
             var staticFileCachePolicy = new CacheControlHeaderValue
             {
@@ -257,12 +257,14 @@ public static class VerySimpleFileHost
             };
 
             app.UseMiddleware<FrontendRoutingMiddleware>();
+            app.UseDefaultFiles(); // Maps (e.g.) "/Login" to "/Login/index.html"
             app.UseCompressedStaticFiles(staticFileOptions);
             app.Use(async (ctx, next) =>
             {
-                ctx.Request.Path = "/404";
+                ctx.Request.Path = "/Error/NotFound/";
                 await next();
             });
+            app.UseDefaultFiles();
             app.UseCompressedStaticFiles(staticFileOptions);
         }
 

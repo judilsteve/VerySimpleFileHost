@@ -4,7 +4,7 @@ import { Route, Router } from 'preact-router';
 import IconLink from './Components/IconLink';
 import Redirect from './Routing/Redirect';
 import { pathnameState } from './State/sharedState';
-import { routes } from './routes';
+import { routes, routeTitlesByPathname } from './routes';
 import safeWindow from './Utils/safeWindow';
 import Browse from './Routes/Browse';
 import ManageUsers from './Routes/Admin/ManageUsers';
@@ -17,11 +17,13 @@ import ChangePassword from './Routes/ChangePassword';
 function App(props: { pathname?: string }) {
     const handleRouteChange = useCallback(() => {
         // Hack to inject pathname at pre-render time (preact helpfully passes it as a prop)
-        pathnameState.setValue(safeWindow?.location.pathname ?? props.pathname);
+        const pathname = safeWindow?.location.pathname ?? props.pathname
+        pathnameState.setValue(pathname);
+        if(safeWindow) safeWindow.document.title = `${routeTitlesByPathname[pathname] ?? routes.notFound.title} - VSFH`;
     }, []);
 
     return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Router url={props.pathname} onChange={handleRouteChange}>{/* Override pathname during pre-rendering */}
+        <Router onChange={handleRouteChange}>
             <Redirect path="/" to={routes.browseFiles.pathname} />
             <Route path={routes.login.pathname} component={Login} />
             <Route path={routes.acceptInvite.pathname} component={AcceptInvite} />
