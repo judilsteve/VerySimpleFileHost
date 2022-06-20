@@ -29,8 +29,6 @@ public static class VerySimpleFileHost
 
     private static string connectionString = $"Filename=data{Path.DirectorySeparatorChar}Database.sqlite";
 
-    private const string acceptInviteRoute = "AcceptInvite";
-
     /// <summary>
     /// Very Simple File Host
     /// </summary>
@@ -86,7 +84,7 @@ public static class VerySimpleFileHost
         await context.SaveChangesAsync();
 
         var host = hostnameOverride ?? GetHost(configManager);
-        var inviteLink = new Uri(new Uri(host), $"{acceptInviteRoute}?key={inviteKey}");
+        var inviteLink = new Uri(new Uri(host), $"/AcceptInvite/?key={inviteKey}");
         await Console.Out.WriteLineAsync(
             $"Account for \"{name}\" created. Use one-time invite link below to log in:\n{inviteLink}");
     }
@@ -126,15 +124,18 @@ public static class VerySimpleFileHost
             // https://github.com/dotnet/runtime/issues/58770#issuecomment-923118142 <-- Planned for 7.0
             .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen(o =>
+        if(builder.Environment.IsDevelopment())
         {
-            o.OperationFilter<ErrorResponseTypeFilter<AuthenticationFailureDto>>(StatusCodes.Status401Unauthorized);
-            o.IncludeXmlComments(Path.Combine(
-                AppContext.BaseDirectory,
-                $"{typeof(ControllerBase).GetTypeInfo().Assembly.GetName().Name}.xml"
-            ));
-        });
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(o =>
+            {
+                o.OperationFilter<ErrorResponseTypeFilter<AuthenticationFailureDto>>(StatusCodes.Status401Unauthorized);
+                o.IncludeXmlComments(Path.Combine(
+                    AppContext.BaseDirectory,
+                    $"{typeof(ControllerBase).GetTypeInfo().Assembly.GetName().Name}.xml"
+                ));
+            });
+        }
 
         builder.Services.AddDbContext<VsfhContext>(o => o
             .UseSqlite(connectionString)
@@ -231,8 +232,11 @@ public static class VerySimpleFileHost
             await next();
         });
 
-        app.UseSwagger();
-        app.UseSwaggerUI();
+        if(app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
         app.UseAuthentication();
 
