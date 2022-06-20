@@ -218,6 +218,7 @@ function Directory(props: DirectoryProps) {
 
         return <div className={`${treeNodeClassName} ${pathClassName}`}>
             <Checkbox
+                aria-label="Select Directory"
                 className={smallClassName}
                 disabled={parentSelected}
                 checked={selected || parentSelected}
@@ -236,7 +237,7 @@ function Directory(props: DirectoryProps) {
     return <List.Item>
         { thisNode }
         {
-            (!loaded && !loading) ? (error && <Message className={underDirectoryClassName} compact error header="Listing Failed" content={error} />) : <List.List>
+            (!loaded && !loading) ? (error && <Message className={underDirectoryClassName} compact error header="Listing Failed" content={error} />) : <List>
                 {loading ? <Loader className={underDirectoryClassName} indeterminate active inline size="tiny" /> : <>
                     {directoryNodes}
                     {fileNodes}
@@ -251,7 +252,7 @@ function Directory(props: DirectoryProps) {
                         </List.Item>
                     }
                 </>}
-            </List.List>
+            </List>
         }
     </List.Item>;
 }
@@ -336,6 +337,7 @@ function File(props: FileProps) {
 
     return <List.Item className={`${treeNodeClassName} ${pathClassName}`}>
         <Checkbox
+            aria-label="Select File"
             className={smallClassName}
             disabled={parentSelected}
             checked={selected || parentSelected}

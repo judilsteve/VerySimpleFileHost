@@ -87,7 +87,7 @@ function NavHeader(props: NavHeaderProps) {
     , [isAdministrator, pathname]);
 
     const linkIcons = links.map(l => (
-        <a key={l.route} href={l.route} data-tooltip={l.name} data-position="bottom left">
+        <a aria-label={l.name} key={l.route} href={l.route} data-tooltip={l.name} data-position="bottom left">
             <Icon link style={{ marginRight: '1em' }} name={l.icon} size="large" />
         </a>
     ));

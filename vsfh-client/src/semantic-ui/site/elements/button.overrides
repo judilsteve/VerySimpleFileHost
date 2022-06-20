@@ -1,3 +1,7 @@
 /*******************************
          Site Overrides
 *******************************/
+
+.ui.secondary.active.button {
+    color: #e7e7e7; // Increase contrast for a11y
+}

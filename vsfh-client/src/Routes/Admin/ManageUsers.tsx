@@ -53,7 +53,7 @@ function InviteLinkModal(props: InviteLinkModalProps) {
             <p>Once you close this modal, you will not be able to view the link again</p>
             <Input fluid
                 value={inviteLink}
-                action={<Button icon={justCopied ? "check" : "copy"} primary onClick={copyLink} />} />
+                action={<Button aria-label="Copy Invite Link" icon={justCopied ? "check" : "copy"} primary onClick={copyLink} />} />
         </Modal.Content>
         <Modal.Actions>
             <Button onClick={close} secondary><Icon name="check" />Done</Button>
@@ -261,7 +261,7 @@ function UserCard(props: UserEditProps) {
                             <Input onKeyDown={submitOnEnter} placeholder="Full Name" disabled={loading} value={newFullName} onChange={e => setNewFullName(e.target.value)} />
                         </FormField>
                         <FormField>
-                            <Checkbox label="Admin" disabled={loading} checked={newIsAdministrator} onChange={_ => setNewIsAdministrator(!newIsAdministrator)} />
+                            <Checkbox aria-label="Admin" label="Admin" disabled={loading} checked={newIsAdministrator} onChange={_ => setNewIsAdministrator(!newIsAdministrator)} />
                         </FormField>
                         <Message error header="Edit Failed" content={error} />
                     </Form>
@@ -272,14 +272,14 @@ function UserCard(props: UserEditProps) {
             <div style={{float: 'right'}}>
                 {
                     editMode ? <>
-                        <Button data-tooltip="Save" size="small" icon="check" positive disabled={!newFullName} onClick={save} loading={loading ? true : undefined} />
-                        <Button data-tooltip="Discard" size="small" icon="close" secondary disabled={loading} onClick={() => setEditMode(false)} />
+                        <Button data-tooltip="Save Changes" aria-label="Save Changes" size="small" icon="check" positive disabled={!newFullName} onClick={save} loading={loading ? true : undefined} />
+                        <Button data-tooltip="Discard Changes" aria-label="Discard Changes" size="small" icon="close" secondary disabled={loading} onClick={() => setEditMode(false)} />
                     </> : <>
-                        <Button data-tooltip="Edit" size="small" icon="write" primary onClick={startEditing} />
+                        <Button data-tooltip="Edit User" aria-label="Edit User" size="small" icon="write" primary onClick={startEditing} />
                     </>
                 }
-                <Button data-tooltip="Reset Password" size="small" icon="unlock" onClick={resetPassword} color="teal" />
-                <Button data-tooltip="Delete" size="small" icon="remove user" onClick={setConfirmDeleteUser} color="orange" />
+                <Button data-tooltip="Reset Password" aria-label="Reset Password" size="small" icon="unlock" onClick={resetPassword} color="teal" />
+                <Button data-tooltip="Delete User" aria-label="Delete User" size="small" icon="remove user" onClick={setConfirmDeleteUser} color="orange" />
             </div>
         </Card.Content>
     </Card>;
@@ -342,14 +342,14 @@ function NewUserCard(props: NewUserCardProps) {
                     <Input onKeyDown={submitOnEnter} disabled={loading} placeholder="Full Name" value={newUserFullName} onChange={e => setNewUserFullName(e.target.value)} />
                 </FormField>
                 <FormField>
-                    <Checkbox disabled={loading} label="Admin" checked={newUserIsAdmin} onChange={_ => setNewUserIsAdmin(!newUserIsAdmin)}/>
+                    <Checkbox disabled={loading} aria-label="Admin" label="Admin" checked={newUserIsAdmin} onChange={_ => setNewUserIsAdmin(!newUserIsAdmin)}/>
                 </FormField>
                 <Message error header="Add Failed" content={error} />
             </Form>
         </Card.Content>
         <Card.Content extra>
             <div style={{float: 'right'}}>
-                <Button data-tooltip="Add" onClick={add} disabled={!newUserFullName} loading={loading} positive size="small" icon="check" />
+                <Button data-tooltip="Add User" aria-label="Add User" onClick={add} disabled={!newUserFullName} loading={loading} positive size="small" icon="check" />
             </div>
         </Card.Content>
     </Card>;

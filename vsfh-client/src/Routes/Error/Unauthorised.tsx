@@ -10,7 +10,7 @@ function Unauthorised() {
     return <SkinnyForm>
         <Header as="h1">Restricted Area<ThemeRule /></Header>
         <p>You are not authorised to view this page</p>
-        <a href={routes.browseFiles.pathname}>
+        <a aria-label="Home" href={routes.browseFiles.pathname}>
             <Icon link name="home" size="large" style={{float: 'right'}} />
         </a>
     </SkinnyForm>;
