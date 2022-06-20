@@ -69,7 +69,7 @@ yarn install --frozen-lockfile
 yarn run build
 ```
 
-4. (Optional) Compress the static client files, for faster page loads
+4. Compress the static client files, for faster page loads (optional, but highly recommended)
 ```bash
 cd ../vsfh-compressor
 dotnet run -- --path=../vsfh-client/build/
