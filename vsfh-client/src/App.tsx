@@ -22,7 +22,9 @@ function App(props: { pathname?: string }) {
         if(safeWindow) safeWindow.document.title = `${routeTitlesByPathname[pathname] ?? routes.notFound.title} - VSFH`;
     }, []);
 
-    return <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    // NOTE: Adding an id to the root app element fixes double rendering of the page in edge cases
+    // See https://github.com/preactjs/preact-cli/issues/1330
+    return <div id="preact_root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Router onChange={handleRouteChange}>
             <Redirect path="/" to={routes.browseFiles.pathname} />
             <Route path={routes.login.pathname} component={Login} />
