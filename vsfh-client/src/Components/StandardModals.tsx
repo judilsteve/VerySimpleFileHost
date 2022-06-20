@@ -16,7 +16,7 @@ function SessionExpiredModal() {
 
     const location = safeWindow?.location;
     const then = location ? `${location.pathname}${location.search}${location.hash}` : '';
-    const loginRoute = `${routes.login.url}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
+    const loginRoute = `${routes.login.pathname}?${LoginRouteParameters.then}=${encodeURIComponent(then)}`;
 
     return <Modal size="tiny" open={sessionExpiredPrompt} onClose={() => setSessionExpiredPrompt(false)}>
         <Modal.Header>Session Expired</Modal.Header>
