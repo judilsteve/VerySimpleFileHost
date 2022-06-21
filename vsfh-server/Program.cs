@@ -224,7 +224,7 @@ public static class VerySimpleFileHost
                 "font-src 'self' data:; " +
                 "form-action 'self'; " +
                 "img-src 'self'; " +
-                "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is probably from semantic-ui's popup element
+                "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is gross but required by various semantic-ui elements
                 "style-src 'self' 'unsafe-inline'; " +
                 "manifest-src 'self'; " +
                 "media-src 'self' "
