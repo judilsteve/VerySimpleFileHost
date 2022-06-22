@@ -254,14 +254,14 @@ public static class VerySimpleFileHost
             {
                 OnPrepareResponse = ctx =>
                 {
-                    // Caching should not be applied to HTML, because this would prevent, for example,
-                    // `/Browse` being redirected to `/Login` when the user's credentials are expired
-                    if(!htmlRegex.IsMatch(ctx.File.Name))
-                        ctx.Context.Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue
-                        {
-                            Public = true,
-                            MaxAge = TimeSpan.FromDays(30)
-                        };
+                    ctx.Context.Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue
+                    {
+                        Public = true,
+                        MaxAge = TimeSpan.FromDays(30),
+                        // Cache entries must be validated before use for HTML, to allow, for example,
+                        // `/Browse` to be redirected to `/Login` when the user's credentials are expired
+                        NoCache = htmlRegex.IsMatch(ctx.File.Name)
+                    };
                 }
             };
 
