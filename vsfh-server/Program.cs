@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Net.Http.Headers;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Reflection;
 using VerySimpleFileHost.Controllers;
 using VerySimpleFileHost.Configuration;
@@ -27,7 +28,9 @@ public static class VerySimpleFileHost
         return configManager;
     }
 
-    private static string connectionString = $"Filename=data{Path.DirectorySeparatorChar}Database.sqlite";
+    private static readonly string connectionString = $"Filename=data{Path.DirectorySeparatorChar}Database.sqlite";
+
+    private static readonly Regex htmlRegex = new Regex(@"\.html(\.br|\.gz)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
     /// Very Simple File Host
@@ -247,16 +250,18 @@ public static class VerySimpleFileHost
 
         if(!app.Environment.IsDevelopment())
         {
-            var staticFileCachePolicy = new CacheControlHeaderValue
-            {
-                Public = true,
-                MaxAge = TimeSpan.FromDays(30)
-            };
             var staticFileOptions = new StaticFileOptions
             {
                 OnPrepareResponse = ctx =>
                 {
-                    ctx.Context.Response.GetTypedHeaders().CacheControl = staticFileCachePolicy;
+                    // Caching should not be applied to HTML, because this would prevent, for example,
+                    // `/Browse` being redirected to `/Login` when the user's credentials are expired
+                    if(!htmlRegex.IsMatch(ctx.File.Name))
+                        ctx.Context.Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue
+                        {
+                            Public = true,
+                            MaxAge = TimeSpan.FromDays(30)
+                        };
                 }
             };
 
