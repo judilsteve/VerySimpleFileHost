@@ -60,7 +60,7 @@ public class FilesController : ControllerBase
         var directoryInfo = new DirectoryInfo(absolutePath);
         return new DirectoryDto
         {
-            DisplayName = rootPathName,
+            DisplayName = path == "" ? rootPathName : directoryInfo.Name,
             Files = GetFiles(directoryInfo),
             Subdirectories = GetSubdirectories(directoryInfo, depth.HasValue ? depth.Value - 1 : null)
         };
