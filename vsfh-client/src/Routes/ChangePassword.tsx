@@ -22,12 +22,15 @@ import { LoginRouteParameters } from "./Login";
 import { printResponseError } from "../Utils/tryHandleError";
 import { route } from "preact-router";
 import { getSearchParam } from "../Utils/safeWindow";
+import { usePageTitle } from '../Hooks/usePageTitle';
 
 export enum ChangePasswordRouteParameters {
     then = 'then'
 };
 
 function ChangePassword() {
+    usePageTitle(routes.changePassword.title);
+
     const [passwordExpiredPrompt, setPasswordExpiredPrompt] = useSharedState(passwordExpiredPromptState);
 
     const [userName, setUserName] = useState('');

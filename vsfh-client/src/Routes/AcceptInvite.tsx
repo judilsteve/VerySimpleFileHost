@@ -21,10 +21,13 @@ import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
 import { route } from "preact-router";
 import { getSearchParam } from "../Utils/safeWindow";
+import { usePageTitle } from '../Hooks/usePageTitle';
 
 export const inviteKeyParamName = 'key';
 
 function AcceptInvite() {
+    usePageTitle(routes.acceptInvite.title);
+
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [checkPassword, setCheckPassword] = useState('');

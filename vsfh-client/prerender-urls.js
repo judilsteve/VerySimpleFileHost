@@ -1,4 +1,4 @@
-const routes = require('./src/routes').routes;
+const { routes } = require('./src/routes');
 
 module.exports = () =>  Object.values(routes)
     .map(r => ({

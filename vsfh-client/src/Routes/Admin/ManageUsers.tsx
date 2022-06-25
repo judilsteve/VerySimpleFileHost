@@ -21,6 +21,8 @@ import { useIsMounted } from "../../Hooks/useIsMounted";
 import safeWindow from "../../Utils/safeWindow";
 import AdminRoute from "../../Routing/AdminRoute";
 import { inviteKeyParamName } from "../AcceptInvite";
+import { routes } from '../../routes';
+import { usePageTitle } from '../../Hooks/usePageTitle';
 
 const api = new UsersApi(apiConfig);
 
@@ -362,6 +364,8 @@ interface InviteKeyUserInfo {
 }
 
 function ManageUsers() {
+    usePageTitle(routes.manageUsers.title);
+
     const [listingError, setListingError] = useState(false);
     const [users, loadingUsers, reloadUsers] = useEndpointData(
         useCallback(() => api.apiUsersListUsersGet(), []),

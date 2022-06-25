@@ -21,12 +21,15 @@ import { useIsMounted } from "../Hooks/useIsMounted";
 import { printResponseError } from "../Utils/tryHandleError";
 import { route } from "preact-router";
 import { getSearchParam } from "../Utils/safeWindow";
+import { usePageTitle } from '../Hooks/usePageTitle';
 
 export enum LoginRouteParameters {
     then = 'then'
 };
 
 function Login() {
+    usePageTitle(routes.login.title);
+
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, ] = useSharedState(rememberMeState);

@@ -4,7 +4,7 @@ import { Route, Router } from 'preact-router';
 import IconLink from './Components/IconLink';
 import Redirect from './Routing/Redirect';
 import { pathnameState } from './State/sharedState';
-import { routes, routeTitlesByPathname } from './routes';
+import { routes } from './routes';
 import safeWindow from './Utils/safeWindow';
 import Browse from './Routes/Browse';
 import ManageUsers from './Routes/Admin/ManageUsers';
@@ -19,7 +19,6 @@ function App(props: { pathname?: string }) {
         // Hack to inject pathname at pre-render time (preact helpfully passes it as a prop)
         const pathname = safeWindow?.location.pathname ?? props.pathname
         pathnameState.setValue(pathname);
-        if(safeWindow) safeWindow.document.title = `${routeTitlesByPathname[pathname] ?? routes.notFound.title} - VSFH`;
     }, []);
 
     // NOTE: Adding an id to the root app element fixes double rendering of the page in edge cases

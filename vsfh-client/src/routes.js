@@ -1,5 +1,3 @@
-// Note: Using old syntax for compatibility with prerender-urls.js
-
 const routes = {
     login: { pathname: '/Login/', title: 'Log In' },
     acceptInvite: { pathname: '/AcceptInvite/', title: 'Accept Invite' },
@@ -10,12 +8,5 @@ const routes = {
     notFound: { pathname: '/Error/NotFound/', title: 'Not Found' }
 };
 
-const routeTitlesByPathname = {};
-for (const route of Object.values(routes)) {
-    routeTitlesByPathname[route.pathname] = route.title;
-}
-
-module.exports = {
-    routes,
-    routeTitlesByPathname
-};
+// Note: Using old export syntax for compatibility with prerender-urls.js
+module.exports = { routes };

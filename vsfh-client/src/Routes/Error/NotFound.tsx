@@ -5,8 +5,11 @@ import { Header, Icon } from "semantic-ui-react";
 import { routes } from "../../routes";
 import SkinnyForm from "../../Components/SkinnyForm";
 import ThemeRule from "../../Components/ThemeRule";
+import { usePageTitle } from '../../Hooks/usePageTitle';
 
 function NotFound() {
+    usePageTitle(routes.notFound.title);
+
     return <SkinnyForm>
         <Header as="h1">Wrong Turn<ThemeRule /></Header>
         <p>The requested page could not be found</p>

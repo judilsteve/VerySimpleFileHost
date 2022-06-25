@@ -27,6 +27,8 @@ import tryHandleError, { printResponseError } from "../Utils/tryHandleError";
 import GlobalSidebar from '../Components/GlobalSidebar';
 import { SelectedPaths, useSharedSelection, useSharedSelectionSource } from '../Hooks/useSharedSelection';
 import CenteredSpinner from '../Components/CenteredSpinner';
+import { routes } from '../routes';
+import { usePageTitle } from '../Hooks/usePageTitle';
 
 const api = new FilesApi(apiConfig);
 
@@ -395,6 +397,8 @@ function CouldNotFindHashModal(props: CouldNotFindHashModalProps) {
 }
 
 function Browse() {
+    usePageTitle(routes.browseFiles.title);
+
     const [navigatedToHash, setNavigatedToHash] = useState(true);
     const navigatedToHashRef = useRef(true);
     useEffect(() => {
