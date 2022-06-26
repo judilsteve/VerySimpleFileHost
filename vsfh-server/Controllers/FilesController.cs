@@ -29,8 +29,8 @@ public class FilesController : ControllerBase
     public class DirectoryDto
     {
         public string DisplayName { get; init; } = null!;
-        public IEnumerable<FileDto>? Files { get; init; }
-        public IEnumerable<DirectoryDto>? Subdirectories { get; init; }
+        public IEnumerable<FileDto>? Files { get; init; } // TODO_JU Serialise this as a JSON dictionary instead of an array?
+        public IEnumerable<DirectoryDto>? Subdirectories { get; init; } // TODO_JU Serialise this as a JSON dictionary instead of an array?
     }
 
     private const string rootPathName = "<root>";

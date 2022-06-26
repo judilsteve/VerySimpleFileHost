@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useIsMounted } from "./useIsMounted";
 
-// TODO_JU Remove or improve this, it's all sorts of janky
+// TODO_JU Replace this with https://swr.vercel.app/
+// Can use optimistic updates for user management page: https://swr.vercel.app/docs/mutation#optimistic-updates
 function useEndpointData<T>(
     getEndpointData: () => Promise<T>,
     handleError?: (error: any) => Promise<void> | void)

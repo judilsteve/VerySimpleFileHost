@@ -1,6 +1,9 @@
 import * as runtime from '../API/runtime';
 import { ApiFilesListingPathGetRequest, DirectoryDto, FilesApi } from "../API";
 
+// TODO_JU Write my own API client generator, with blackjack, and hookers.
+// https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API
+// Make it output SWR hooks
 class FilesApiOverride extends FilesApi {
     // Copy/pasted from auto-generated code 
     async apiFilesListingPathGetRaw(requestParameters: ApiFilesListingPathGetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DirectoryDto>> {
