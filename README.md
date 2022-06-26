@@ -43,6 +43,10 @@ Media such as audio and video can be streamed, with full support for seek operat
 
 ## Instructions
 
+If you'd prefer to get up and running faster, you can [download a binary release](https://github.com/judilsteve/VerySimpleFileHost/releases), extract it, and  skip straight to step 6. This also avoids needing to install the prerequisites mentioned above (although libsodium still needs to be manually installed for some targets like ARM; you'll get an error when you try to set up your first account if this is the case).
+
+You can also build a containerised deployment with the included Dockerfile. There are instructions for running the VSFH Docker image in the next section.
+
 1. Clone this repository to an appropriate directory
 
 2. Build the server
