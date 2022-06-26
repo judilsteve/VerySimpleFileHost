@@ -38,5 +38,4 @@ COPY --from=compressor /vsfh-client ./wwwroot
 
 RUN mkdir data
 
-# TODO_JU Actually test this
 ENTRYPOINT [ "/vsfh/VerySimpleFileHost" ]
