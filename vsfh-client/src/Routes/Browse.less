@@ -3,26 +3,25 @@
     display: block;
 }
 
-// TODO_JU This much "!important" cannot be good
-.show-on-node-hover {
-    transition: opacity 100ms ease !important;
-    opacity: 0 !important;
+i.icon.show-on-node-hover {
+    transition: opacity 100ms ease;
+    opacity: 0;
 }
 
 .tree-node:hover > div > .show-on-node-hover {
-    opacity: 0.8 !important;
+    opacity: 0.8;
 }
 
 .tree-node:hover > a > .show-on-node-hover {
-    opacity: 0.8 !important;
+    opacity: 0.8;
 }
 
 .tree-node:hover > div > .show-on-node-hover:hover {
-    opacity: 1 !important;
+    opacity: 1;
 }
 
 .tree-node:hover > a > .show-on-node-hover:hover {
-    opacity: 1 !important;
+    opacity: 1;
 }
 
 .stuck-container .grid {
@@ -38,6 +37,7 @@
 
 .path:hover {
     white-space: pre-wrap;
+    word-break: break-all;
 }
 
 .checkbox.small {
