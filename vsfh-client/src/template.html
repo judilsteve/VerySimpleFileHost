@@ -2,12 +2,39 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
+
         <title><% preact.title %></title>
+
         <link rel="manifest" href="/site.webmanifest">
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+        <!--
+            Preload API fetches that we know will run on component mount.
+            See section "Using pre-rendering values in your markup" of https://preactjs.com/cli/pre-rendering/
+        -->
+        <% for (const prefetch of htmlWebpackPlugin.options.CLI_DATA.preRenderData.prefetches || []) { %>
+            <!--
+                Although this request is to the same origin, the openapi client runs it with "Sec-Fetch-Mode: cors",
+                so we must add the "crossorigin" flag to ensure the preload is run with the same Sec-Fetch-Mode
+                and can be matched to the eventual fetch request originating from our JS
+            -->
+            <link rel="preload" href="<%= prefetch %>" as="fetch" crossorigin>
+        <% } %>
+
+        <!-- Preload fonts (only woff2 for now, browsers without woff2 support will have to wait until the CSS is parsed) -->
+        <% for (const font of webpack.assets.filter(entry => entry.name.match(/\.woff2$/))) { %>
+            <!--
+                Although this request is to the same origin, the browser runs it with "Sec-Fetch-Mode: cors",
+                so we must add the "crossorigin" flag to ensure the preload is run with the same Sec-Fetch-Mode
+                and can be matched to the eventual request originating from the CSS @font-face directive.
+                Adding the `type` ensures that this preload will only run on browsers that support woff2.
+            -->
+            <link rel="preload" href="<%= htmlWebpackPlugin.files.publicPath %><%= font.name %>" as="font" type="font/woff2" crossorigin>
+        <% } %>
+
         <meta name="apple-mobile-web-app-title" content="VSFH">
         <meta name="application-name" content="VSFH">
         <meta name="msapplication-TileColor" content="#111111">
