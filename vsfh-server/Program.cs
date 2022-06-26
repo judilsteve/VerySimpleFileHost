@@ -190,7 +190,8 @@ public static class VerySimpleFileHost
                 };
             });
 
-        if(!builder.Environment.IsDevelopment())
+        var serveFrontendBundle = !builder.Environment.IsDevelopment();
+        if(serveFrontendBundle)
             builder.Services.AddCompressedStaticFiles(o =>
             {
                 o.EnableImageSubstitution = false;
@@ -217,23 +218,6 @@ public static class VerySimpleFileHost
         {
             MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
         });
-        
-        app.Use(async (ctx, next) =>
-        {
-            // Generated with https://addons.mozilla.org/en-US/firefox/addon/laboratory-by-mozilla/
-            ctx.Response.Headers.Add("Content-Security-Policy",
-                "default-src 'none'; " +
-                "connect-src 'self'; " +
-                "font-src 'self' data:; " +
-                "form-action 'self'; " +
-                "img-src 'self'; " +
-                "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is gross but required by various semantic-ui elements
-                "style-src 'self' 'unsafe-inline'; " +
-                "manifest-src 'self'; " +
-                "media-src 'self' "
-            );
-            await next();
-        });
 
         if(app.Environment.IsDevelopment())
         {
@@ -248,20 +232,36 @@ public static class VerySimpleFileHost
         app.UseEndpoints(e =>
             e.MapControllers().RequireAuthorization());
 
-        if(!app.Environment.IsDevelopment())
+        if(serveFrontendBundle)
         {
             var staticFileOptions = new StaticFileOptions
             {
                 OnPrepareResponse = ctx =>
                 {
+                    var isHtml = htmlRegex.IsMatch(ctx.File.Name);
                     ctx.Context.Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue
                     {
                         Public = true,
                         MaxAge = TimeSpan.FromDays(30),
                         // Cache entries must be validated before use for HTML, to allow, for example,
                         // `/Browse` to be redirected to `/Login` when the user's credentials are expired
-                        NoCache = htmlRegex.IsMatch(ctx.File.Name)
+                        NoCache = isHtml
                     };
+                    if(isHtml)
+                    {
+                        // Generated with https://addons.mozilla.org/en-US/firefox/addon/laboratory-by-mozilla/
+                        ctx.Context.Response.Headers.Add("Content-Security-Policy",
+                            "default-src 'none'; " +
+                            "connect-src 'self'; " +
+                            "font-src 'self' data:; " +
+                            "form-action 'self'; " +
+                            "img-src 'self'; " +
+                            "script-src 'self' 'unsafe-inline'; " + // 'unsafe-inline' is gross but required by various semantic-ui elements
+                            "style-src 'self' 'unsafe-inline'; " +
+                            "manifest-src 'self'; " +
+                            "media-src 'self' "
+                        );
+                    }
                 }
             };
 
