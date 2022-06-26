@@ -111,7 +111,7 @@ Only the last bind mount needs to be read/write, the rest can be read only. For 
 ## Exposing VSFH to the Internet
 You will likely need to forward VSFH's HTTPS listen port to 443 and its HTTP listen port to 80. Instructions for this will be specific to your chosen firewall/router. Forwarding to other ports is possible, but you will lose the ability to use Let's Encrypt certificates, since Let's Encrypt's challenge schemes require VSFH to listen on ports 80 and 443.
 
-VSFH runs on the Kestrel HTTP server, which (since .NET Core 2.0) can be used as an edge server. Reverse proxying VSFH through Apache/nginx/IIS/etc should not be required (but you still can if you want to).
+VSFH runs on the Kestrel HTTP server, which (since .NET Core 2.0) can be used as an edge server. VSFH is preconfigured to serve pre-compressed static content with effective `Cache-Control` and `Content-Security-Policy` headers. Dynamic response compression is already implemented on endpoints which would benefit from it (and which are not susceptible to chosen-plaintext attacks like BREACH/CRIME). Therefore, reverse-proxying VSFH through Apache/nginx/IIS/etc is not required, but can still be done if it is convenient for your deployment scenario (although [you will lose the ability to use LettuceEncrypt](https://github.com/natemcmaster/LettuceEncrypt#aspnet-core-with-kestrel-behind-a-reverse-proxy)).
 
 # Configuration
 Adjust `./vsfh-server/build/VerySimpleFileHost/appsettings.json` as required. Comments are provided in the [default configuration](https://github.com/judilsteve/VerySimpleFileHost/blob/main/vsfh-server/appsettings.json) for your reference.
