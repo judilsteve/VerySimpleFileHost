@@ -1,30 +1,44 @@
 # BUILD SERVER
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS server-builder
+FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS server-builder
 
-WORKDIR /tmp
-COPY . /tmp/VerySimpleFileHost
-WORKDIR /tmp/VerySimpleFileHost/vsfh-server
+ADD ./vsfh-server /vsfh-server
+
+WORKDIR /vsfh-server
 
 RUN dotnet restore
 RUN dotnet publish -c Release -o build --use-current-runtime -p:PublishReadyToRun=true --no-self-contained
 
 # BUILD CLIENT
-# Note: Tried using node 17 but `npm ci` would hang
-FROM docker.io/node:16 AS client-builder
+FROM docker.io/node:18-slim AS client-builder
 
-WORKDIR /tmp/vsfh-client
-COPY --from=server-builder /tmp/VerySimpleFileHost/vsfh-client ./
+ADD ./vsfh-client /vsfh-client
+WORKDIR /vsfh-client
 
 RUN yarn install --frozen-lockfile
-RUN yarn run build
+
+# See https://github.com/webpack/webpack/issues/14532
+# The build process calls Object.createHash, which in node is implemented via openssl
+RUN export NODE_OPTIONS=--openssl-legacy-provider && yarn run build
+
+# COMPRESS CLIENT
+FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS compressor
+
+ADD ./vsfh-compressor /vsfh-compressor
+COPY --from=client-builder /vsfh-client/build /vsfh-client
+WORKDIR /vsfh-compressor
+
+RUN dotnet run -c Release -- --path /vsfh-client
 
 # BUILD RUNTIME ENVIRONMENT
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim
+
+# TODO_JU Do I need to `RUN apt-get install -y libsodium-dev`?
 
 WORKDIR /vsfh
-COPY --from=server-builder /tmp/VerySimpleFileHost/vsfh-server/build .
-COPY --from=client-builder /tmp/vsfh-client/build ./wwwroot
+COPY --from=server-builder /vsfh-server/build .
+COPY --from=compressor /vsfh-client ./wwwroot
 
 RUN mkdir data
 
+# TODO_JU Actually test this
 ENTRYPOINT [ "/vsfh/VerySimpleFileHost" ]
