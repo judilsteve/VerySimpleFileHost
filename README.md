@@ -36,12 +36,10 @@ Media such as audio and video can be streamed, with full support for seek operat
 # Install and Run
 
 ## Prerequisites
-- Node v16\*
-- Yarn
-- dotnet SDK 6.0
-- libsodium
-
-\* At the time of writing, Node v17 appears to have issues with installing dependencies. Consider using [nvm](https://github.com/nvm-sh/nvm) if you need to maintain multiple Node installations.
+- [Node.js](https://nodejs.org/) (tested with v16 and v18)
+- [Yarn](https://yarnpkg.com/)
+- [dotnet SDK 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- [libsodium](https://github.com/jedisct1/libsodium) (available in most distros' package repositories)
 
 ## Instructions
 
