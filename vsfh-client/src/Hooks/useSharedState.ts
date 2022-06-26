@@ -24,10 +24,8 @@ export class SharedState<T> {
 }
 
 export class SharedPersistedState<T> extends SharedState<T> {
-    constructor(localStorageKey: string, initialValue: T) {
-        const persistedJson = safeWindow?.localStorage.getItem(localStorageKey) ?? null;
-        const persistedData = persistedJson === null ? initialValue : JSON.parse(persistedJson);
-        super(persistedData);
+    constructor(private localStorageKey: string, private initialValue: T) {
+        super(initialValue);
         // https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem#exceptions
         this.watch(s => {
             try {
@@ -44,12 +42,22 @@ export class SharedPersistedState<T> extends SharedState<T> {
             this.setValue(e.newValue === null ? e.newValue : JSON.parse(e.newValue));
         }
     }
+
+    public loadFromLocalStorage() {
+        const persistedJson = window.localStorage.getItem(this.localStorageKey) ?? null;
+        this.setValue(persistedJson === null ? this.initialValue : (JSON.parse(persistedJson) as T));
+    }
 }
 
 export function useSharedState<T>(sharedState: SharedState<T>): [T, (newValue: T) => void] {
     const [value, setValue] = useState(sharedState.value);
     useEffect(() => {
         sharedState.watch(setValue);
+        if(sharedState instanceof SharedPersistedState) {
+            // Restore value from local storage (it would not have been available during pre-rendering)
+            // Must do this *after* setting up our watcher or else the "local" state value will not be set
+            sharedState.loadFromLocalStorage();
+        }
         return () => sharedState.removeWatcher(setValue);
     }, [sharedState]);
     return [value, useCallback((newValue: T) => sharedState.setValue(newValue), [sharedState])];
