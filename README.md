@@ -33,7 +33,7 @@ Users can download entire directories as a tarball (with optional gzip compressi
 ## HTTP Range and MIME Support
 Media such as audio and video can be streamed, with full support for seek operations (via HTTP range requests). Administrators can configure MIME type mappings so that files automatically open in the right application.
 
-# Install and Run
+# Build and Run
 
 ## Prerequisites
 - [Node.js](https://nodejs.org/) (tested with v16 and v18)
