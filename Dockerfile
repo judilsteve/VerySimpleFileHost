@@ -32,8 +32,6 @@ RUN dotnet run -c Release -- --path /vsfh-client
 # BUILD RUNTIME ENVIRONMENT
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim
 
-# TODO_JU Do I need to `RUN apt-get install -y libsodium-dev`?
-
 WORKDIR /vsfh
 COPY --from=server-builder /vsfh-server/build .
 COPY --from=compressor /vsfh-client ./wwwroot
