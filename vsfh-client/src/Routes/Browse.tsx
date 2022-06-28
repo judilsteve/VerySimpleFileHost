@@ -160,8 +160,9 @@ function Directory(props: DirectoryProps) {
 
     const { selected, toggleSelect } = useSharedSelection(selectPath, deselectPath, selectedPaths, path, true);
 
-    const fileNodes = useMemo(() => {
+    const { fileNodes, hiddenFileCount } = useMemo(() => {
         const fileNodes = [];
+        let hiddenFileCount = 0;
         for(const file of tree?.files ?? []) {
             const filePath = combinePaths(path, file.displayName!);
             if(visiblePaths.has(filePath))
@@ -176,11 +177,13 @@ function Directory(props: DirectoryProps) {
                     selectedPaths={selectedPaths}
                     navigatedToHash={navigatedToHash}
                     onFoundHash={onFoundHash} />);
+            else hiddenFileCount++;
         }
-        return fileNodes;
+        return { fileNodes, hiddenFileCount };
     }, [path, tree, visiblePaths, selectPath, deselectPath, selectedPaths, selected, navigatedToHash, onFoundHash]);
 
     const directoryNodes = [];
+    let hiddenDirectoryCount = 0;
     for(const subdir of tree?.subdirectories ?? []) {
         const dirPath = combinePaths(path, subdir.displayName!);
         if(visiblePaths.has(dirPath))
@@ -201,6 +204,7 @@ function Directory(props: DirectoryProps) {
                 onFoundHash={onFoundHash}
                 handleListingError={handleListingError}
             />);
+        else hiddenDirectoryCount++;
     }
 
     const isHash = hash && decodeURIComponent(hash).substring(1) === path;
@@ -236,23 +240,34 @@ function Directory(props: DirectoryProps) {
         </div>;
     }, [displayName, isHash, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, archiveFormat]);
 
+    let hiddenText = '';
+    if(tree && !directoryNodes.length && !fileNodes.length) {
+        if(tree.files.length + tree.subdirectories.length) hiddenText = 'No matches';
+        else hiddenText = 'Empty';
+    } else {
+        if(hiddenFileCount) {
+            hiddenText += `${hiddenFileCount} file${hiddenFileCount > 1 ? 's' : ''} `;
+            if(hiddenDirectoryCount) hiddenText += `and `;
+        }
+        if(hiddenDirectoryCount) {
+            hiddenText += `${hiddenDirectoryCount} director${hiddenDirectoryCount > 1 ? 'ies' : 'y'} `;
+        }
+        if(hiddenText) hiddenText += 'hidden by filter';
+    }
+
     return <List.Item>
         { thisNode }
         {
             (!loaded && !loading) ? (error && <Message className={underDirectoryClassName} compact error header="Listing Failed" content={error} />) : <List>
                 {loading ? <Loader className={underDirectoryClassName} indeterminate active inline size="tiny" /> : <>
-                    {directoryNodes}
-                    {fileNodes}
                     {
-                        !directoryNodes.length && !fileNodes.length &&
+                        (hiddenText) &&
                         <List.Item className={emptyListPlaceholderClassName}>
-                            {
-                                !!(tree.files!.length + tree.subdirectories!.length)
-                                ? 'No matches'
-                                : 'Empty'
-                            }
+                            {hiddenText}
                         </List.Item>
                     }
+                    {directoryNodes}
+                    {fileNodes}
                 </>}
             </List>
         }
