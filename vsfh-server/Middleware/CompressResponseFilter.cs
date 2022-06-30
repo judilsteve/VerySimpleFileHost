@@ -75,12 +75,13 @@ public class CompressResponseAttribute : ActionFilterAttribute
 
         if (preferredEncoding is null)
         {
+            base.OnActionExecuted(filterContext);
             return;
         }
 
         var response = filterContext.HttpContext.Response;
         // TODO_JU Use pipelines? https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/request-response?view=aspnetcore-6.0
-        if (preferredEncoding == Encoding.Brotli && false) // TODO_JU This does not appear to be producing correct brotli streams; it fails to decompress in Firefox 102 and Postman 8.10
+        if (preferredEncoding == Encoding.Brotli)
         {
             response.Headers.Add("Content-Encoding", brotli);
             response.Body = new BrotliStream(response.Body, CompressionLevel.Fastest);
@@ -90,5 +91,20 @@ public class CompressResponseAttribute : ActionFilterAttribute
             response.Headers.Add("Content-Encoding", gzip);
             response.Body = new GZipStream(response.Body, CompressionLevel.Fastest);
         }
+
+        base.OnActionExecuted(filterContext);
+    }
+
+    public override void OnResultExecuted(ResultExecutedContext context)
+    {
+        var body = context.HttpContext.Response.Body;
+        if(body is BrotliStream || body is GZipStream)
+        {
+            // BrotliStream needs to write a trailer or else it will fail in some browsers (Firefox 102+)
+            // Do it for GZipStream as well because although I haven't seen any issues without DisposeAsync(),
+            // I also don't see any issues with DisposeAsync()
+            context.HttpContext.Response.Body.DisposeAsync();
+        }
+        base.OnResultExecuted(context);
     }
 }

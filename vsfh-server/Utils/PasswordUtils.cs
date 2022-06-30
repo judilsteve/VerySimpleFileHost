@@ -72,7 +72,7 @@ public static class PasswordUtils
             return (false, false);
         }
 
-        if(PasswordHash.ArgonPasswordNeedsRehash(user.PasswordSaltedHash, hashStrength))
+        if(PasswordHash.ArgonPasswordNeedsRehash(user.PasswordSaltedHash!, hashStrength))
         {
             user.PasswordSaltedHash = GenerateSaltedHash(attemptedPassword);
             return (true, true);
