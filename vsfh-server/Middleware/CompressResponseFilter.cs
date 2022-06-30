@@ -80,7 +80,7 @@ public class CompressResponseAttribute : ActionFilterAttribute
 
         var response = filterContext.HttpContext.Response;
         // TODO_JU Use pipelines? https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/request-response?view=aspnetcore-6.0
-        if (preferredEncoding == Encoding.Brotli)
+        if (preferredEncoding == Encoding.Brotli && false) // TODO_JU This does not appear to be producing correct brotli streams; it fails to decompress in Firefox 102 and Postman 8.10
         {
             response.Headers.Add("Content-Encoding", brotli);
             response.Body = new BrotliStream(response.Body, CompressionLevel.Fastest);

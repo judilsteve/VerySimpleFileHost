@@ -430,7 +430,6 @@ function Browse() {
     const [couldNotFindHash, setCouldNotFindHash] = useState('');
 
     const handleListingError = useCallback((path: string) => {
-        console.debug({ navigatedToHashRef });
         if(navigatedToHashRef.current) return;
         const parsedHash = parseHash(window.location.hash);
         if(!path || parsedHash.startsWith(`${path}/`)) {
