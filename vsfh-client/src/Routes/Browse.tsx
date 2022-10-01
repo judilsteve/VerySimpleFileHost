@@ -220,7 +220,7 @@ function Directory(props: DirectoryProps) {
         };
 
         const hashLink = `#${path}`;
-        const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}&asAttachment=true`;
+        const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}`;
 
         return <div className={`${treeNodeClassName} ${pathClassName}`}>
             <Checkbox
@@ -235,7 +235,7 @@ function Directory(props: DirectoryProps) {
                 <Icon name={loaded || loading || error ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
-            <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} native />
+            <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} download={`${displayName}.${archiveFormat.toLocaleLowerCase()}`} native />
             <IconLink aria-label="Link" className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </div>;
     }, [displayName, isHash, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, archiveFormat]);
@@ -274,34 +274,36 @@ function Directory(props: DirectoryProps) {
     </List.Item>;
 }
 
-interface SneakyLinkProps {
-    regularClickHref: string;
-    altClickHref: string;
+interface DownloadLinkProps {
+    href: string;
+    fileName: string;
     children?: preact.ComponentChildren;
 }
 
-function SneakyLink(props: SneakyLinkProps) {
-    const { regularClickHref, altClickHref, children } = props;
+function DownloadLink(props: DownloadLinkProps) {
+    const { href, fileName, children } = props;
 
     const ref = useRef<HTMLAnchorElement>(null);
 
-    const overrideHref = useCallback((e) => {
+    // TODO_JU Use `download` attribute instead?
+    // https://developer.mozilla.org/en-US/docs/Web/API/HTMLAnchorElement/download
+    const applyDownloadAttribute = useCallback((e) => {
         // User is attempting to open the link in a new tab
         // Quickly set the href to altClickHref so they go to the right place
-        ref.current!.href = altClickHref;
+        ref.current!.download = fileName;
         // Set it back immediately after the browser has done its job
-        window.setTimeout(() => ref.current!.href = regularClickHref, 0);
-    }, [altClickHref, regularClickHref])
+        window.setTimeout(() => ref.current!.download = undefined, 0);
+    }, [fileName])
 
     const onClick = useCallback((e: MouseEvent) => {
-        if(e.ctrlKey) overrideHref(e);
-    }, [overrideHref]);
+        if(!e.ctrlKey) applyDownloadAttribute(e);
+    }, [applyDownloadAttribute]);
 
     const onMouseUp = useCallback((e: MouseEvent) => {
-        if(e.button === 1) overrideHref(e);
-    }, [overrideHref])
+        if(e.button !== 1) applyDownloadAttribute(e);
+    }, [applyDownloadAttribute])
 
-    return <a ref={ref} href={regularClickHref} onClick={onClick} onMouseUp={onMouseUp} native>
+    return <a ref={ref} href={href} onClick={onClick} onMouseUp={onMouseUp} native>
         { children }
     </a>
 }
@@ -359,14 +361,14 @@ function File(props: FileProps) {
             disabled={parentSelected}
             checked={selected || parentSelected}
             onChange={toggleSelect} />
-        <SneakyLink regularClickHref={`${href}?asAttachment=true`} altClickHref={href}>
+        <DownloadLink href={href} fileName={displayName}>
             <div className={hashAnchorClassName} id={path}></div>
             <span className={isHash ? hashAnchorNodeClassName : undefined}>
                 {isHash && <Icon className={hashAnchorNodeClassName} name="angle double right" />}
                 <Icon name="file" />
                 {displayName}&nbsp;
             </span>
-        </SneakyLink>
+        </DownloadLink>
         <span className={fileSizeClassName} >({humaniseBytes(sizeBytes)})&nbsp;</span>
         <IconLink aria-label="Link" className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
     </List.Item>;
@@ -509,7 +511,7 @@ function Browse() {
         clearPaths
     } = useSharedSelectionSource();
 
-    const selectedPathsArray = Object.keys(selectedPaths);
+    const selectedPathsArray = useMemo(() => Object.keys(selectedPaths), [selectedPaths]);
 
     const root = useMemo(() => <Directory
         expandedDirectories={expandedDirectories}

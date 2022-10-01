@@ -34,7 +34,6 @@ public class FilesController : ControllerBase
     }
 
     private const string rootPathName = "<root>";
-    private const string noRootMessage = "Ask an administrator to configure the root shared directory";
 
     private static string NotFoundMessage(string path) =>
         $"File/directory with path \"{path}\" could not be found";
@@ -65,12 +64,6 @@ public class FilesController : ControllerBase
             Subdirectories = GetSubdirectories(directoryInfo, depth.HasValue ? depth.Value - 1 : null)
         };
     }
-
-    private static readonly EnumerationOptions skipInaccessible = new()
-    {
-        AttributesToSkip = FileAttributes.Hidden | FileAttributes.System,
-        IgnoreInaccessible = true
-    };
 
     private IEnumerable<FileDto> GetFiles(DirectoryInfo directoryInfo)
     {
