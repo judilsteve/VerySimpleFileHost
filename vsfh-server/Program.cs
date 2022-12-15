@@ -229,8 +229,8 @@ public static class VerySimpleFileHost
 
         app.UseRouting();
         app.UseAuthorization();
-        app.UseEndpoints(e =>
-            e.MapControllers().RequireAuthorization());
+        app.MapControllers()
+            .RequireAuthorization();
 
         if(serveFrontendBundle)
         {

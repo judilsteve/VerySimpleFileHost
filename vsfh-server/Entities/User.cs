@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace VerySimpleFileHost.Entities;
 
-[Index(new[]{ nameof(User.LoginName) }, IsUnique=true)]
+[Index(nameof(User.LoginName), IsUnique=true)]
 public class User
 {
     public Guid Id { get; set; }
-    public string FullName { get; set; } = null!;
+    public required string FullName { get; set; }
     public string? LoginName { get; set; }
     public string? PasswordSaltedHash { get; set; }
     public string? InviteKey { get; set; }

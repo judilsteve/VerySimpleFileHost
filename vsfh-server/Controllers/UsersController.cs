@@ -26,7 +26,7 @@ public class UsersController : ControllerBase
     public class UserListingDto
     {
         public Guid Id { get; init; }
-        public string FullName { get; init; } = null!;
+        public required string FullName { get; init; }
         public string? LoginName { get; init; }
         public bool IsAdministrator { get; init; }
         public bool Activated { get; init; }
@@ -50,7 +50,7 @@ public class UsersController : ControllerBase
 
     public class UserAddRequestDto
     {
-        [MinLength(1)] public string FullName { get; init; } = null!;
+        [MinLength(1)] public required string FullName { get; init; }
         [Required] public bool? IsAdministrator { get; init; }
     }
 

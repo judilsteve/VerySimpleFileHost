@@ -22,6 +22,7 @@ import { printResponseError } from "../Utils/tryHandleError";
 import { route } from "preact-router";
 import { getSearchParam } from "../Utils/safeWindow";
 import { usePageTitle } from '../Hooks/usePageTitle';
+import sanitiseRedirectUrl from '../Utils/sanitiseRedirectUrl';
 
 export enum LoginRouteParameters {
     then = 'then'
@@ -37,7 +38,7 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const then = getSearchParam(LoginRouteParameters.then);
+    const then = sanitiseRedirectUrl(getSearchParam(LoginRouteParameters.then));
     const isMounted = useIsMounted();
     const login = async () => {
         if(loading) return;

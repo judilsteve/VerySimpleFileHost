@@ -23,6 +23,7 @@ import { printResponseError } from "../Utils/tryHandleError";
 import { route } from "preact-router";
 import { getSearchParam } from "../Utils/safeWindow";
 import { usePageTitle } from '../Hooks/usePageTitle';
+import sanitiseRedirectUrl from '../Utils/sanitiseRedirectUrl';
 
 export enum ChangePasswordRouteParameters {
     then = 'then'
@@ -89,7 +90,8 @@ function ChangePassword() {
         disabled: loadingUserName || changingPassword
     };
 
-    const then = getSearchParam(ChangePasswordRouteParameters.then);
+    let then = sanitiseRedirectUrl(getSearchParam(ChangePasswordRouteParameters.then));
+
     const isMounted = useIsMounted();
     const changePassword = async () => {
         if(changingPassword) return;

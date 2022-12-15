@@ -31,7 +31,8 @@ public class CompressResponseAttribute : ActionFilterAttribute
     public override void OnActionExecuted(ActionExecutedContext filterContext)
     {
         var acceptedEncodings = filterContext.HttpContext.Request.Headers["Accept-Encoding"]
-            .SelectMany(sv => sv.Split(','));
+            .Where(sv => sv is not null)
+            .SelectMany(sv => sv!.Split(','));
 
         // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
         Encoding? preferredEncoding = null;

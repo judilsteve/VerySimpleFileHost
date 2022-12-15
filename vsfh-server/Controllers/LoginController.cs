@@ -28,8 +28,8 @@ public class LoginController : ControllerBase
 
     public class LoginAttemptDto
     {
-        [MinLength(1)] public string UserName { get; init; } = null!;
-        [MinLength(1)] public string Password { get; init; } = null!;
+        [MinLength(1)] public required string UserName { get; init; }
+        [MinLength(1)] public required string Password { get; init; }
         [Required] public bool? RememberMe { get; init; }
     }
 
@@ -66,9 +66,9 @@ public class LoginController : ControllerBase
 
     public class AcceptInviteDto
     {
-        [MinLength(1)] public string InviteKey { get; init; } = null!;
-        [MinLength(1)] public string UserName { get; init; } = null!;
-        [MinLength(1)] public string NewPassword { get; init; } = null!;
+        [MinLength(1)] public required string InviteKey { get; init; }
+        [MinLength(1)] public required string UserName { get; init; }
+        [MinLength(1)] public required string NewPassword { get; init; }
         [Required] public bool? RememberMe { get; init; }
     }
 
@@ -192,9 +192,9 @@ public class LoginController : ControllerBase
 
     public class ChangePasswordAttemptDto
     {
-        [MinLength(1)] public string UserName { get; set; } = null!;
-        [MinLength(1)] public string CurrentPassword { get; init; } = null!;
-        [MinLength(1)] public string NewPassword { get; init; } = null!;
+        [MinLength(1)] public required string UserName { get; set; }
+        [MinLength(1)] public required string CurrentPassword { get; init; }
+        [MinLength(1)] public required string NewPassword { get; init; }
         [Required] public bool? RememberMe { get; init; }
     }
 
@@ -260,7 +260,7 @@ public class LoginController : ControllerBase
 
     public class AuthStatusDto
     {
-        public string UserName { get; init; } = null!;
+        public required string UserName { get; init; }
         public bool IsAdministrator { get; init; }
     }
 

@@ -22,13 +22,13 @@ public class FilesController : ControllerBase
 
     public class FileDto
     {
-        public string DisplayName { get; init; } = null!;
+        public required string DisplayName { get; init; }
         public long SizeBytes { get; init; }
     }
 
     public class DirectoryDto
     {
-        public string DisplayName { get; init; } = null!;
+        public required string DisplayName { get; init; }
         public IEnumerable<FileDto>? Files { get; init; } // TODO_JU Serialise this as a JSON dictionary instead of an array?
         public IEnumerable<DirectoryDto>? Subdirectories { get; init; } // TODO_JU Serialise this as a JSON dictionary instead of an array?
     }

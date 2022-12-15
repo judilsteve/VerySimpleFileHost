@@ -285,8 +285,6 @@ function DownloadLink(props: DownloadLinkProps) {
 
     const ref = useRef<HTMLAnchorElement>(null);
 
-    // TODO_JU Use `download` attribute instead?
-    // https://developer.mozilla.org/en-US/docs/Web/API/HTMLAnchorElement/download
     const applyDownloadAttribute = useCallback((e) => {
         // User is attempting to open the link in a new tab
         // Quickly set the href to altClickHref so they go to the right place
