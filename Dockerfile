@@ -1,5 +1,5 @@
 # BUILD SERVER
-FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS server-builder
+FROM mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim AS server-builder
 
 ADD ./vsfh-server /vsfh-server
 
@@ -21,7 +21,7 @@ RUN yarn install --frozen-lockfile
 RUN export NODE_OPTIONS=--openssl-legacy-provider && yarn run build
 
 # COMPRESS CLIENT
-FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS compressor
+FROM mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim AS compressor
 
 ADD ./vsfh-compressor /vsfh-compressor
 COPY --from=client-builder /vsfh-client/build /vsfh-client
@@ -30,7 +30,7 @@ WORKDIR /vsfh-compressor
 RUN dotnet run -c Release -- --path /vsfh-client
 
 # BUILD RUNTIME ENVIRONMENT
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim
+FROM mcr.microsoft.com/dotnet/aspnet:7.0-bullseye-slim
 
 WORKDIR /vsfh
 COPY --from=server-builder /vsfh-server/build .

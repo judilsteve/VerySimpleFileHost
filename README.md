@@ -38,7 +38,7 @@ Media such as audio and video can be streamed, with full support for seek operat
 ## Prerequisites
 - [Node.js](https://nodejs.org/) (tested with v16 and v18)
 - [Yarn](https://yarnpkg.com/)
-- [dotnet SDK 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- [dotnet SDK 7.0](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
 - [libsodium](https://github.com/jedisct1/libsodium) (available in most distros' package repositories)
 
 ## Instructions
