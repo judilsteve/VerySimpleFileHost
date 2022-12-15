@@ -221,6 +221,10 @@ function Directory(props: DirectoryProps) {
 
         const hashLink = `#${path}`;
         const downloadLink = `/api/Files/Download/${sanitisePath(path)}?archiveFormat=${archiveFormat}`;
+        const archiveExtension = {
+            [ArchiveFormat.Tar]: '.tar.gz',
+            [ArchiveFormat.Zip]: '.zip'
+        }[archiveFormat] ?? '';
 
         return <div className={`${treeNodeClassName} ${pathClassName}`}>
             <Checkbox
@@ -235,7 +239,7 @@ function Directory(props: DirectoryProps) {
                 <Icon name={loaded || loading || error ? 'folder open' : 'folder'} />
                 {displayName}&nbsp;
             </span>
-            <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} download={`${displayName}.${archiveFormat.toLocaleLowerCase()}`} native />
+            <IconLink aria-label="Download" className={showOnNodeHoverClassName} name="download" href={downloadLink} download={`${displayName}${archiveExtension}`} native />
             <IconLink aria-label="Link" className={showOnNodeHoverClassName} href={hashLink} name="linkify" />
         </div>;
     }, [displayName, isHash, loaded, expand, loading, parentSelected, selected, toggleSelect, path, onCollapse, archiveFormat]);

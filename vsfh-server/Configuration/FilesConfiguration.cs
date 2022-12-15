@@ -10,7 +10,7 @@ public class FilesConfiguration : IValidatableObject
     public Dictionary<string, string> MimeTypesByExtension { get; init; } = null!;
     public bool IncludeHiddenFilesAndDirectories { get; init; }
     public bool IncludeSystemFilesAndDirectories { get; init; }
-    [Range(1, 9)] public int? GzipCompressionLevel { get; init; }
+    public CompressionLevel TarCompressionLevel { get; init; }
     public CompressionLevel ZipCompressionLevel { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext _)
@@ -22,5 +22,8 @@ public class FilesConfiguration : IValidatableObject
 
         if(!Enum.IsDefined<CompressionLevel>(ZipCompressionLevel))
             yield return new ValidationResult($"{nameof(ZipCompressionLevel)} must be one of: {string.Join(", ", Enum.GetValues<CompressionLevel>())}");
+
+        if(!Enum.IsDefined<CompressionLevel>(TarCompressionLevel))
+            yield return new ValidationResult($"{nameof(TarCompressionLevel)} must be one of: {string.Join(", ", Enum.GetValues<CompressionLevel>())}");
     }
 }

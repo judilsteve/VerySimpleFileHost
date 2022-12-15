@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Formats.Tar;
 using System.IO.Compression;
 using System.Text;
-using ICSharpCode.SharpZipLib.Tar;
-using ICSharpCode.SharpZipLib.GZip;
 using VerySimpleFileHost.Configuration;
 using VerySimpleFileHost.ActionResults;
 using VerySimpleFileHost.Utils;
@@ -141,9 +140,7 @@ public class FilesController : ControllerBase
     {
         return archiveFormat switch
         {
-            ArchiveFormat.Tar => config.GzipCompressionLevel.HasValue
-                ? "application/gzip"
-                : "application/x-tar",
+            ArchiveFormat.Tar => "application/gzip",
             ArchiveFormat.Zip => "application/zip",
             _ => throw new ArgumentException("Unrecognised archive format", nameof(archiveFormat))
         };
@@ -249,32 +246,8 @@ public class FilesController : ControllerBase
         IList<(string absolutePath, bool isDirectory)> absolutePaths,
         Stream outputStream)
     {
-        if(config.GzipCompressionLevel.HasValue)
-        {
-            using var gzipOutputStream = new GZipOutputStream(outputStream)
-            {
-                IsStreamOwner = false
-            };
-            using var tarOutputStream = new TarOutputStream(gzipOutputStream, Encoding.UTF8)
-            {
-                IsStreamOwner = false
-            };
-            await WriteTarStream(absolutePaths, tarOutputStream);
-        }
-        else
-        {
-            using var tarOutputStream = new TarOutputStream(outputStream, Encoding.UTF8)
-            {
-                IsStreamOwner = false
-            };
-            await WriteTarStream(absolutePaths, tarOutputStream);
-        }
-    }
-
-    private async Task WriteTarStream(
-        IList<(string absolutePath, bool isDirectory)> absolutePaths,
-        TarOutputStream tarOutputStream)
-    {
+        using var gzipOutputStream = new GZipStream(outputStream, config.TarCompressionLevel);
+        using var tarWriter = new TarWriter(gzipOutputStream);
         foreach(var (absolutePath, isDirectory) in absolutePaths)
         {
             if(isDirectory)
@@ -289,37 +262,22 @@ public class FilesController : ControllerBase
                     {
                         tarEntryPath = Path.Combine(directoryInfo.Name, tarEntryPath);
                     }
-                    // TODO_JU Migrate to System.Formats.Tar when 7.0 goes GA
-                    // https://devblogs.microsoft.com/dotnet/announcing-dotnet-7-preview-4/#added-new-tar-apis
-                    var tarEntry = TarEntry.CreateTarEntry(tarEntryPath);
-                    tarEntry.Size = fileInfo.Length;
-                    tarOutputStream.PutNextEntry(tarEntry);
-                    using var fileStream = fileInfo.OpenRead();
-                    await fileStream.CopyToAsync(tarOutputStream, HttpContext.RequestAborted);
-                    HttpContext.RequestAborted.ThrowIfCancellationRequested();
-                    tarOutputStream.CloseEntry();
+
+                    await tarWriter.WriteEntryAsync(fileInfo.FullName, tarEntryPath, HttpContext.RequestAborted);
                 }
             }
             else
             {
-                var fileInfo = new FileInfo(absolutePath);
-                var tarEntry = TarEntry.CreateTarEntry(Path.GetFileName(absolutePath));
-                tarEntry.Size = fileInfo.Length;
-                tarOutputStream.PutNextEntry(tarEntry);
-                using var fileStream = fileInfo.OpenRead();
-                await fileStream.CopyToAsync(tarOutputStream, HttpContext.RequestAborted);
-                HttpContext.RequestAborted.ThrowIfCancellationRequested();
-                tarOutputStream.CloseEntry();
+                await tarWriter.WriteEntryAsync(absolutePath, Path.GetFileName(absolutePath), HttpContext.RequestAborted);
             }
         }
-        tarOutputStream.Close();
     }
 
     private string GetArchiveExtension(ArchiveFormat archiveFormat)
     {
         return archiveFormat switch
         {
-            ArchiveFormat.Tar => config.GzipCompressionLevel.HasValue ? ".tar.gz" : ".tar",
+            ArchiveFormat.Tar => ".tar.gz",
             ArchiveFormat.Zip => ".zip",
             _ => throw new ArgumentException("Unrecognised archive format", nameof(archiveFormat))
         };
