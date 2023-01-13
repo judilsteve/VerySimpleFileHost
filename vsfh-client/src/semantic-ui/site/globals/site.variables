@@ -2,6 +2,8 @@
      User Global Variables
 *******************************/
 
+@supportIE: false;
+
 // Serve google fonts ourselves instead of deferring to fonts.gstatic.com (slow)
 @importGoogleFonts: false;
 

@@ -23,7 +23,8 @@ export default (config, env, helpers) => {
     assetsPattern.to = '.';
   }
 
-  config.plugins.unshift(new FontminPlugin({
+  // TODO_JU Figure out how to use fomantic's built-in icon font minification and remove this plugin, the patcher package, and the patch
+  /*config.plugins.unshift(new FontminPlugin({
     autodetect: false, // Does not work with this build pipeline
     glyphs: [ // https://fontawesome.com/v5/cheatsheet/free/solid
       '\uf07c', // folder-open
@@ -51,7 +52,7 @@ export default (config, env, helpers) => {
       '\uf3a5', // gem
     ],
     allowedFilesRegex: new RegExp('icons')
-  }));
+  }));*/
 
   config.resolve.alias['../../theme.config$'] = path.join(config.context, 'semantic-ui/theme.config');
 

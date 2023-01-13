@@ -1,8 +1,8 @@
 import { h, Fragment } from 'preact';
 
-import 'semantic-ui-less/definitions/modules/modal.less';
-import 'semantic-ui-less/definitions/elements/button.less';
-import 'semantic-ui-less/definitions/elements/icon.less';
+import 'fomantic-ui-less/definitions/modules/modal.less';
+import 'fomantic-ui-less/definitions/elements/button.less';
+import 'fomantic-ui-less/definitions/elements/icon.less';
 import { Modal, Button, Icon } from "semantic-ui-react";
 import { routes } from "../routes";
 import { useSharedState } from "../Hooks/useSharedState";

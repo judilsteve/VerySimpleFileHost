@@ -1,8 +1,8 @@
 import { h, Fragment } from 'preact';
 import { useEffect, useState } from "preact/hooks";
-import 'semantic-ui-less/definitions/collections/form.less';
-import 'semantic-ui-less/definitions/elements/input.less';
-import 'semantic-ui-less/definitions/elements/label.less';
+import 'fomantic-ui-less/definitions/collections/form.less';
+import 'fomantic-ui-less/definitions/elements/input.less';
+import 'fomantic-ui-less/definitions/elements/label.less';
 import { Input, LabelProps } from "semantic-ui-react";
 import { ZXCVBNResult } from "zxcvbn";
 import { AuthConfigDto } from "../API";

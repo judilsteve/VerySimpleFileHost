@@ -1,6 +1,6 @@
 import { h } from 'preact';
-import 'semantic-ui-less/definitions/elements/header.less';
-import 'semantic-ui-less/definitions/elements/icon.less';
+import 'fomantic-ui-less/definitions/elements/header.less';
+import 'fomantic-ui-less/definitions/elements/icon.less';
 import { Header, Icon } from "semantic-ui-react";
 import { routes } from "../../routes";
 import SkinnyForm from "../../Components/SkinnyForm";

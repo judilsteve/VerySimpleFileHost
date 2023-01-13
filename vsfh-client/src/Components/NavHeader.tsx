@@ -1,11 +1,11 @@
 import { h, Fragment } from 'preact';
 import { useState, useMemo, useCallback } from "preact/hooks";
-import 'semantic-ui-less/definitions/elements/button.less';
-import 'semantic-ui-less/definitions/elements/header.less';
-import 'semantic-ui-less/definitions/elements/icon.less';
-import 'semantic-ui-less/definitions/collections/message.less';
-import 'semantic-ui-less/definitions/modules/modal.less';
-import 'semantic-ui-less/definitions/modules/popup.less';
+import 'fomantic-ui-less/definitions/elements/button.less';
+import 'fomantic-ui-less/definitions/elements/header.less';
+import 'fomantic-ui-less/definitions/elements/icon.less';
+import 'fomantic-ui-less/definitions/collections/message.less';
+import 'fomantic-ui-less/definitions/modules/modal.less';
+import 'fomantic-ui-less/definitions/modules/popup.less';
 import { Button, Header, Icon, Message, Modal, SemanticICONS } from "semantic-ui-react";
 import { loginApi } from "../apiInstances";
 import { routes } from "../routes";
@@ -97,7 +97,7 @@ function NavHeader(props: NavHeaderProps) {
             <Header as="h1" style={{ marginBottom: 0 }}>{pageTitle}</Header>
             <div>
                 { linkIcons }
-                <span data-tooltip="Log Out" data-position="bottom left"><Icon link name="sign-out" size="large" onClick={() => setLoggingOut(true)} /></span>
+                <span data-tooltip="Log Out" data-position="bottom left"><Icon link name="sign-out alternate" size="large" onClick={() => setLoggingOut(true)} /></span>
             </div>
         </div>
         <ThemeRule />

@@ -1,10 +1,10 @@
 
 import { h } from 'preact';
-import '@fontsource/lato/latin-400';
-import '@fontsource/lato/latin-700';
-// TODO_JU Upgrade to fomantic, use some of its new features (e.g. coloured loading spinner, dynamic less compilation)
-import 'semantic-ui-less/definitions/globals/reset.less';
-import 'semantic-ui-less/definitions/globals/site.less';
+//import '@fontsource/lato/latin-400'; TODO_JU This is supposed to be bundled now, test and remove from package.json
+//import '@fontsource/lato/latin-700';
+// TODO_JU Dynamic less compilation: https://fomantic-ui.com/introduction/build-tools.html#variationvariables
+import 'fomantic-ui-less/definitions/globals/reset.less';
+import 'fomantic-ui-less/definitions/globals/site.less';
 
 import App from './App';
 
