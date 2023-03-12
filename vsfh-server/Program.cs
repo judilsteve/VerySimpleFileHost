@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Net.Http.Headers;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Reflection;
@@ -205,6 +206,12 @@ public static class VerySimpleFileHost
         {
             builder.Services.AddLettuceEncrypt()
                 .PersistDataToDirectory(new DirectoryInfo(lettuceEncryptConfig.LettuceEncryptDirectory ?? $"data{Path.DirectorySeparatorChar}LettuceEncrypt"), lettuceEncryptConfig.PfxPassword);
+        }
+
+        if (!builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddHttpsRedirection(options =>
+                options.RedirectStatusCode = (int)HttpStatusCode.PermanentRedirect);
         }
 
         builder.Services.AddLogging();
