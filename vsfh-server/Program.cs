@@ -151,6 +151,9 @@ public static class VerySimpleFileHost
         {
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
 
+            if(configManager.GetRequiredSection("Kestrel").GetValue<bool>("UseHttp3"))
+                o.ConfigureEndpointDefaults(o => o.Protocols = HttpProtocols.Http1AndHttp2AndHttp3);
+
             // By default, all file descriptors are set up as HTTP
             // Assume the first is HTTPS (so that we are secure by default),
             // use raw HTTP for the rest (which will be handled by the HTTPS redirection middleware)

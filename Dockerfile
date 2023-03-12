@@ -32,6 +32,13 @@ RUN dotnet run -c Release -- --path /vsfh-client
 # BUILD RUNTIME ENVIRONMENT
 FROM mcr.microsoft.com/dotnet/aspnet:7.0-bullseye-slim
 
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
+    apt-add-repository https://packages.microsoft.com/debian/11/prod && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends && \
+    libmsquic && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /vsfh
 COPY --from=server-builder /vsfh-server/build .
 COPY --from=compressor /vsfh-client ./wwwroot
