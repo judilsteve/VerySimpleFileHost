@@ -148,12 +148,18 @@ public static class VerySimpleFileHost
         var lettuceEncryptConfig = new LettuceEncryptConfiguration();
         configManager.Bind(nameof(LettuceEncrypt), lettuceEncryptConfig);
         var useLettuceEncrypt = !string.IsNullOrWhiteSpace(lettuceEncryptConfig.EmailAddress) && (lettuceEncryptConfig.DomainNames?.Any() ?? false);
+        var useHttp3 = configManager.GetRequiredSection("Kestrel").GetValue<bool>("UseHttp3");
+        var httpsPortOverride = Environment.GetEnvironmentVariable("HTTPS_PORT");
         builder.Services.Configure<KestrelServerOptions>(o => 
         {
             o.AllowSynchronousIO = true; // System.IO.Compression.ZipArchive requires synchronous IO
 
-            if(configManager.GetRequiredSection("Kestrel").GetValue<bool>("UseHttp3"))
-                o.ConfigureEndpointDefaults(o => o.Protocols = HttpProtocols.Http1AndHttp2AndHttp3);
+            if(useHttp3)
+                o.ConfigureEndpointDefaults(o => {
+                    o.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
+                    // Default alt-svc header logic doesn't respect this envvar, we need our own logic
+                    o.DisableAltSvcHeader = httpsPortOverride is not null;
+                });
 
             // By default, all file descriptors are set up as HTTP
             // Assume the first is HTTPS (so that we are secure by default),
@@ -222,6 +228,16 @@ public static class VerySimpleFileHost
         {
             app.UseHttpsRedirection();
             app.UseHsts();
+        }
+
+        if(useHttp3 && httpsPortOverride is not null)
+        {
+            app.Use((ctx, next) => {
+                if (ctx.Request.Protocol != HttpProtocol.Http3)
+                    ctx.Response.Headers["Alt-Svc"] = $"h3=\":{httpsPortOverride}\"; ma=86400";
+
+                return next();
+            });
         }
 
         app.UseCookiePolicy(new CookiePolicyOptions
