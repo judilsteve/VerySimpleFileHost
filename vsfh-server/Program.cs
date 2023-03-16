@@ -20,6 +20,13 @@ namespace VerySimpleFileHost.Run;
 
 public static class VerySimpleFileHost
 {
+    private enum SystemDFileDescriptorProtocol
+    {
+        HTTPS3,
+        HTTPS,
+        HTTP
+    }
+
     private static ConfigurationManager BuildConfigManager(string[] args, WebApplicationBuilder builder)
     {
         var configManager = new ConfigurationManager();
@@ -161,19 +168,29 @@ public static class VerySimpleFileHost
                     o.DisableAltSvcHeader = httpsPortOverride is not null;
                 });
 
-            // By default, all file descriptors are set up as HTTP
-            // Assume the first is HTTPS (so that we are secure by default),
-            // use raw HTTP for the rest (which will be handled by the HTTPS redirection middleware)
-            var isFirstFileDescriptor = true;
+            // See https://www.freedesktop.org/software/systemd/man/sd_listen_fds.html
+            // This envvar can be set by the `FileDescriptorName` field in the .socket file
+            var fileDescriptorProtocols = (Environment.GetEnvironmentVariable("LISTEN_FDNAMES")
+                ?? throw new Exception("You must set names for socket activation to indicate protocols"))
+                .Split(":")!
+                .Select(Enum.Parse<SystemDFileDescriptorProtocol>);
+            var fileDescriptorProtocolEnumerator = fileDescriptorProtocols.GetEnumerator();
             o.UseSystemd(fd =>
             {
-                if(isFirstFileDescriptor)
+                if(!fileDescriptorProtocolEnumerator.MoveNext())
+                    throw new Exception("There were less FD names than sockets passed");
+                var protocol = fileDescriptorProtocolEnumerator.Current;
+                if(protocol != SystemDFileDescriptorProtocol.HTTP)
                 {
                     fd.UseHttps(h => 
                     {
                         if(useLettuceEncrypt) h.UseLettuceEncrypt(o.ApplicationServices);
                     });
-                    isFirstFileDescriptor = false;
+
+                    if(protocol == SystemDFileDescriptorProtocol.HTTPS3)
+                    {
+                        fd.Protocols = HttpProtocols.Http3;
+                    }
                 }
             });
         });
