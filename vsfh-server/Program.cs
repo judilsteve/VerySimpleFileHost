@@ -63,7 +63,7 @@ public static class VerySimpleFileHost
 
     private static async Task CreateAdminAccount(ConfigurationManager configManager, string? hostnameOverride)
     {
-        var context = new VsfhContext(new DbContextOptionsBuilder<VsfhContext>().UseSqlite(connectionString).Options);
+        using var context = new VsfhContext(new DbContextOptionsBuilder<VsfhContext>().UseSqlite(connectionString).Options);
         Directory.CreateDirectory("data");
         await context.Database.MigrateAsync();
 
