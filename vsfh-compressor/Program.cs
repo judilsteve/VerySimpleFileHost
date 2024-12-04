@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+﻿using System.CommandLine;
+using System.IO.Compression;
 
 namespace VsfhCompressor.Run;
 
@@ -31,7 +32,7 @@ public static class VsfhCompressor
     }
 
     private const long fileSizeStepFactor = 1024;
-    private static readonly string[] fileSizeSuffixes = new[]{ "B", "KiB", "MiB", "GiB", "TiB" };
+    private static readonly string[] fileSizeSuffixes = [ "B", "KiB", "MiB", "GiB", "TiB" ];
 
     private static string HumaniseBytes(long bytes)
     {
@@ -58,12 +59,13 @@ public static class VsfhCompressor
     /// <param name="path">
     /// Path to files which should be compressed
     /// </param>
-    public static async Task Main(string path)
+    public static async Task Compress(string path)
     {
         var compressibleExtensions = new[]
         {
             "css",
             "js",
+            "htm",
             "html",
             "svg",
             "txt",
@@ -72,7 +74,8 @@ public static class VsfhCompressor
             "ico",
             "map", // Source maps
             "ttf",
-            "eot"
+            "eot",
+            "wasm"
         };
         var compressibleFilePaths = compressibleExtensions
             .SelectMany(e => Directory.EnumerateFiles(path, $"*.{e}", SearchOption.AllDirectories));
@@ -80,8 +83,9 @@ public static class VsfhCompressor
         var totalOriginalSizeBytes = new ConcurrentTally();
         var totalGzipSizeBytes = new ConcurrentTally();
         var totalBrotliSizeBytes = new ConcurrentTally();
+        var totalZstdSizeBytes = new ConcurrentTally();
 
-        await Parallel.ForEachAsync(compressibleFilePaths, async (filePath, _) =>
+        await Parallel.ForEachAsync(compressibleFilePaths, async (filePath, cancellationToken) =>
         {
             var originalSizeBytes = new FileInfo(filePath).Length;
             var countsForTotal = !filePath.EndsWith(".map");
@@ -95,6 +99,7 @@ public static class VsfhCompressor
                 {
                     await totalGzipSizeBytes.Add(originalSizeBytes);
                     await totalBrotliSizeBytes.Add(originalSizeBytes);
+                    await totalZstdSizeBytes.Add(originalSizeBytes);
                 }
 
                 return;
@@ -102,53 +107,54 @@ public static class VsfhCompressor
 
             using var inputStream = File.OpenRead(filePath);
 
-            var fileGzPath = $"{filePath}.gz";
-            using(var gzippedFileStream = File.Create(fileGzPath))
+            async Task Compress(string suffix, Func<Stream, Stream> makeCompressedStream, ConcurrentTally tally)
             {
-                using var gzipStream = new GZipStream(gzippedFileStream, CompressionLevel.SmallestSize);
-                await inputStream.CopyToAsync(gzipStream);
+                var compressedPath = $"{filePath}.${suffix}";
+                using(var compressedFileStream = File.Create(compressedPath))
+                {
+                    using var compressedStream = makeCompressedStream(compressedFileStream);
+                    await inputStream.CopyToAsync(compressedStream);
+                }
+
+                var compressedSizeBytes = new FileInfo(compressedPath).Length;
+                var compressionRatio = (double)compressedSizeBytes / (double)originalSizeBytes;
+                if(compressionRatio > maxCompressionRatio)
+                {
+                    await Console.Out.WriteLineAsync($"Skipping {suffix} compression of file \"{filePath}\" because the compression ratio ({compressionRatio}) was poor");
+                    File.Delete(compressedPath);
+                    if(countsForTotal) await tally.Add(originalSizeBytes);
+                }
+                else if(countsForTotal)
+                {
+                    await tally.Add(compressedSizeBytes);
+                }
             }
 
-            var gzSizeBytes = new FileInfo(fileGzPath).Length;
-            var gzRatio = (double)gzSizeBytes / (double)originalSizeBytes;
-            if(gzRatio > maxCompressionRatio)
-            {
-                await Console.Out.WriteLineAsync($"Skipping gzip compression of file \"{filePath}\" because the compression ratio ({gzRatio}) was poor");
-                File.Delete(fileGzPath);
-                if(countsForTotal) await totalGzipSizeBytes.Add(originalSizeBytes);
-            }
-            else if(countsForTotal)
-            {
-                await totalGzipSizeBytes.Add(gzSizeBytes);
-            }
-
+            await Compress("gz", fs => new GZipStream(fs, CompressionLevel.SmallestSize), totalGzipSizeBytes);
             inputStream.Seek(0, SeekOrigin.Begin);
-
-            var fileBrPath = $"{filePath}.br";
-            using(var brotlidFileStream = File.Create(fileBrPath))
-            {
-                using var brotliStream = new BrotliStream(brotlidFileStream, CompressionLevel.SmallestSize);
-                await inputStream.CopyToAsync(brotliStream);
-            }
-
-            var brSizeBytes = new FileInfo(fileBrPath).Length;
-            var brRatio = (double)brSizeBytes / (double)originalSizeBytes;
-            if(brRatio > maxCompressionRatio)
-            {
-                await Console.Out.WriteLineAsync($"Skipping brotli compression of file \"{filePath}\" because the compression ratio ({brRatio}) was poor");
-                File.Delete(fileBrPath);
-                if(countsForTotal) await totalBrotliSizeBytes.Add(originalSizeBytes);
-            }
-            else if(countsForTotal)
-            {
-                await totalBrotliSizeBytes.Add(brSizeBytes);
-            }
+            await Compress("br", fs => new BrotliStream(fs, CompressionLevel.SmallestSize), totalBrotliSizeBytes);
+            inputStream.Seek(0, SeekOrigin.Begin);
+            await Compress("zst", fs => new ZstdSharp.CompressionStream(fs, 22), totalZstdSizeBytes);
         });
 
-        await Console.Out.WriteLineAsync($"Original size: {HumaniseBytes(totalOriginalSizeBytes.Value)}");
-        var gzRatio = (double)totalGzipSizeBytes.Value / (double)totalOriginalSizeBytes.Value;
-        await Console.Out.WriteLineAsync($"Gzipped size: {HumaniseBytes(totalGzipSizeBytes.Value)} ({gzRatio * 100.0:F2}% of original size)");
-        var brRatio = (double)totalBrotliSizeBytes.Value / (double)totalOriginalSizeBytes.Value;
-        await Console.Out.WriteLineAsync($"Brotlid size: {HumaniseBytes(totalBrotliSizeBytes.Value)} ({brRatio * 100.0:F2}% of original size)");
+        async Task PrintStats(string name, ConcurrentTally tally)
+        {
+            var ratio = tally.Value / (double)totalOriginalSizeBytes.Value;
+            await Console.Out.WriteLineAsync($"{name} size: {HumaniseBytes(tally.Value)} ({ratio * 100.0:F2}% of original size)");
+        }
+
+        await PrintStats("Original", totalOriginalSizeBytes);
+        await PrintStats("Gzipped", totalGzipSizeBytes);
+        await PrintStats("Brotlid", totalBrotliSizeBytes);
+        await PrintStats("Zstd", totalZstdSizeBytes);
+    }
+
+    public static Task Main(string[] args)
+    {
+        var pathOption = new Argument<DirectoryInfo>("path", "Directory to compress");
+        var rootCommand = new RootCommand("Compresses static web content");
+        rootCommand.AddArgument(pathOption);
+        rootCommand.SetHandler(dir => Compress(dir.FullName), pathOption);
+        return rootCommand.InvokeAsync(args);
     }
 }
