@@ -109,11 +109,11 @@ public static class VsfhCompressor
 
             async Task Compress(string suffix, Func<Stream, Stream> makeCompressedStream, ConcurrentTally tally)
             {
-                var compressedPath = $"{filePath}.${suffix}";
+                var compressedPath = $"{filePath}.{suffix}";
                 using(var compressedFileStream = File.Create(compressedPath))
                 {
                     using var compressedStream = makeCompressedStream(compressedFileStream);
-                    await inputStream.CopyToAsync(compressedStream);
+                    await inputStream.CopyToAsync(compressedStream, cancellationToken);
                 }
 
                 var compressedSizeBytes = new FileInfo(compressedPath).Length;

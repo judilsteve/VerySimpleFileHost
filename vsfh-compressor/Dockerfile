@@ -1,13 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS builder
 
 # NativeAOT build deps
-RUN apt-get udpate \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     clang zlib1g-dev
 
-COPY . /app
-
+RUN mkdir /app
 WORKDIR /app
+
+COPY Program.cs .
+COPY VerySimpleFileHostCompressor.csproj .
+
 RUN dotnet publish \
     -o publish \
     -c Release \
