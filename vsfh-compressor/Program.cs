@@ -134,7 +134,8 @@ public static class VsfhCompressor
             inputStream.Seek(0, SeekOrigin.Begin);
             await Compress("br", fs => new BrotliStream(fs, CompressionLevel.SmallestSize), totalBrotliSizeBytes);
             inputStream.Seek(0, SeekOrigin.Begin);
-            await Compress("zst", fs => new ZstdSharp.CompressionStream(fs, 22), totalZstdSizeBytes);
+            // Browsers don't support zstd "ultra" levels (>19)
+            await Compress("zst", fs => new ZstdSharp.CompressionStream(fs, level: 19), totalZstdSizeBytes);
         });
 
         async Task PrintStats(string name, ConcurrentTally tally)
